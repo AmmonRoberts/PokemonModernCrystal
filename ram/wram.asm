@@ -2892,6 +2892,10 @@ wAutoNickname::
 ; 0 = Standard nicnkaming (asks for nickname)
 ; 1 = Random nicknames
 	db
+wBerryTreeRandomizer::
+; 0 = Standard berry trees
+; 1 = Randomized berry trees
+	db
 ; The three randomized starter species (if randomization is enabled)
 wRandomStarter1:: db
 wRandomStarter2:: db
