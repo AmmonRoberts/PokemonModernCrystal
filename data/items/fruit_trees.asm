@@ -32,3 +32,22 @@ FruitTreeItems:
 	db MINT_BERRY   ; PEWTER_CITY_2
 	db BURNT_BERRY  ; FUCHSIA_CITY
 	assert_table_length NUM_FRUIT_TREES
+
+UniqueFruitTreeItems:
+; List of unique berries for randomizer (equal odds for each)
+	db BERRY
+	db PSNCUREBERRY
+	db BITTER_BERRY
+	db PRZCUREBERRY
+	db MYSTERYBERRY
+	db ICE_BERRY
+	db MINT_BERRY
+	db BURNT_BERRY
+	db RED_APRICORN
+	db BLU_APRICORN
+	db BLK_APRICORN
+	db WHT_APRICORN
+	db PNK_APRICORN
+	db GRN_APRICORN
+	db YLW_APRICORN
+DEF NUM_UNIQUE_FRUIT_ITEMS EQU 15

@@ -3,11 +3,12 @@
 	const NEWGAMEOPT_WILD_ENCOUNTERS  ; 0
 	const NEWGAMEOPT_STARTER_RAND     ; 1
 	const NEWGAMEOPT_TRAINER_RAND     ; 2
-	const NEWGAMEOPT_AUTO_NICKNAME    ; 3
-	const NEWGAMEOPT_TM_MODE          ; 4
-	const NEWGAMEOPT_POISON_SURVIVAL  ; 5
-	const NEWGAMEOPT_CONTINUE         ; 6
-DEF NUM_NEWGAMEOPTIONS EQU const_value ; 7
+	const NEWGAMEOPT_BERRY_RAND       ; 3
+	const NEWGAMEOPT_AUTO_NICKNAME    ; 4
+	const NEWGAMEOPT_TM_MODE          ; 5
+	const NEWGAMEOPT_POISON_SURVIVAL  ; 6
+	const NEWGAMEOPT_CONTINUE         ; 7
+	DEF NUM_NEWGAMEOPTIONS EQU const_value ; 8
 
 _NewGameOptions:
 	; Initialize Crystal data (including all new game options to defaults)
@@ -101,6 +102,8 @@ StringNewGameOptions:
 	db "     :<LF>"
 	db "TRAINERS<LF>"
 	db "     :<LF>"
+	db "BERRY TREES<LF>"
+	db "     :<LF>"
 	db "NICKNAMES<LF>"
 	db "     :<LF>"
 	db "TM MODE<LF>"
@@ -117,10 +120,37 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_WildEncounters
 	dw NewGameOptions_StarterRandomization
 	dw NewGameOptions_TrainerRandomization
+	dw NewGameOptions_BerryRandomization
 	dw NewGameOptions_AutoNickname
 	dw NewGameOptions_TMMode
 	dw NewGameOptions_PoisonSurvival
 	dw NewGameOptions_Continue
+NewGameOptions_BerryRandomization:
+	ld a, [wBerryTreeRandomizer]
+	ldh a, [hJoyPressed]
+	bit B_PAD_LEFT, a
+	jr nz, .Toggle
+	bit B_PAD_RIGHT, a
+	jr z, .NonePressed
+.Toggle:
+	ld a, [wBerryTreeRandomizer]
+	xor 1
+	ld [wBerryTreeRandomizer], a
+.NonePressed:
+	ld a, [wBerryTreeRandomizer]
+	and a
+	jr nz, .Randomized
+	ld de, .Standard
+	jr .Display
+.Randomized:
+	ld de, .Randomized_str
+.Display:
+	hlcoord 8, 9
+	call PlaceString
+	and a
+	ret
+.Standard:     db "STANDARD  @"
+.Randomized_str: db "RANDOMIZED@"
 
 NewGameOptions_WildEncounters:
 	ld a, [wWildEncounterType]
@@ -226,7 +256,7 @@ NewGameOptions_TMMode:
 .Unlimited:
 	ld de, .Unlimited_str
 .Display:
-	hlcoord 8, 11
+	hlcoord 8, 13
 	call PlaceString
 	and a
 	ret
@@ -254,7 +284,7 @@ NewGameOptions_PoisonSurvival:
 .Safe:
 	ld de, .Safe_str
 .Display:
-	hlcoord 8, 13
+	hlcoord 8, 15
 	call PlaceString
 	and a
 	ret
@@ -282,7 +312,7 @@ NewGameOptions_AutoNickname:
 .On:
 	ld de, .On_str
 .Display:
-	hlcoord 8, 9
+	hlcoord 8, 11
 	call PlaceString
 	and a
 	ret
@@ -338,7 +368,7 @@ NewGameOptionsControl:
 	ret
 
 NewGameOptions_UpdateCursorPosition:
-	; Clear cursor positions at rows 2, 4, 6, 8, 10, 12, 14 only
+	; Clear cursor positions at rows 2, 4, 6, 8, 10, 12, 14, 16
 	hlcoord 1, 2
 	ld [hl], $7f ; space character
 	hlcoord 1, 4
@@ -352,6 +382,8 @@ NewGameOptions_UpdateCursorPosition:
 	hlcoord 1, 12
 	ld [hl], $7f ; space character
 	hlcoord 1, 14
+	ld [hl], $7f ; space character
+	hlcoord 1, 16
 	ld [hl], $7f ; space character
 	
 	; Place cursor at current position
