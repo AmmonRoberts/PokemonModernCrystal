@@ -2138,6 +2138,8 @@ NEXTU
 wMenuItemsList:: ds 16
 wMenuItemsListEnd::
 
+wNewGameOptionsPage:: db ; 0 = page 1, 1 = page 2
+
 NEXTU
 ; fruit tree data
 wCurFruitTree:: db
@@ -2895,6 +2897,10 @@ wAutoNickname::
 wBerryTreeRandomizer::
 ; 0 = Standard berry trees
 ; 1 = Randomized berry trees
+	db
+wItemRandomizer::
+; 0 = Standard item balls
+; 1 = Randomized item balls
 	db
 ; The three randomized starter species (if randomization is enabled)
 wRandomStarter1:: db

@@ -1,14 +1,23 @@
 ; NewGameOptions menu constants
+; Page 1: Randomizer options
 	const_def
 	const NEWGAMEOPT_WILD_ENCOUNTERS  ; 0
 	const NEWGAMEOPT_STARTER_RAND     ; 1
 	const NEWGAMEOPT_TRAINER_RAND     ; 2
 	const NEWGAMEOPT_BERRY_RAND       ; 3
-	const NEWGAMEOPT_AUTO_NICKNAME    ; 4
-	const NEWGAMEOPT_TM_MODE          ; 5
-	const NEWGAMEOPT_POISON_SURVIVAL  ; 6
-	const NEWGAMEOPT_CONTINUE         ; 7
-	DEF NUM_NEWGAMEOPTIONS EQU const_value ; 8
+	const NEWGAMEOPT_ITEM_RAND        ; 4
+	const NEWGAMEOPT_PAGE1_CONTINUE   ; 5
+DEF NUM_NEWGAMEOPTIONS_PAGE1 EQU const_value ; 6
+
+; Page 2: Other options
+	const_def
+	const NEWGAMEOPT_AUTO_NICKNAME    ; 0
+	const NEWGAMEOPT_TM_MODE          ; 1
+	const NEWGAMEOPT_POISON_SURVIVAL  ; 2
+	const NEWGAMEOPT_PAGE2_CONTINUE   ; 3
+DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 4
+
+DEF NUM_NEWGAMEOPTIONS EQU NUM_NEWGAMEOPTIONS_PAGE1 ; For compatibility
 
 _NewGameOptions:
 	; Initialize Crystal data (including all new game options to defaults)
@@ -26,18 +35,36 @@ _NewGameOptions:
 	push af
 	ld [hl], TRUE
 	
+	; Start on page 1
+	xor a
+	ld [wNewGameOptionsPage], a
+	
+.refresh_page
 	hlcoord 0, 0
 	ld b, SCREEN_HEIGHT - 2
 	ld c, SCREEN_WIDTH - 2
 	call Textbox
 	hlcoord 2, 2
-	ld de, StringNewGameOptions
+	ld a, [wNewGameOptionsPage]
+	and a
+	jr nz, .page2
+	ld de, StringNewGameOptionsPage1
+	jr .display_page
+.page2
+	ld de, StringNewGameOptionsPage2
+.display_page
 	call PlaceString
 	xor a
 	ld [wJumptableIndex], a
 
 ; Display the settings of each option when the menu is opened
-	ld c, NUM_NEWGAMEOPTIONS - 1 ; omit continue button
+	ld a, [wNewGameOptionsPage]
+	and a
+	jr nz, .page2_count
+	ld c, NUM_NEWGAMEOPTIONS_PAGE1 - 1 ; omit continue button
+	jr .print_text_loop
+.page2_count
+	ld c, NUM_NEWGAMEOPTIONS_PAGE2 - 1 ; omit continue button
 .print_text_loop
 	push bc
 	xor a
@@ -62,14 +89,46 @@ _NewGameOptions:
 	call JoyTextDelay
 	ldh a, [hJoyPressed]
 	and PAD_START
-	jr nz, .ExitOptions
+	jr nz, .handle_start
 	ldh a, [hJoyPressed]
 	and PAD_B
-	jr nz, .CancelNewGame
+	jr nz, .handle_b
 	call NewGameOptionsControl
 	jr c, .dpad
 	call GetNewGameOptionPointer
-	jr c, .ExitOptions
+	jr c, .handle_continue_button
+	jr .dpad
+
+.handle_start
+	; START advances to next page or starts game
+	ld a, [wNewGameOptionsPage]
+	and a
+	jr z, .go_to_page2
+	; On page 2, start the game
+	jr .ExitOptions
+
+.go_to_page2
+	ld a, 1
+	ld [wNewGameOptionsPage], a
+	jp .refresh_page
+
+.handle_b
+	; B button behavior
+	ld a, [wNewGameOptionsPage]
+	and a
+	jr z, .CancelNewGame ; Page 1: cancel new game
+	; Page 2: go back to page 1
+	xor a
+	ld [wNewGameOptionsPage], a
+	jp .refresh_page
+
+.handle_continue_button
+	; Continue button pressed
+	ld a, [wNewGameOptionsPage]
+	and a
+	jr z, .go_to_page2 ; Page 1: go to page 2
+	; Page 2: start the game
+	jr .ExitOptions
 
 .dpad
 	call NewGameOptions_UpdateCursorPosition
@@ -95,7 +154,8 @@ _NewGameOptions:
 	scf ; set carry, cancel new game
 	ret
 
-StringNewGameOptions:
+StringNewGameOptionsPage1:
+	db "RANDOMIZERS   1/2<LF>"
 	db "WILD #MON<LF>"
 	db "     :<LF>"
 	db "STARTERS<LF>"
@@ -104,6 +164,12 @@ StringNewGameOptions:
 	db "     :<LF>"
 	db "BERRY TREES<LF>"
 	db "     :<LF>"
+	db "ITEMS<LF>"
+	db "     :<LF>"
+	db "CONTINUE@"
+
+StringNewGameOptionsPage2:
+	db "OTHER OPTIONS 2/2<LF>"
 	db "NICKNAMES<LF>"
 	db "     :<LF>"
 	db "TM MODE<LF>"
@@ -113,14 +179,24 @@ StringNewGameOptions:
 	db "CONTINUE@"
 
 GetNewGameOptionPointer:
-	jumptable .Pointers, wJumptableIndex
+	ld a, [wNewGameOptionsPage]
+	and a
+	jr nz, .page2
+	jumptable .PointersPage1, wJumptableIndex
+.page2
+	jumptable .PointersPage2, wJumptableIndex
 
-.Pointers:
-; entries correspond to NEWGAMEOPT_* constants
+.PointersPage1:
+; entries correspond to NEWGAMEOPT_* constants (Page 1)
 	dw NewGameOptions_WildEncounters
 	dw NewGameOptions_StarterRandomization
 	dw NewGameOptions_TrainerRandomization
 	dw NewGameOptions_BerryRandomization
+	dw NewGameOptions_ItemRandomization
+	dw NewGameOptions_Continue
+
+.PointersPage2:
+; entries correspond to NEWGAMEOPT_* constants (Page 2)
 	dw NewGameOptions_AutoNickname
 	dw NewGameOptions_TMMode
 	dw NewGameOptions_PoisonSurvival
@@ -145,7 +221,34 @@ NewGameOptions_BerryRandomization:
 .Randomized:
 	ld de, .Randomized_str
 .Display:
-	hlcoord 8, 9
+	hlcoord 8, 10
+	call PlaceString
+	and a
+	ret
+.Standard:     db "STANDARD  @"
+.Randomized_str: db "RANDOMIZED@"
+
+NewGameOptions_ItemRandomization:
+	ld a, [wItemRandomizer]
+	ldh a, [hJoyPressed]
+	bit B_PAD_LEFT, a
+	jr nz, .Toggle
+	bit B_PAD_RIGHT, a
+	jr z, .NonePressed
+.Toggle:
+	ld a, [wItemRandomizer]
+	xor 1
+	ld [wItemRandomizer], a
+.NonePressed:
+	ld a, [wItemRandomizer]
+	and a
+	jr nz, .Randomized
+	ld de, .Standard
+	jr .Display
+.Randomized:
+	ld de, .Randomized_str
+.Display:
+	hlcoord 8, 12
 	call PlaceString
 	and a
 	ret
@@ -172,7 +275,7 @@ NewGameOptions_WildEncounters:
 .Randomized:
 	ld de, .Randomized_str
 .Display:
-	hlcoord 8, 3
+	hlcoord 8, 4
 	call PlaceString
 	and a
 	ret
@@ -200,7 +303,7 @@ NewGameOptions_StarterRandomization:
 .Randomized:
 	ld de, .Randomized_str
 .Display:
-	hlcoord 8, 5
+	hlcoord 8, 6
 	call PlaceString
 	and a
 	ret
@@ -228,7 +331,7 @@ NewGameOptions_TrainerRandomization:
 .Randomized:
 	ld de, .Randomized_str
 .Display:
-	hlcoord 8, 7
+	hlcoord 8, 8
 	call PlaceString
 	and a
 	ret
@@ -256,7 +359,7 @@ NewGameOptions_TMMode:
 .Unlimited:
 	ld de, .Unlimited_str
 .Display:
-	hlcoord 8, 13
+	hlcoord 8, 6
 	call PlaceString
 	and a
 	ret
@@ -284,7 +387,7 @@ NewGameOptions_PoisonSurvival:
 .Safe:
 	ld de, .Safe_str
 .Display:
-	hlcoord 8, 15
+	hlcoord 8, 8
 	call PlaceString
 	and a
 	ret
@@ -312,7 +415,7 @@ NewGameOptions_AutoNickname:
 .On:
 	ld de, .On_str
 .Display:
-	hlcoord 8, 11
+	hlcoord 8, 4
 	call PlaceString
 	and a
 	ret
@@ -342,15 +445,27 @@ NewGameOptionsControl:
 	ret
 
 .DownPressed:
+	ld a, [wNewGameOptionsPage]
+	and a
+	jr nz, .page2_down
+	; Page 1
 	ld a, [hl]
-	cp NEWGAMEOPT_CONTINUE
+	cp NEWGAMEOPT_PAGE1_CONTINUE
+	jr z, .WrapToTop
+	inc [hl]
+	scf
+	ret
+.page2_down
+	; Page 2
+	ld a, [hl]
+	cp NEWGAMEOPT_PAGE2_CONTINUE
 	jr z, .WrapToTop
 	inc [hl]
 	scf
 	ret
 
 .WrapToTop:
-	ld [hl], NEWGAMEOPT_WILD_ENCOUNTERS
+	ld [hl], 0
 	scf
 	ret
 
@@ -363,31 +478,36 @@ NewGameOptionsControl:
 	ret
 
 .WrapToBottom:
-	ld [hl], NEWGAMEOPT_CONTINUE
+	ld a, [wNewGameOptionsPage]
+	and a
+	jr nz, .page2_bottom
+	; Page 1
+	ld [hl], NEWGAMEOPT_PAGE1_CONTINUE
+	scf
+	ret
+.page2_bottom
+	; Page 2
+	ld [hl], NEWGAMEOPT_PAGE2_CONTINUE
 	scf
 	ret
 
 NewGameOptions_UpdateCursorPosition:
-	; Clear cursor positions at rows 2, 4, 6, 8, 10, 12, 14, 16
-	hlcoord 1, 2
+	; Clear cursor positions at all possible rows
+	hlcoord 1, 3
 	ld [hl], $7f ; space character
-	hlcoord 1, 4
+	hlcoord 1, 5
 	ld [hl], $7f ; space character
-	hlcoord 1, 6
+	hlcoord 1, 7
 	ld [hl], $7f ; space character
-	hlcoord 1, 8
+	hlcoord 1, 9
 	ld [hl], $7f ; space character
-	hlcoord 1, 10
+	hlcoord 1, 11
 	ld [hl], $7f ; space character
-	hlcoord 1, 12
-	ld [hl], $7f ; space character
-	hlcoord 1, 14
-	ld [hl], $7f ; space character
-	hlcoord 1, 16
+	hlcoord 1, 13
 	ld [hl], $7f ; space character
 	
-	; Place cursor at current position
-	hlcoord 1, 2
+	; Place cursor at current position (starting at row 3 for first option)
+	hlcoord 1, 3
 	ld bc, SCREEN_WIDTH * 2
 	ld a, [wJumptableIndex]
 	call AddNTimes

@@ -602,6 +602,21 @@ ObjectEventTypeArray:
 	ld de, wItemBallData
 	ld bc, wItemBallDataEnd - wItemBallData
 	call FarCopyBytes
+	; Check if item randomizer is enabled
+	ld a, [wItemRandomizer]
+	and a
+	jr z, .no_randomize
+	; Randomize the item
+	ld a, NUM_RANDOMIZABLE_ITEMS
+	call RandomRange
+	ld e, a
+	ld d, 0
+	ld hl, RandomizableItems
+	add hl, de
+	ld a, BANK(RandomizableItems)
+	call GetFarByte
+	ld [wItemBallItemID], a
+.no_randomize
 	ld a, PLAYEREVENT_ITEMBALL
 	scf
 	ret
