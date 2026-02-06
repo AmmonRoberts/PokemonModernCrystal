@@ -44,21 +44,7 @@ Route29Tutorial1:
 	setevent EVENT_DUDE_TALKED_TO_YOU
 	opentext
 	writetext CatchingTutorialIntroText
-	yesorno
-	iffalse Script_RefusedTutorial1
-	closetext
-	follow ROUTE29_COOLTRAINER_M1, PLAYER
-	applymovement ROUTE29_COOLTRAINER_M1, DudeMovementData1b
-	stopfollow
-	loadwildmon RATTATA, 5
-	catchtutorial BATTLETYPE_TUTORIAL
-	turnobject ROUTE29_COOLTRAINER_M1, UP
-	opentext
-	writetext CatchingTutorialDebriefText
-	waitbutton
-	closetext
-	setscene SCENE_ROUTE29_NOOP
-	setevent EVENT_LEARNED_TO_CATCH_POKEMON
+	jump Script_RefusedTutorial1
 	end
 
 Route29Tutorial2:
@@ -69,34 +55,16 @@ Route29Tutorial2:
 	setevent EVENT_DUDE_TALKED_TO_YOU
 	opentext
 	writetext CatchingTutorialIntroText
-	yesorno
-	iffalse Script_RefusedTutorial2
-	closetext
-	follow ROUTE29_COOLTRAINER_M1, PLAYER
-	applymovement ROUTE29_COOLTRAINER_M1, DudeMovementData2b
-	stopfollow
-	loadwildmon RATTATA, 5
-	catchtutorial BATTLETYPE_TUTORIAL
-	turnobject ROUTE29_COOLTRAINER_M1, UP
-	opentext
-	writetext CatchingTutorialDebriefText
-	waitbutton
-	closetext
-	setscene SCENE_ROUTE29_NOOP
-	setevent EVENT_LEARNED_TO_CATCH_POKEMON
+	jump Script_RefusedTutorial2
 	end
 
 Script_RefusedTutorial1:
-	writetext CatchingTutorialDeclinedText
-	waitbutton
 	closetext
 	applymovement ROUTE29_COOLTRAINER_M1, DudeMovementData1b
 	setscene SCENE_ROUTE29_NOOP
 	end
 
 Script_RefusedTutorial2:
-	writetext CatchingTutorialDeclinedText
-	waitbutton
 	closetext
 	applymovement ROUTE29_COOLTRAINER_M1, DudeMovementData2b
 	setscene SCENE_ROUTE29_NOOP
@@ -256,14 +224,13 @@ CatchingTutorialBoxFullText:
 
 CatchingTutorialIntroText:
 	text "I've seen you a"
-	line "couple times. How"
+	line "couple times."
 
-	para "many #MON have"
-	line "you caught?"
+	para "Come talk to me if"
+	line "you want to learn"
 
-	para "Would you like me"
-	line "to show you how to"
-	cont "catch #MON?"
+	para "how to catch"
+	line "#MON!"
 	done
 
 CatchingTutorialDebriefText:
