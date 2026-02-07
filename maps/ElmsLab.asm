@@ -1507,6 +1507,8 @@ GiveStarterPokemon1:
 	ld a, [wRandomStarter1]
 .give
 	ld [wCurPartySpecies], a
+	ld [wCurSpecies], a
+	call GetBaseData
 	ld a, 5
 	ld [wCurPartyLevel], a
 	xor a ; FALSE
@@ -1517,13 +1519,17 @@ GiveStarterPokemon1:
 	ld [wCurItem], a
 	ld hl, wPartyMon1Item
 	ld [hl], a
-	; Apply random nickname if enabled
-	ld a, [wAutoNickname]
-	and a
-	jr z, .failed
+	ld a, [wCurPartySpecies]
+	ld [wNamedObjectIndex], a
+	call GetPokemonName
+	ld hl, wStringBuffer1
+	ld de, wMonOrItemNameBuffer
+	ld bc, MON_NAME_LENGTH
+	call CopyBytes
 	ld hl, wPartyMonNicknames
-	ld de, wPartyMonNicknames
-	farcall GiveRandomNickname
+	ld d, h
+	ld e, l
+	farcall NicknameStarterPokemon
 .failed
 	ret
 
@@ -1538,6 +1544,8 @@ GiveStarterPokemon2:
 	ld a, [wRandomStarter2]
 .give
 	ld [wCurPartySpecies], a
+	ld [wCurSpecies], a
+	call GetBaseData
 	ld a, 5
 	ld [wCurPartyLevel], a
 	xor a ; FALSE
@@ -1548,13 +1556,17 @@ GiveStarterPokemon2:
 	ld [wCurItem], a
 	ld hl, wPartyMon1Item
 	ld [hl], a
-	; Apply random nickname if enabled
-	ld a, [wAutoNickname]
-	and a
-	jr z, .failed
+	ld a, [wCurPartySpecies]
+	ld [wNamedObjectIndex], a
+	call GetPokemonName
+	ld hl, wStringBuffer1
+	ld de, wMonOrItemNameBuffer
+	ld bc, MON_NAME_LENGTH
+	call CopyBytes
 	ld hl, wPartyMonNicknames
-	ld de, wPartyMonNicknames
-	farcall GiveRandomNickname
+	ld d, h
+	ld e, l
+	farcall NicknameStarterPokemon
 .failed
 	ret
 
@@ -1569,6 +1581,8 @@ GiveStarterPokemon3:
 	ld a, [wRandomStarter3]
 .give
 	ld [wCurPartySpecies], a
+	ld [wCurSpecies], a
+	call GetBaseData
 	ld a, 5
 	ld [wCurPartyLevel], a
 	xor a ; FALSE
@@ -1579,12 +1593,20 @@ GiveStarterPokemon3:
 	ld [wCurItem], a
 	ld hl, wPartyMon1Item
 	ld [hl], a
-	; Apply random nickname if enabled
-	ld a, [wAutoNickname]
-	and a
-	jr z, .failed
+	ld a, [wCurPartySpecies]
+	ld [wNamedObjectIndex], a
+	call GetPokemonName
+	ld hl, wStringBuffer1
+	ld de, wMonOrItemNameBuffer
+	ld bc, MON_NAME_LENGTH
+	call CopyBytes
 	ld hl, wPartyMonNicknames
-	ld de, wPartyMonNicknames
-	farcall GiveRandomNickname
+	ld d, h
+	ld e, l
+	farcall NicknameStarterPokemon
 .failed
 	ret
+
+CaughtAskNicknameText:
+	text_far _CaughtAskNicknameText
+	text_end
