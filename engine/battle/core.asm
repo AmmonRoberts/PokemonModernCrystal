@@ -5693,10 +5693,50 @@ MoveInfoBox:
 	ld [hl], '/'
 
 	callfar UpdateMoveData
+
+; For Hidden Power, compute the real type from the player's DVs and patch
+; wPlayerMoveStruct + MOVE_TYPE before printing, so the type row and the
+; effectiveness check both reflect the actual hidden type.
+; Formula mirrors HiddenPowerDamage: type = ((Atk&3)<<2)|(Def&3), +1 skip NORMAL,
+; +1 skip BIRD, skip unused type range.
+	ld a, [wPlayerMoveStruct + MOVE_EFFECT]
+	cp EFFECT_HIDDEN_POWER
+	jr nz, .print_type_normal
+	ld hl, wBattleMonDVs
+	ld a, [hl]
+	and %0011              ; Def DV & 3
+	ld b, a
+	ld a, [hl]
+	and %0011 << 4
+	swap a
+	add a
+	add a                  ; (Atk DV & 3) << 2
+	or b
+	inc a                  ; skip NORMAL
+	cp BIRD
+	jr c, .hp_type_ok
+	inc a                  ; skip BIRD
+	cp UNUSED_TYPES
+	jr c, .hp_type_ok
+	add UNUSED_TYPES_END - UNUSED_TYPES
+.hp_type_ok
+	ld [wPlayerMoveStruct + MOVE_TYPE], a
+	; Use GetTypeName (farcall) to copy the type name into wStringBuffer1,
+	; then PlaceString it. GetTypeName reads the raw type from wNamedObjectIndex.
+	ld [wNamedObjectIndex], a
+	farcall GetTypeName
+	hlcoord 1, 9
+	ld de, wStringBuffer1
+	call PlaceString
+	jr .after_type
+
+.print_type_normal
 	ld a, [wPlayerMoveStruct + MOVE_ANIM]
 	ld b, a
 	hlcoord 1, 9
 	predef PrintMoveType
+
+.after_type
 
 ; Show power + effectiveness on row 11.
 ; power = 0  -> non-damaging, leave row blank
