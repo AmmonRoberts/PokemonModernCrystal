@@ -616,7 +616,7 @@ ParsePlayerAction:
 .not_encored
 	ld a, [wBattlePlayerAction]
 	cp BATTLEPLAYERACTION_SWITCH
-	jr z, .reset_rage
+	jp z, .reset_rage
 	and a
 	jr nz, .reset_bide
 	ld a, [wPlayerSubStatus3]
@@ -5655,10 +5655,10 @@ MoveInfoBox:
 	cp b
 	jr nz, .not_disabled
 
-	hlcoord 1, 10
+	hlcoord 1, 9
 	ld de, .Disabled
 	call PlaceString
-	jr .done
+	jp .done
 
 .not_disabled
 	ld hl, wMenuCursorY
@@ -5689,33 +5689,107 @@ MoveInfoBox:
 	ld [wStringBuffer1], a
 	call .PrintPP
 
-	hlcoord 1, 9
-	ld de, .Type
-	call PlaceString
-
-	hlcoord 7, 11
+	hlcoord 6, 10
 	ld [hl], '/'
 
 	callfar UpdateMoveData
 	ld a, [wPlayerMoveStruct + MOVE_ANIM]
 	ld b, a
-	hlcoord 2, 10
+	hlcoord 1, 9
 	predef PrintMoveType
+
+; Show power + effectiveness on row 11.
+; power = 0  -> non-damaging, leave row blank
+; power = 1  -> variable/formula damage:
+;               OHKO moves show "---" and skip effectiveness
+;               all others show "???" and still show effectiveness
+; power >= 2 -> fixed power, print the number and show effectiveness
+	ld a, [wPlayerMoveStruct + MOVE_POWER]
+	and a
+	jp z, .done        ; power 0: non-damaging, leave row blank
+	cp 1
+	jr nz, .show_power_num ; power >= 2: print number
+
+	; power = 1: check if OHKO
+	ld a, [wPlayerMoveStruct + MOVE_EFFECT]
+	cp EFFECT_OHKO
+	jr nz, .show_variable_power
+	; OHKO: show "---", then still show effectiveness
+	hlcoord 1, 11
+	ld de, .OHKOPow
+	call PlaceString
+	jr .show_effectiveness
+
+.show_variable_power
+	; variable damage: show "???" then fall through to effectiveness
+	hlcoord 1, 11
+	ld de, .VarPow
+	call PlaceString
+	jr .show_effectiveness
+
+.show_power_num
+	ld [wStringBuffer1], a
+	hlcoord 1, 11
+	push hl
+	ld de, wStringBuffer1
+	lb bc, 1, 3
+	call PrintNum
+	pop hl
+
+.show_effectiveness
+	call SetPlayerTurn
+	callfar BattleCheckTypeMatchup
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .eff_immune
+	cp EFFECTIVE
+	jr c, .eff_not_very
+	jr z, .eff_normal
+	cp EFFECTIVE * 2 + 1
+	jr nc, .eff_double
+	ld de, .EffSuper
+	jr .print_eff
+.eff_not_very
+	ld de, .EffNotVery
+	jr .print_eff
+.eff_normal
+	ld de, .EffNormal
+	jr .print_eff
+.eff_immune
+	ld de, .EffImmune
+	jr .print_eff
+.eff_double
+	ld de, .EffDouble
+.print_eff
+	hlcoord 5, 11
+	call PlaceString
 
 .done
 	ret
 
 .Disabled:
 	db "Disabled!@"
-.Type:
-	db "TYPE/@"
+.OHKOPow:
+	db "---@"
+.VarPow:
+	db "???@"
+.EffImmune:
+	db "x0  @"
+.EffNotVery:
+	db "x0.5@"
+.EffNormal:
+	db "x1  @"
+.EffSuper:
+	db "x2  @"
+.EffDouble:
+	db "x4  @"
 
 .PrintPP:
-	hlcoord 5, 11
+	hlcoord 4, 10
 	ld a, [wLinkMode] ; What's the point of this check?
 	cp LINK_MOBILE
 	jr c, .ok
-	hlcoord 5, 11
+	hlcoord 4, 10
 .ok
 	push hl
 	ld de, wStringBuffer1
