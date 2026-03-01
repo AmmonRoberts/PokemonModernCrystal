@@ -198,13 +198,13 @@ HandleMapTimeAndJoypad:
 	call UpdateTime
 	call GetJoypad
 if DEF(_DEBUG)
-	call .MaybeDebugRoom
+	call .DebugRoom
 endc
 	call TimeOfDayPals
 	ret
 
 if DEF(_DEBUG)
-.MaybeDebugRoom:
+.DebugRoom:
 	ldh a, [hJoyDown]
 	and PAD_SELECT | PAD_START
 	cp PAD_SELECT | PAD_START

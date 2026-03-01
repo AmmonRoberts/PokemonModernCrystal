@@ -47,12 +47,21 @@ _DebugRoom::
 	call ByteFill
 	call DebugRoom_PrintStackBottomTop
 	call DebugRoom_PrintWindowStackBottomTop
-	call DebugRoom_PrintRTCHaltChk
-	call DebugRoom_PrintBattleSkip
+	ldh a, [hDebugRoomMenuPage]
+	cp DEBUGROOMMENU_PAGE_1
+	jr z, .page1_status
+	cp DEBUGROOMMENU_PAGE_3
+	jr nz, .status_done
+.page3_status
 	call DebugRoom_PrintTelDebug
 	call DebugRoom_PrintRAMFlag
 	call DebugRoom_PrintGender
 	call DebugRoom_PrintItemRando
+	jr .status_done
+.page1_status
+	call DebugRoom_PrintRTCHaltChk
+	call DebugRoom_PrintBattleSkip
+.status_done
 	ldh a, [hDebugRoomMenuPage]
 	ld [wWhichIndexSet], a
 	ld hl, .MenuHeader
@@ -82,7 +91,7 @@ _DebugRoom::
 	db 1 ; default option
 
 .MenuData:
-	db STATICMENU_CURSOR ; flags
+	db STATICMENU_CURSOR | STATICMENU_WRAP ; flags
 	db 0 ; items
 	dw .MenuItems
 	dw PlaceMenuStrings
@@ -432,7 +441,7 @@ DebugRoomMenu_WarpTo:
 	dw wDebugRoomWarpGroup  ; value address
 	db 1                    ; min value (group 1 = OLIVINE)
 	db NUM_MAP_GROUPS       ; max value (group 26 = CHERRYGROVE)
-	db MAPGROUP_CERULEAN    ; initial value (group 7, for testing MACHINE_PART)
+	db MAPGROUP_NEW_BARK    ; initial value
 	dw .GroupString         ; label string
 	dw NULL                 ; value name function
 	db TRUE                 ; is hex value?
@@ -440,7 +449,7 @@ DebugRoomMenu_WarpTo:
 	dw wDebugRoomWarpMap    ; value address
 	db 1                    ; min value
 	db 91                   ; max value (largest group has 91 maps)
-	db MAP_CERULEAN_GYM     ; initial value (map 6 in group 7)
+	db MAP_NEW_BARK_TOWN    ; initial value
 	dw .MapString          ; label string
 	dw NULL                ; value name function
 	db TRUE                ; is hex value?
@@ -464,7 +473,15 @@ DebugRoom_DoWarp:
 	ldh [hMapEntryMethod], a
 	ld a, MAPSTATUS_ENTER
 	call LoadMapStatus
+	ld hl, .WarpQueuedText
+	call MenuTextbox
+	call DebugRoom_JoyWaitABSelect
+	call CloseWindow
 	ret
+
+.WarpQueuedText:
+	text "WARP QUEUED!"
+	done
 
 DebugRoomMenu_BattleSkip:
 	ld a, BANK(sSkipBattle)
