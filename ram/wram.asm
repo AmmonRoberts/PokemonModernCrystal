@@ -1285,6 +1285,10 @@ UNION
 wDebugRoomItemID::       db
 wDebugRoomItemQuantity:: db
 NEXTU
+; debug room warp values
+wDebugRoomWarpGroup:: db
+wDebugRoomWarpMap::   db
+NEXTU
 ; debug room new pokemon values
 wDebugRoomMon::    box_struct wDebugRoomMon
 wDebugRoomMonBox:: db

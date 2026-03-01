@@ -25,6 +25,10 @@ HiddenItemScript::
 	ld a, [wItemRandomizer]
 	and a
 	ret z
+	; Don't randomize MACHINE_PART - it's required for progression
+	ld a, [wHiddenItemID]
+	cp MACHINE_PART
+	ret z
 	; Randomizer enabled: pick a random item
 	ld a, NUM_RANDOMIZABLE_ITEMS
 	call RandomRange

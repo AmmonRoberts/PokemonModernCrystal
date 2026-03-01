@@ -197,8 +197,30 @@ HandleMapTimeAndJoypad:
 
 	call UpdateTime
 	call GetJoypad
+if DEF(_DEBUG)
+	call .MaybeDebugRoom
+endc
 	call TimeOfDayPals
 	ret
+
+if DEF(_DEBUG)
+.MaybeDebugRoom:
+	ldh a, [hJoyDown]
+	and PAD_SELECT | PAD_START
+	cp PAD_SELECT | PAD_START
+	ret nz
+	farcall _DebugRoom
+	; If a warp was queued, leave hMapEntryMethod and wMapStatus as-is
+	ldh a, [hMapEntryMethod]
+	and a
+	ret nz
+	; No warp - reload map visuals to fix display corruption from the debug menu
+	ld a, MAPSETUP_RELOADMAP
+	ldh [hMapEntryMethod], a
+	ld a, MAPSTATUS_ENTER
+	ld [wMapStatus], a
+	ret
+endc
 
 HandleMapObjects:
 	farcall HandleNPCStep
@@ -605,6 +627,12 @@ ObjectEventTypeArray:
 	; Check if item randomizer is enabled
 	ld a, [wItemRandomizer]
 	and a
+	jr z, .no_randomize
+	; Don't randomize key/story items
+	ld a, [wItemBallItemID]
+	cp HM_WATERFALL
+	jr z, .no_randomize
+	cp COIN_CASE
 	jr z, .no_randomize
 	; Randomize the item
 	ld a, NUM_RANDOMIZABLE_ITEMS

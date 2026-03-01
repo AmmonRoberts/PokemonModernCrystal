@@ -28,8 +28,10 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_RAM_FLAG_CLR ; 12
 	const DEBUGROOMMENUITEM_CHANGE_SEX   ; 13
 	const DEBUGROOMMENUITEM_BT_BUG_POKE  ; 14
+	const DEBUGROOMMENUITEM_ITEM_RANDO   ; 15
+	const DEBUGROOMMENUITEM_WARP_TO      ; 16
 
-_DebugRoom:
+_DebugRoom::
 	ldh a, [hJoyDown]
 	and PAD_SELECT | PAD_START
 	cp PAD_SELECT | PAD_START
@@ -50,6 +52,7 @@ _DebugRoom:
 	call DebugRoom_PrintTelDebug
 	call DebugRoom_PrintRAMFlag
 	call DebugRoom_PrintGender
+	call DebugRoom_PrintItemRando
 	ldh a, [hDebugRoomMenuPage]
 	ld [wWhichIndexSet], a
 	ld hl, .MenuHeader
@@ -108,6 +111,8 @@ _DebugRoom:
 	db "RAM FLAG CLR@"
 	db "CHANGE SEX@"
 	db "BT BUG POKE@"
+	db "ITEM RANDO@"
+	db "WARP TO@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -132,6 +137,8 @@ _DebugRoom:
 	dw DebugRoomMenu_RAMFlagClr
 	dw DebugRoomMenu_ChangeSex
 	dw DebugRoomMenu_BTBugPoke
+	dw DebugRoomMenu_ItemRando
+	dw DebugRoomMenu_WarpTo
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -161,12 +168,14 @@ _DebugRoom:
 	db -1
 
 	; DEBUGROOMMENU_PAGE_3
-	db 6
+	db 8
 	db DEBUGROOMMENUITEM_TEL_DEBUG
 	db DEBUGROOMMENUITEM_SUM_RECALC
 	db DEBUGROOMMENUITEM_RAM_FLAG_CLR
 	db DEBUGROOMMENUITEM_CHANGE_SEX
 	db DEBUGROOMMENUITEM_BT_BUG_POKE
+	db DEBUGROOMMENUITEM_ITEM_RANDO
+	db DEBUGROOMMENUITEM_WARP_TO
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -374,6 +383,87 @@ DebugRoomMenu_TimerReset:
 	ld hl, sRTCStatusFlags
 	set RTC_RESET_F, [hl]
 	call CloseSRAM
+	ret
+
+DebugRoomMenu_ItemRando:
+	ld a, [wItemRandomizer]
+	inc a
+	and 1
+	ld [wItemRandomizer], a
+	ret
+
+DebugRoom_PrintItemRando:
+	hlcoord 16, 9
+	ld de, .RandoString
+	call PlaceString
+	ld a, [wItemRandomizer]
+	hlcoord 16, 10
+	ld de, .OffString
+	or a
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.RandoString:
+	db "RNDO:@"
+.OffString:
+	db " OFF@"
+.OnString:
+	db "  ON@"
+
+DebugRoomMenu_WarpTo:
+	ld hl, .PagedValuesHeader
+	call DebugRoom_EditPagedValues
+	ret
+
+.PagedValuesHeader:
+	dw NULL ; A function
+	dw NULL ; Select function
+	dw DebugRoom_DoWarp ; Start function
+	dw NULL ; Auto function
+	db 1 ; # pages
+	dw .Page1Values
+
+.Page1Values:
+	db 2
+	; paged_value wDebugRoomWarpGroup, 0, NUM_MAP_GROUPS - 1, GROUP_NEW_BARK_TOWN, .GroupString, NULL, TRUE
+	dw wDebugRoomWarpGroup  ; value address
+	db 1                    ; min value (group 1 = OLIVINE)
+	db NUM_MAP_GROUPS       ; max value (group 26 = CHERRYGROVE)
+	db MAPGROUP_CERULEAN    ; initial value (group 7, for testing MACHINE_PART)
+	dw .GroupString         ; label string
+	dw NULL                 ; value name function
+	db TRUE                 ; is hex value?
+	; MAP paged value
+	dw wDebugRoomWarpMap    ; value address
+	db 1                    ; min value
+	db 91                   ; max value (largest group has 91 maps)
+	db MAP_CERULEAN_GYM     ; initial value (map 6 in group 7)
+	dw .MapString          ; label string
+	dw NULL                ; value name function
+	db TRUE                ; is hex value?
+
+.GroupString:
+	db "GROUP@"
+.MapString:
+	db "MAP  @"
+
+DebugRoom_DoWarp:
+	; Set up a door warp to the selected map group and map number
+	ld a, [wDebugRoomWarpGroup]
+	ld [wNextMapGroup], a
+	ld a, [wDebugRoomWarpMap]
+	ld [wNextMapNumber], a
+	ld a, 1 ; warp 1 = first warp exit in the destination map
+	ld [wNextWarp], a
+	ld a, SPAWN_N_A ; prevent EnterMapSpawnPoint from overriding the destination
+	ld [wDefaultSpawnpoint], a
+	ld a, MAPSETUP_DOOR
+	ldh [hMapEntryMethod], a
+	ld a, MAPSTATUS_ENTER
+	call LoadMapStatus
 	ret
 
 DebugRoomMenu_BattleSkip:
