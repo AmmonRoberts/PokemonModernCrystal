@@ -1,5 +1,6 @@
 	object_const_def
 	const CIANWOODPHARMACY_PHARMACIST
+	const CIANWOOD_SELF_TRADE_GUY
 
 CianwoodPharmacy_MapScripts:
 	def_scene_scripts
@@ -32,6 +33,14 @@ CianwoodPharmacist:
 
 .Mart:
 	pokemart MARTTYPE_PHARMACY, MART_CIANWOOD
+	closetext
+	end
+
+CianwoodSelfTradeGuy:
+	faceplayer
+	opentext
+	special SelfTrade
+	waitbutton
 	closetext
 	end
 
@@ -85,3 +94,4 @@ CianwoodPharmacy_MapEvents:
 
 	def_object_events
 	object_event  2,  3, SPRITE_PHARMACIST, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, PAL_NPC_RED, OBJECTTYPE_SCRIPT, 0, CianwoodPharmacist, -1
+    object_event  5,  4, SPRITE_UNUSED_GUY, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, PAL_NPC_BLUE, OBJECTTYPE_SCRIPT, 0, CianwoodSelfTradeGuy, -1

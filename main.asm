@@ -487,6 +487,7 @@ SECTION "bank3F", ROMX
 
 INCLUDE "engine/tilesets/tileset_anims.asm"
 INCLUDE "engine/events/npc_trade.asm"
+INCLUDE "engine/events/self_trade.asm"
 INCLUDE "engine/events/mom_phone.asm"
 
 
