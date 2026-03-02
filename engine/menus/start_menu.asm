@@ -519,7 +519,18 @@ StartMenu_Pokemon:
 	farcall PartyMenuSelect
 	jr c, .return ; if cancelled or pressed B
 
+; Check if SELECT was pressed for quick switch
+	ld a, [wSwitchMon]
+	and a
+	jr nz, .select_switch
+
 	call PokemonActionSubmenu
+	jr .handle_action
+
+.select_switch
+	call SwitchPartyMons
+
+.handle_action
 	cp 3
 	jr z, .menu
 	cp 0
