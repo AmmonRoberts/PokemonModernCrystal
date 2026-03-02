@@ -66,15 +66,20 @@ _TitleScreen:
 	ld bc, TILEMAP_WIDTH
 	ld a, 5
 	call ByteFill
-; lines 8-9
+; lines 8-10
 	hlbgcoord 0, 8
-	ld bc, 2 * TILEMAP_WIDTH
+	ld bc, 3 * TILEMAP_WIDTH
 	ld a, 6
 	call ByteFill
 
-; 'CRYSTAL VERSION'
+; 'MODERN CRYSTAL VERSION' row 1 (tiles 5-15); logo art at 0-4 keeps palette 6
 	hlbgcoord 5, 9
-	ld bc, 11 ; length of version text
+	ld bc, 11
+	ld a, 1
+	call ByteFill
+; 'MODERN CRYSTAL VERSION' row 2 (tiles 7-12 = VERSION text only); logo art at 0-5 keeps palette 6
+	hlbgcoord 7, 10
+	ld bc, 6
 	ld a, 1
 	call ByteFill
 
@@ -106,7 +111,7 @@ _TitleScreen:
 
 ; Draw Pokemon logo
 	hlcoord 0, 3
-	lb bc, 7, 20
+	lb bc, 8, 20
 	ld d, $80
 	ld e, 20
 	call DrawTitleGraphic
@@ -114,7 +119,7 @@ _TitleScreen:
 ; Draw copyright text
 	hlbgcoord 3, 0, vBGMap1
 	lb bc, 1, 13
-	ld d, $c
+	ld d, $20
 	ld e, 16
 	call DrawTitleGraphic
 
