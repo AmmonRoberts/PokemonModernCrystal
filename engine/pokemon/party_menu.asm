@@ -633,7 +633,7 @@ InitPartyMenuWithCancel:
 
 .done
 	ld [wMenuCursorY], a
-	ld a, PAD_A | PAD_B
+	ld a, PAD_A | PAD_B | PAD_SELECT
 	ld [wMenuJoypadFilter], a
 	ret
 
@@ -685,6 +685,12 @@ PartyMenuSelect:
 	dec a
 	ld [wCurPartyMon], a
 	ld c, a
+; Check if SELECT was pressed for quick switch
+	bit B_PAD_SELECT, b
+	jr z, .not_select
+	inc a
+	ld [wSwitchMon], a ; store 1-indexed slot for quick switch
+.not_select
 	ld b, 0
 	ld hl, wPartySpecies
 	add hl, bc
