@@ -7,6 +7,9 @@ InitCrystalData:
 	ld [wWildEncounterType], a
 	ld [wStarterRandomization], a
 	ld [wTMMode], a
+	ld a, 2 ; default EXP multiplier = 100%
+	ld [wExpMultiplier], a
+	xor a
 	ld [wRandomStarter1], a
 	ld [wRandomStarter2], a
 	ld [wRandomStarter3], a
