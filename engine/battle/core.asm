@@ -4620,6 +4620,12 @@ DrawPlayerHUD:
 	ld b, a
 	call FillInExpBar
 	pop de
+; Place shiny icon if player mon is shiny
+	ld bc, wTempMonDVs
+	farcall CheckShininess
+	ret nc
+	hlcoord 18, 8
+	ld [hl], $5e
 	ret
 
 UpdatePlayerHPPal:
@@ -4853,6 +4859,12 @@ DrawEnemyHUD:
 	hlcoord 2, 2
 	ld b, 0
 	call DrawBattleHPBar
+; Place shiny icon if enemy mon is shiny
+	ld bc, wTempMonDVs
+	farcall CheckShininess
+	ret nc
+	hlcoord 10, 1
+	ld [hl], $5e
 	ret
 
 UpdateEnemyHPPal:
@@ -6965,11 +6977,19 @@ BoostStat:
 
 _LoadBattleFontsHPBar:
 	callfar LoadBattleFontsHPBar
-	ret
+; Load shiny sparkle tile for battle HUD display
+	ld de, StatsScreenPageTilesGFX + 14 tiles
+	ld hl, vTiles2 tile $5e
+	lb bc, BANK(StatsScreenPageTilesGFX), 1
+	jp Get2bppViaHDMA
 
 _LoadHPBar:
 	callfar LoadHPBar
-	ret
+; Load shiny sparkle tile for battle HUD display
+	ld de, StatsScreenPageTilesGFX + 14 tiles
+	ld hl, vTiles2 tile $5e
+	lb bc, BANK(StatsScreenPageTilesGFX), 1
+	jp Get2bppViaHDMA
 
 LoadHPExpBarGFX: ; unreferenced
 	ld de, EnemyHPBarBorderGFX
