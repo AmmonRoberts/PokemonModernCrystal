@@ -7240,6 +7240,8 @@ GiveExperiencePoints:
 	ld a, [hl]
 	cp LUCKY_EGG
 	call z, BoostExp
+; Apply EXP multiplier option
+	call ApplyExpMultiplier
 	ldh a, [hQuotient + 3]
 	ld [wStringBuffer2 + 1], a
 	ldh a, [hQuotient + 2]
@@ -7540,6 +7542,95 @@ BoostExp:
 	ldh a, [hProduct + 2]
 	adc b
 	ldh [hProduct + 2], a
+	pop bc
+	ret
+
+ApplyExpMultiplier:
+; Apply the EXP multiplier option to the experience value in hProduct+2/+3.
+; wExpMultiplier: 0=50%, 1=75%, 2=100%, 3=125%, 4=150%
+	ld a, [wExpMultiplier]
+	cp 2
+	ret z ; 100% - no change
+	push bc
+	and a
+	jr z, .half           ; 0 = 50%
+	cp 1
+	jr z, .three_quarter  ; 1 = 75%
+	cp 3
+	jr z, .five_quarter   ; 3 = 125%
+	; 4 = 150%
+.one_and_half:
+	; value = value + value / 2
+	ldh a, [hProduct + 2]
+	ld b, a
+	ldh a, [hProduct + 3]
+	ld c, a
+	srl b
+	rr c
+	ldh a, [hProduct + 3]
+	add c
+	ldh [hProduct + 3], a
+	ldh a, [hProduct + 2]
+	adc b
+	ldh [hProduct + 2], a
+	pop bc
+	ret
+
+.five_quarter:
+	; value = value + value / 4
+	ldh a, [hProduct + 2]
+	ld b, a
+	ldh a, [hProduct + 3]
+	ld c, a
+	srl b
+	rr c
+	srl b
+	rr c
+	ldh a, [hProduct + 3]
+	add c
+	ldh [hProduct + 3], a
+	ldh a, [hProduct + 2]
+	adc b
+	ldh [hProduct + 2], a
+	pop bc
+	ret
+
+.three_quarter:
+	; value = value - value / 4
+	ldh a, [hProduct + 2]
+	ld b, a
+	ldh a, [hProduct + 3]
+	ld c, a
+	srl b
+	rr c
+	srl b
+	rr c
+	ldh a, [hProduct + 3]
+	sub c
+	ldh [hProduct + 3], a
+	ldh a, [hProduct + 2]
+	sbc b
+	ldh [hProduct + 2], a
+	pop bc
+	ret
+
+.half:
+	; value = value / 2
+	ldh a, [hProduct + 2]
+	srl a
+	ldh [hProduct + 2], a
+	ldh a, [hProduct + 3]
+	rra
+	ldh [hProduct + 3], a
+	; Ensure at least 1 EXP
+	or a
+	jr nz, .half_done
+	ldh a, [hProduct + 2]
+	or a
+	jr nz, .half_done
+	ld a, 1
+	ldh [hProduct + 3], a
+.half_done:
 	pop bc
 	ret
 

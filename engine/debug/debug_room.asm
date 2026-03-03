@@ -3,6 +3,7 @@
 	const DEBUGROOMMENU_PAGE_1 ; 0
 	const DEBUGROOMMENU_PAGE_2 ; 1
 	const DEBUGROOMMENU_PAGE_3 ; 2
+	const DEBUGROOMMENU_PAGE_4 ; 3
 DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 
 	; _DebugRoom.Strings and _DebugRoom.Jumptable indexes
@@ -30,6 +31,7 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_BT_BUG_POKE  ; 14
 	const DEBUGROOMMENUITEM_ITEM_RANDO   ; 15
 	const DEBUGROOMMENUITEM_WARP_TO      ; 16
+	const DEBUGROOMMENUITEM_EXP_MULT     ; 17
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -51,7 +53,12 @@ _DebugRoom::
 	cp DEBUGROOMMENU_PAGE_1
 	jr z, .page1_status
 	cp DEBUGROOMMENU_PAGE_3
+	jr z, .page3_status
+	cp DEBUGROOMMENU_PAGE_4
 	jr nz, .status_done
+.page4_status
+	call DebugRoom_PrintExpMult
+	jr .status_done
 .page3_status
 	call DebugRoom_PrintTelDebug
 	call DebugRoom_PrintRAMFlag
@@ -122,6 +129,7 @@ _DebugRoom::
 	db "BT BUG POKE@"
 	db "ITEM RANDO@"
 	db "WARP TO@"
+	db "EXP MULT@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -148,6 +156,7 @@ _DebugRoom::
 	dw DebugRoomMenu_BTBugPoke
 	dw DebugRoomMenu_ItemRando
 	dw DebugRoomMenu_WarpTo
+	dw DebugRoomMenu_ExpMult
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -185,6 +194,12 @@ _DebugRoom::
 	db DEBUGROOMMENUITEM_BT_BUG_POKE
 	db DEBUGROOMMENUITEM_ITEM_RANDO
 	db DEBUGROOMMENUITEM_WARP_TO
+	db DEBUGROOMMENUITEM_NEXT
+	db -1
+
+	; DEBUGROOMMENU_PAGE_4
+	db 2
+	db DEBUGROOMMENUITEM_EXP_MULT
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -421,6 +436,47 @@ DebugRoom_PrintItemRando:
 	db " OFF@"
 .OnString:
 	db "  ON@"
+
+DebugRoomMenu_ExpMult:
+	ld a, [wExpMultiplier]
+	inc a
+	cp 5
+	jr c, .ok
+	xor a
+.ok
+	ld [wExpMultiplier], a
+	ret
+
+DebugRoom_PrintExpMult:
+	hlcoord 16, 0
+	ld de, .ExpLabel
+	call PlaceString
+	ld a, [wExpMultiplier]
+	ld e, a
+	ld d, 0
+	ld hl, .ExpStrings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 16, 1
+	call PlaceString
+	ret
+
+.ExpLabel:
+	db "EXP:@"
+.ExpStrings:
+	dw .str_050
+	dw .str_075
+	dw .str_100
+	dw .str_125
+	dw .str_150
+.str_050: db "0.50@"
+.str_075: db "0.75@"
+.str_100: db "1.00@"
+.str_125: db "1.25@"
+.str_150: db "1.50@"
 
 DebugRoomMenu_WarpTo:
 	ld hl, .PagedValuesHeader

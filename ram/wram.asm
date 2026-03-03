@@ -2866,7 +2866,7 @@ wBugContestSecsRemaining:: db
 
 wMapStatusEnd::
 
-	ds 2
+	ds 1
 
 wCrystalData::
 wPlayerGender::
@@ -2905,6 +2905,13 @@ wBerryTreeRandomizer::
 wItemRandomizer::
 ; 0 = Standard item balls
 ; 1 = Randomized item balls
+	db
+wExpMultiplier::
+; 0 = 50% EXP
+; 1 = 75% EXP
+; 2 = 100% EXP (default)
+; 3 = 125% EXP
+; 4 = 150% EXP
 	db
 ; The three randomized starter species (if randomization is enabled)
 wRandomStarter1:: db
