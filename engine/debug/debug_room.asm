@@ -32,6 +32,7 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_ITEM_RANDO   ; 15
 	const DEBUGROOMMENUITEM_WARP_TO      ; 16
 	const DEBUGROOMMENUITEM_EXP_MULT     ; 17
+	const DEBUGROOMMENUITEM_PERMAFAINT   ; 18
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -58,6 +59,7 @@ _DebugRoom::
 	jr nz, .status_done
 .page4_status
 	call DebugRoom_PrintExpMult
+	call DebugRoom_PrintPermafaint
 	jr .status_done
 .page3_status
 	call DebugRoom_PrintTelDebug
@@ -130,6 +132,7 @@ _DebugRoom::
 	db "ITEM RANDO@"
 	db "WARP TO@"
 	db "EXP MULT@"
+	db "PERMAFAINT@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -157,6 +160,7 @@ _DebugRoom::
 	dw DebugRoomMenu_ItemRando
 	dw DebugRoomMenu_WarpTo
 	dw DebugRoomMenu_ExpMult
+	dw DebugRoomMenu_Permafaint
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -198,8 +202,9 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_4
-	db 2
+	db 3
 	db DEBUGROOMMENUITEM_EXP_MULT
+	db DEBUGROOMMENUITEM_PERMAFAINT
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -446,6 +451,31 @@ DebugRoomMenu_ExpMult:
 .ok
 	ld [wExpMultiplier], a
 	ret
+
+DebugRoomMenu_Permafaint:
+	ld a, [wPermafaint]
+	inc a
+	and 1
+	ld [wPermafaint], a
+	ret
+
+DebugRoom_PrintPermafaint:
+	hlcoord 16, 3
+	ld de, .Label
+	call PlaceString
+	ld a, [wPermafaint]
+	hlcoord 16, 4
+	ld de, .OffString
+	or a
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "PRMA:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
 
 DebugRoom_PrintExpMult:
 	hlcoord 16, 0
