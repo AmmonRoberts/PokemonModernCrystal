@@ -11,6 +11,7 @@ Script_Whiteout:
 	waitbutton
 	special FadeOutToWhite
 	pause 40
+	callasm CheckPermafaintGameOver
 	special HealParty
 	checkflag ENGINE_BUG_CONTEST_TIMER
 	iftrue .bug_contest
@@ -35,6 +36,14 @@ OverworldBGMap:
 	call HideSprites
 	call RotateThreePalettesLeft
 	ret
+
+CheckPermafaintGameOver:
+; If bit 1 of wPermafaint is set, the save was just wiped due to a party wipe.
+; Soft-reset the game instead of healing and warping the player.
+	ld a, [wPermafaint]
+	bit 1, a
+	ret z        ; not a game-over wipe — return normally to the script
+	jp Reset     ; screen is already white; reset to title
 
 BattleBGMap:
 	ld b, SCGB_BATTLE_GRAYSCALE

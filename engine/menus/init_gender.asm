@@ -13,6 +13,7 @@ InitCrystalData:
 	ld [wRandomStarter1], a
 	ld [wRandomStarter2], a
 	ld [wRandomStarter3], a
+	ld [wPermafaint], a
 	ld [wPlayerPostalCode], a
 	ld [wPlayerPostalCode+1], a
 	ld [wPlayerPostalCode+2], a

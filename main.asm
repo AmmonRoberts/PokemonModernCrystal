@@ -183,6 +183,7 @@ SECTION "Crystal Features 1", ROMX
 
 INCLUDE "engine/menus/init_gender.asm"
 INCLUDE "engine/menus/newgame_options.asm"
+INCLUDE "engine/battle/permafaint.asm"
 INCLUDE "engine/items/pack_kris.asm"
 INCLUDE "engine/events/move_tutor.asm"
 INCLUDE "engine/gfx/crystal_layouts.asm"

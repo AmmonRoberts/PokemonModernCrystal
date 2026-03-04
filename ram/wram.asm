@@ -2866,8 +2866,6 @@ wBugContestSecsRemaining:: db
 
 wMapStatusEnd::
 
-	ds 1
-
 wCrystalData::
 wPlayerGender::
 ; bit 0:
@@ -2921,6 +2919,11 @@ wRandomStarter3:: db
 wPlayerAge:: ds 1
 wPlayerPrefecture:: ds 1
 wPlayerPostalCode:: ds 4
+wPermafaint::
+; 0 = Standard (fainted Pokemon can be revived)
+; 1 = Permafaint (fainted Pokemon are immediately released)
+; Placed last so old saves always read 0 (off) here rather than aliasing wPlayerAge
+	db
 wCrystalDataEnd::
 
 wCrystalFlags::
