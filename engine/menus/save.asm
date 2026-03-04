@@ -869,7 +869,15 @@ _LoadData:
 	ld a, [sCrystalFlags + 1]
 	ld [hli], a
 
-	jp CloseSRAM
+	call CloseSRAM
+	; Sanitize wPermafaint: only 0 (off) and 1 (on) are valid.
+	; Any other value (SRAM garbage from old saves) is clamped to 0 (off).
+	ld a, [wPermafaint]
+	cp 2
+	ret c
+	xor a
+	ld [wPermafaint], a
+	ret
 
 GetBoxAddress:
 	ld a, [wCurBox]
