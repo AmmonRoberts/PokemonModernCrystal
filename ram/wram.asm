@@ -1295,6 +1295,10 @@ wDebugRoomMonBox:: db
 NEXTU
 ; debug room GB ID values
 wDebugRoomGBID:: dw
+NEXTU
+; debug room badge edit values
+wDebugRoomBadges::            ds NUM_BADGES
+wDebugRoomBadgesInitialized:: db
 ENDU
 
 endc

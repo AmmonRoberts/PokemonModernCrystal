@@ -33,6 +33,7 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_WARP_TO      ; 16
 	const DEBUGROOMMENUITEM_EXP_MULT     ; 17
 	const DEBUGROOMMENUITEM_PERMAFAINT   ; 18
+	const DEBUGROOMMENUITEM_BADGE_EDIT   ; 19
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -133,6 +134,7 @@ _DebugRoom::
 	db "WARP TO@"
 	db "EXP MULT@"
 	db "PERMAFAINT@"
+	db "BADGE EDIT@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -161,6 +163,7 @@ _DebugRoom::
 	dw DebugRoomMenu_WarpTo
 	dw DebugRoomMenu_ExpMult
 	dw DebugRoomMenu_Permafaint
+	dw DebugRoomMenu_BadgeEdit
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -202,9 +205,10 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_4
-	db 3
+	db 4
 	db DEBUGROOMMENUITEM_EXP_MULT
 	db DEBUGROOMMENUITEM_PERMAFAINT
+	db DEBUGROOMMENUITEM_BADGE_EDIT
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -1908,6 +1912,144 @@ DebugRoomMenu_BTBugPoke:
 	text "It'", "s bug #MON!"
 	next "No.    Clear flag?"
 	done
+
+DebugRoomMenu_BadgeEdit:
+	xor a
+	ld [wDebugRoomBadgesInitialized], a
+	ld hl, .PagedValuesHeader
+	call DebugRoom_EditPagedValues
+	ret
+
+.PagedValuesHeader:
+	dw NULL                      ; A function
+	dw NULL                      ; Select function
+	dw DebugRoom_SaveBadges      ; Start function
+	dw DebugRoom_InitBadgesOnce  ; Auto function
+	db 2                         ; # pages
+	dw DebugRoomMenu_BadgeEdit_Page1Values
+	dw DebugRoomMenu_BadgeEdit_Page2Values
+
+DebugRoom_InitBadgesOnce:
+; Load current badge state into scratch bytes on the first frame.
+	ld a, [wDebugRoomBadgesInitialized]
+	or a
+	ret nz
+	ld a, $ff
+	ld [wDebugRoomBadgesInitialized], a
+	; Unpack Johto badges (bit 0 = ZEPHYR ... bit 7 = RISING)
+	ld a, [wJohtoBadges]
+	ld hl, wDebugRoomBadges
+	ld c, NUM_JOHTO_BADGES
+.unpack_johto
+	ld b, a
+	and 1
+	ld [hli], a
+	ld a, b
+	rrca
+	dec c
+	jr nz, .unpack_johto
+	; Unpack Kanto badges (bit 0 = BOULDER ... bit 7 = EARTH)
+	ld a, [wKantoBadges]
+	ld c, NUM_KANTO_BADGES
+.unpack_kanto
+	ld b, a
+	and 1
+	ld [hli], a
+	ld a, b
+	rrca
+	dec c
+	jr nz, .unpack_kanto
+	; Redraw the page with the loaded values
+	ld a, [wDebugRoomCurPage]
+	call DebugRoom_PrintPage
+	ld a, '▶'
+	call DebugRoom_ShowHideCursor
+	ret
+
+DebugRoom_SaveBadges:
+	call YesNoBox
+	ret c
+	; Pack Johto badge scratch bytes back (read RISING..ZEPHYR, shift into byte)
+	ld hl, wDebugRoomBadges + NUM_JOHTO_BADGES - 1
+	xor a
+	ld c, NUM_JOHTO_BADGES
+.pack_johto
+	ld b, a
+	ld a, [hld]
+	rra
+	ld a, b
+	rla
+	dec c
+	jr nz, .pack_johto
+	ld d, a ; d = packed Johto badges
+	; Pack Kanto badge scratch bytes back (read EARTH..BOULDER, shift into byte)
+	ld hl, wDebugRoomBadges + NUM_JOHTO_BADGES + NUM_KANTO_BADGES - 1
+	xor a
+	ld c, NUM_KANTO_BADGES
+.pack_kanto
+	ld b, a
+	ld a, [hld]
+	rra
+	ld a, b
+	rla
+	dec c
+	jr nz, .pack_kanto
+	ld e, a ; e = packed Kanto badges
+	; Write to WRAM
+	ld a, d
+	ld [wJohtoBadges], a
+	ld a, e
+	ld [wKantoBadges], a
+	; Write to SRAM
+	ld a, BANK(sPlayerData)
+	call OpenSRAM
+	ld a, d
+	ld [sPlayerData + (wJohtoBadges - wPlayerData)], a
+	ld a, e
+	ld [sPlayerData + (wKantoBadges - wPlayerData)], a
+	call CloseSRAM
+	call DebugRoom_SaveChecksum
+	ret
+
+DebugRoomMenu_BadgeEdit_Page1Values:
+	db 8
+	paged_value wDebugRoomBadges + ZEPHYRBADGE,  0, 1, 0, .ZephyrString,  NULL, FALSE
+	paged_value wDebugRoomBadges + HIVEBADGE,    0, 1, 0, .HiveString,    NULL, FALSE
+	paged_value wDebugRoomBadges + PLAINBADGE,   0, 1, 0, .PlainString,   NULL, FALSE
+	paged_value wDebugRoomBadges + FOGBADGE,     0, 1, 0, .FogString,     NULL, FALSE
+	paged_value wDebugRoomBadges + MINERALBADGE, 0, 1, 0, .MineralString, NULL, FALSE
+	paged_value wDebugRoomBadges + STORMBADGE,   0, 1, 0, .StormString,   NULL, FALSE
+	paged_value wDebugRoomBadges + GLACIERBADGE, 0, 1, 0, .GlacierString, NULL, FALSE
+	paged_value wDebugRoomBadges + RISINGBADGE,  0, 1, 0, .RisingString,  NULL, FALSE
+
+.ZephyrString:  db "ZEPHYR@"
+.HiveString:    db "HIVE@"
+.PlainString:   db "PLAIN@"
+.FogString:     db "FOG@"
+.MineralString: db "MINERAL@"
+.StormString:   db "STORM@"
+.GlacierString: db "GLACIER@"
+.RisingString:  db "RISING@"
+
+DebugRoomMenu_BadgeEdit_Page2Values:
+	db 8
+	paged_value wDebugRoomBadges + NUM_JOHTO_BADGES + BOULDERBADGE,  0, 1, 0, .BoulderString,  NULL, FALSE
+	paged_value wDebugRoomBadges + NUM_JOHTO_BADGES + CASCADEBADGE,  0, 1, 0, .CascadeString,  NULL, FALSE
+	paged_value wDebugRoomBadges + NUM_JOHTO_BADGES + THUNDERBADGE,  0, 1, 0, .ThunderString,  NULL, FALSE
+	paged_value wDebugRoomBadges + NUM_JOHTO_BADGES + RAINBOWBADGE,  0, 1, 0, .RainbowString,  NULL, FALSE
+	paged_value wDebugRoomBadges + NUM_JOHTO_BADGES + SOULBADGE,     0, 1, 0, .SoulString,     NULL, FALSE
+	paged_value wDebugRoomBadges + NUM_JOHTO_BADGES + MARSHBADGE,    0, 1, 0, .MarshString,    NULL, FALSE
+	paged_value wDebugRoomBadges + NUM_JOHTO_BADGES + VOLCANOBADGE,  0, 1, 0, .VolcanoString,  NULL, FALSE
+	paged_value wDebugRoomBadges + NUM_JOHTO_BADGES + EARTHBADGE,    0, 1, 0, .EarthString,    NULL, FALSE
+
+.BoulderString: db "BOULDER@"
+.CascadeString: db "CASCADE@"
+.ThunderString: db "THUNDER@"
+.RainbowString: db "RAINBOW@"
+.SoulString:    db "SOUL@"
+.MarshString:   db "MARSH@"
+.VolcanoString: db "VOLCANO@"
+.EarthString:   db "EARTH@"
 
 PrintHexNumber:
 ; Print the c-byte value from de to hl as hexadecimal digits.
