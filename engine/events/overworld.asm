@@ -1471,6 +1471,19 @@ FishFunction:
 	ld a, d
 	and a
 	jr z, .nonibble
+	; Check if wild encounters should be randomized
+	ld a, [wWildEncounterType]
+	and a
+	jr z, .notRandFish
+.randFishLoop
+	call Random
+	and a
+	jr z, .randFishLoop
+	cp NUM_POKEMON + 1
+	jr nc, .randFishLoop
+	ld d, a
+.notRandFish
+	ld a, d
 	ld [wTempWildMonSpecies], a
 	ld a, e
 	ld [wCurPartyLevel], a

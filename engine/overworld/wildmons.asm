@@ -326,10 +326,10 @@ ChooseWildEncounter:
 	; === RANDOMIZED ENCOUNTERS ===
 .randomized_encounters
 	call CheckOnWater
-	jr z, .randomized_grass_encounter
+	jr z, .randomized_water_encounter
 	inc hl
 	inc hl
-	jr .randomized_water_encounter
+	; fall through to .randomized_grass_encounter
 
 .randomized_grass_encounter
 	call Random
