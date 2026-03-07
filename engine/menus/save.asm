@@ -870,12 +870,11 @@ _LoadData:
 	ld [hli], a
 
 	call CloseSRAM
-	; Sanitize wPermafaint: only 0 (off) and 1 (on) are valid.
-	; Any other value (SRAM garbage from old saves) is clamped to 0 (off).
+	; Sanitize wPermafaint on load: preserve only the two user-setting bits (0=permadeath,
+	; 1=reset-on-wipe). Bit 2 is runtime-only (game-over pending) and is always cleared.
+	; Values from old saves that only used bits 0 are preserved correctly by this mask.
 	ld a, [wPermafaint]
-	cp 2
-	ret c
-	xor a
+	and $03
 	ld [wPermafaint], a
 	ret
 

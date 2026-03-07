@@ -15,9 +15,10 @@ DEF NUM_NEWGAMEOPTIONS_PAGE1 EQU const_value ; 6
 	const NEWGAMEOPT_TM_MODE          ; 1
 	const NEWGAMEOPT_POISON_SURVIVAL  ; 2
 	const NEWGAMEOPT_EXP_MULTIPLIER   ; 3
-	const NEWGAMEOPT_PERMAFAINT       ; 4
-	const NEWGAMEOPT_PAGE2_CONTINUE   ; 5
-DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 6
+	const NEWGAMEOPT_PERMADEATH       ; 4
+	const NEWGAMEOPT_RESET_ON_WIPE    ; 5
+	const NEWGAMEOPT_PAGE2_CONTINUE   ; 6
+DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 7
 
 DEF NUM_NEWGAMEOPTIONS EQU NUM_NEWGAMEOPTIONS_PAGE1 ; For compatibility
 
@@ -180,7 +181,9 @@ StringNewGameOptionsPage2:
 	db "     :<LF>"
 	db "EXP MULTIPLIER<LF>"
 	db "     :<LF>"
-	db "PERMAFAINT<LF>"
+	db "PERMADEATH<LF>"
+	db "     :<LF>"
+	db "RESET ON WIPE<LF>"
 	db "     :<LF>"
 	db "CONTINUE@"
 
@@ -207,7 +210,8 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_TMMode
 	dw NewGameOptions_PoisonSurvival
 	dw NewGameOptions_ExpMultiplier
-	dw NewGameOptions_Permafaint
+	dw NewGameOptions_Permadeath
+	dw NewGameOptions_ResetOnWipe
 	dw NewGameOptions_Continue
 NewGameOptions_BerryRandomization:
 	ld a, [wBerryTreeRandomizer]
@@ -487,7 +491,7 @@ NewGameOptions_ExpMultiplier:
 .str_125: db "x1.25@"
 .str_150: db "x1.50@"
 
-NewGameOptions_Permafaint:
+NewGameOptions_Permadeath:
 	ld a, [wPermafaint]
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
@@ -496,11 +500,11 @@ NewGameOptions_Permafaint:
 	jr z, .NonePressed
 .Toggle:
 	ld a, [wPermafaint]
-	xor 1
+	xor 1     ; toggle bit 0 (permadeath)
 	ld [wPermafaint], a
 .NonePressed:
 	ld a, [wPermafaint]
-	and a
+	bit 0, a
 	jr nz, .On
 	ld de, .Off
 	jr .Display
@@ -508,6 +512,33 @@ NewGameOptions_Permafaint:
 	ld de, .On_str
 .Display:
 	hlcoord 8, 12
+	call PlaceString
+	and a
+	ret
+.Off:    db "OFF     @"
+.On_str: db "ON      @"
+
+NewGameOptions_ResetOnWipe:
+	ld a, [wPermafaint]
+	ldh a, [hJoyPressed]
+	bit B_PAD_LEFT, a
+	jr nz, .Toggle
+	bit B_PAD_RIGHT, a
+	jr z, .NonePressed
+.Toggle:
+	ld a, [wPermafaint]
+	xor 2     ; toggle bit 1 (reset-on-wipe)
+	ld [wPermafaint], a
+.NonePressed:
+	ld a, [wPermafaint]
+	bit 1, a
+	jr nz, .On
+	ld de, .Off
+	jr .Display
+.On:
+	ld de, .On_str
+.Display:
+	hlcoord 8, 14
 	call PlaceString
 	and a
 	ret
@@ -595,6 +626,8 @@ NewGameOptions_UpdateCursorPosition:
 	hlcoord 1, 11
 	ld [hl], $7f ; space character
 	hlcoord 1, 13
+	ld [hl], $7f ; space character
+	hlcoord 1, 15
 	ld [hl], $7f ; space character
 	
 	; Place cursor at current position (starting at row 3 for first option)

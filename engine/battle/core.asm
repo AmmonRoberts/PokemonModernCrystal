@@ -2958,12 +2958,6 @@ LostBattle:
 	ld a, [wLinkMode]
 	and a
 	jr nz, .LostLinkBattle
-	; Permafaint: wipe the save file when a party wipe occurs (single-player only)
-	ld a, [wPermafaint]
-	and a
-	jr z, .skip_permafaint_wipe
-	farcall WipePermafaintSave
-.skip_permafaint_wipe:
 
 ; Grayscale
 	ld b, SCGB_BATTLE_GRAYSCALE
@@ -8492,7 +8486,7 @@ FillEnemyMovesFromMoveIndicesBuffer: ; unreferenced
 	ret
 
 ExitBattle:
-	farcall DoProcessPermafaintReleases
+	farcall HandlePermadeathAfterBattle
 	call .HandleEndOfBattle
 	call CleanUpBattleRAM
 	ret

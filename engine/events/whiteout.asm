@@ -9,6 +9,7 @@ OverworldWhiteoutScript::
 Script_Whiteout:
 	writetext .WhitedOutText
 	waitbutton
+	callasm ShowPermadeathWhiteoutMessage
 	special FadeOutToWhite
 	pause 40
 	callasm CheckPermafaintGameOver
@@ -29,6 +30,18 @@ Script_Whiteout:
 	text_far _WhitedOutText
 	text_end
 
+.PCWithdrawText:
+	text_far _PermadeathPCWithdrawText
+	text_end
+
+.NoMonsGameOverText:
+	text_far _PermadeathNoMonsGameOverText
+	text_end
+
+.WipeGameOverText:
+	text_far _PermadeathWipeGameOverText
+	text_end
+
 OverworldBGMap:
 	call ClearPalettes
 	call ClearScreen
@@ -37,11 +50,48 @@ OverworldBGMap:
 	call RotateThreePalettesLeft
 	ret
 
+ShowPermadeathWhiteoutMessage:
+; Called from Script_Whiteout after the "blacked out" text is dismissed.
+; Shows an informational or game-over message based on wPermafaint flags:
+;   bit 3 set → a Pokémon was retrieved from the PC into slot 0 of the party
+;   bit 2 set + bit 1 set → game over due to reset-on-wipe
+;   bit 2 set + bit 1 clear → game over: no Pokémon remain anywhere
+	ld a, [wPermafaint]
+	bit 3, a
+	jr z, .check_gameover
+	; Load the withdrawn mon's nickname fresh from party slot 0.
+	; It was just placed there by TryPermadeathPCWithdraw and is safe to read now.
+	res 3, a
+	ld [wPermafaint], a
+	xor a
+	ld hl, wPartyMonNicknames
+	call GetNickname
+	ld hl, Script_Whiteout.PCWithdrawText
+	call PrintText
+	call WaitPressAorB_BlinkCursor
+	ret
+.check_gameover:
+	bit 2, a
+	ret z           ; no game-over, nothing to show
+	bit 1, a
+	jr z, .no_mons
+	; Reset-on-wipe game over
+	ld hl, Script_Whiteout.WipeGameOverText
+	call PrintText
+	call WaitPressAorB_BlinkCursor
+	ret
+.no_mons:
+	; Permadeath: no Pokémon left anywhere
+	ld hl, Script_Whiteout.NoMonsGameOverText
+	call PrintText
+	call WaitPressAorB_BlinkCursor
+	ret
+
 CheckPermafaintGameOver:
-; If bit 1 of wPermafaint is set, the save was just wiped due to a party wipe.
+; If bit 2 of wPermafaint is set, the save was just wiped due to a party wipe.
 ; Soft-reset the game instead of healing and warping the player.
 	ld a, [wPermafaint]
-	bit 1, a
+	bit 2, a
 	ret z        ; not a game-over wipe — return normally to the script
 	jp Reset     ; screen is already white; reset to title
 

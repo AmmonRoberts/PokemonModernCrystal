@@ -33,7 +33,8 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_WARP_TO      ; 16
 	const DEBUGROOMMENUITEM_EXP_MULT     ; 17
 	const DEBUGROOMMENUITEM_PERMAFAINT   ; 18
-	const DEBUGROOMMENUITEM_BADGE_EDIT   ; 19
+	const DEBUGROOMMENUITEM_RESET_ON_WIPE ; 19
+	const DEBUGROOMMENUITEM_BADGE_EDIT   ; 1a
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -61,6 +62,7 @@ _DebugRoom::
 .page4_status
 	call DebugRoom_PrintExpMult
 	call DebugRoom_PrintPermafaint
+	call DebugRoom_PrintResetOnWipe
 	jr .status_done
 .page3_status
 	call DebugRoom_PrintTelDebug
@@ -134,6 +136,7 @@ _DebugRoom::
 	db "WARP TO@"
 	db "EXP MULT@"
 	db "PERMAFAINT@"
+	db "RESET WIPE@"
 	db "BADGE EDIT@"
 
 .Jumptable:
@@ -163,6 +166,7 @@ _DebugRoom::
 	dw DebugRoomMenu_WarpTo
 	dw DebugRoomMenu_ExpMult
 	dw DebugRoomMenu_Permafaint
+	dw DebugRoomMenu_ResetOnWipe
 	dw DebugRoomMenu_BadgeEdit
 
 .MenuItems:
@@ -205,9 +209,10 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_4
-	db 4
+	db 5
 	db DEBUGROOMMENUITEM_EXP_MULT
 	db DEBUGROOMMENUITEM_PERMAFAINT
+	db DEBUGROOMMENUITEM_RESET_ON_WIPE
 	db DEBUGROOMMENUITEM_BADGE_EDIT
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
@@ -458,8 +463,13 @@ DebugRoomMenu_ExpMult:
 
 DebugRoomMenu_Permafaint:
 	ld a, [wPermafaint]
-	inc a
-	and 1
+	xor 1   ; toggle bit 0 (permadeath)
+	ld [wPermafaint], a
+	ret
+
+DebugRoomMenu_ResetOnWipe:
+	ld a, [wPermafaint]
+	xor 2   ; toggle bit 1 (reset-on-wipe)
 	ld [wPermafaint], a
 	ret
 
@@ -470,7 +480,7 @@ DebugRoom_PrintPermafaint:
 	ld a, [wPermafaint]
 	hlcoord 16, 4
 	ld de, .OffString
-	or a
+	bit 0, a
 	jr z, .ok
 	ld de, .OnString
 .ok
@@ -478,6 +488,24 @@ DebugRoom_PrintPermafaint:
 	ret
 
 .Label:     db "PRMA:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
+
+DebugRoom_PrintResetOnWipe:
+	hlcoord 16, 5
+	ld de, .Label
+	call PlaceString
+	ld a, [wPermafaint]
+	hlcoord 16, 6
+	ld de, .OffString
+	bit 1, a
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "RWIP:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 

@@ -546,6 +546,26 @@ _WhitedOutText::
 	line "out!"
 	done
 
+_PermadeathPCWithdrawText::
+	text_ram wStringBuffer1
+	text_start
+	line "was retrieved!@"
+	text_end
+
+_PermadeathWipeGameOverText::
+	text "Your party was"
+	line "wiped out!"
+
+	para "GAME OVER"
+	done
+
+_PermadeathNoMonsGameOverText::
+	text "You have no"
+	line "#MON left!"
+
+	para "GAME OVER"
+	done
+
 _ItemfinderItemNearbyText::
 	text "Yes! ITEMFINDER"
 	line "indicates there's"

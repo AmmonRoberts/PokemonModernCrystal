@@ -2924,8 +2924,10 @@ wPlayerAge:: ds 1
 wPlayerPrefecture:: ds 1
 wPlayerPostalCode:: ds 4
 wPermafaint::
-; 0 = Standard (fainted Pokemon can be revived)
-; 1 = Permafaint (fainted Pokemon are immediately released)
+; 0 = Standard (fainted Pokemon can be revived, no save wipe)
+; bit 0 = Permadeath (fainted Pokemon are immediately released)
+; bit 1 = Reset on party wipe (party wipe wipes the save and resets the game)
+; bit 2 = Game-over reset pending (runtime only — set by WipePermafaintSave, cleared on load)
 ; Placed last so old saves always read 0 (off) here rather than aliasing wPlayerAge
 	db
 wCrystalDataEnd::
