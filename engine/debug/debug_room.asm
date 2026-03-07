@@ -117,7 +117,7 @@ _DebugRoom::
 	db "#DEX COMP@"
 	db "TIMER RESET@"
 	db "DECORATE ALL@"
-	db "ITEM GET!@"
+	db "PC ITEM GET!@"
 	db "RTC EDIT@"
 	db "NEXT@"
 	db "GB ID SET@"
@@ -1244,6 +1244,7 @@ DebugRoomMenu_ItemGet:
 DebugRoom_SaveItem:
 	call YesNoBox
 	ret c
+	; Update SRAM PC items
 	ld a, BANK(sPlayerData)
 	call OpenSRAM
 	ld hl, sPlayerData + (wPCItems - wPlayerData)
@@ -1268,6 +1269,27 @@ DebugRoom_SaveItem:
 	ld a, MAX_ITEM_STACK
 .max
 	ld [hl], a
+	call CloseSRAM
+	; Also update WRAM PC items
+	ld hl, wPCItems
+	ld a, [wDebugRoomItemID]
+	ld c, a
+.wram_find
+	ld a, [hl]
+	cp c
+	jr z, .wram_found
+	inc hl
+	inc hl
+	jr .wram_find
+.wram_found
+	inc hl
+	ld a, [wDebugRoomItemQuantity]
+	add [hl]
+	cp MAX_ITEM_STACK + 1
+	jr c, .wram_max
+	ld a, MAX_ITEM_STACK
+.wram_max
+	ld [hl], a
 	ld hl, .ItemNumberAddedText
 	jr .done
 
@@ -1282,13 +1304,31 @@ DebugRoom_SaveItem:
 	ld a, [wDebugRoomItemQuantity]
 	ld [hli], a
 	ld [hl], -1 ; terminator
+	call CloseSRAM
+	; Also update WRAM PC items
+	ld hl, wNumPCItems
+	inc [hl]
+	inc hl ; hl = wPCItems
+.wram_find_end
+	ld a, [hl]
+	cp -1
+	jr z, .wram_insert
+	inc hl
+	inc hl
+	jr .wram_find_end
+.wram_insert
+	ld a, [wDebugRoomItemID]
+	ld [hli], a
+	ld a, [wDebugRoomItemQuantity]
+	ld [hli], a
+	ld [hl], -1 ; terminator
 	ld hl, .CreatedNewItemText
 	jr .done
 
 .full
+	call CloseSRAM
 	ld hl, .StockFullText
 .done
-	call CloseSRAM
 	call MenuTextbox
 	call DebugRoom_JoyWaitABSelect
 	call CloseWindow
@@ -1296,15 +1336,15 @@ DebugRoom_SaveItem:
 	ret
 
 .ItemNumberAddedText:
-	text "Item number added!"
+	text "PC qty increased!"
 	done
 
 .CreatedNewItemText:
-	text "Created new item!"
+	text "Added to PC!"
 	done
 
 .StockFullText:
-	text "Stock full!!"
+	text "PC is full!!"
 	done
 
 DebugRoom_PrintItemName:
@@ -1322,7 +1362,7 @@ DebugRoom_PrintItemName:
 
 DebugRoomMenu_ItemGet_Page1Values:
 	db 2
-	paged_value wDebugRoomItemID,       1, NUM_POKEMON, MASTER_BALL, .ItemNameString, DebugRoom_PrintItemName, FALSE
+	paged_value wDebugRoomItemID,       1, NUM_ITEMS,   MASTER_BALL, .ItemNameString, DebugRoom_PrintItemName, FALSE
 	paged_value wDebugRoomItemQuantity, 1, 99,          1,           .NumberString,   NULL,                    FALSE
 
 .ItemNameString: db "ITEM NAME@"
@@ -1349,10 +1389,16 @@ DebugRoom_SavePokemon:
 	ret c
 	call DebugRoom_UpdateExpForLevel
 	ld a, [wDebugRoomMonBox]
-	dec a
+	dec a ; convert to 0-indexed
 	ld b, a
+	ld a, [wCurBox]
+	and $f
+	cp b
+	jr z, .active_box
+	; target is a numbered box - use DebugRoom_BoxAddresses
+	ld a, b
 	add a
-	add b
+	add b ; multiply by 3 for table_width 3
 	ld h, 0
 	ld l, a
 	ld de, DebugRoom_BoxAddresses
@@ -1362,6 +1408,13 @@ DebugRoom_SavePokemon:
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
+	jr .got_box_pointer
+.active_box
+	; target is the currently active box - use sBox directly
+	ld a, BANK(sBoxCount)
+	call OpenSRAM
+	ld hl, sBoxCount
+.got_box_pointer
 	ld a, [hl]
 	cp MONS_PER_BOX
 	jr nc, .full
@@ -1429,6 +1482,7 @@ DebugRoom_SavePokemon:
 	call MenuTextbox
 	call DebugRoom_JoyWaitABSelect
 	call CloseWindow
+	call DebugRoom_SaveChecksum
 	ret
 
 .full
