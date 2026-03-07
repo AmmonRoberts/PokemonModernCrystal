@@ -1,10 +1,11 @@
 	const_def 1
-	const PINK_PAGE  ; 1
-	const GREEN_PAGE ; 2
-	const BLUE_PAGE  ; 3
+	const PINK_PAGE   ; 1
+	const GREEN_PAGE  ; 2
+	const BLUE_PAGE   ; 3
+	const YELLOW_PAGE ; 4
 DEF NUM_STAT_PAGES EQU const_value - 1
 
-DEF STAT_PAGE_MASK EQU %00000011
+DEF STAT_PAGE_MASK EQU %00000111
 	const_def 4
 	const STATS_SCREEN_PLACE_FRONTPIC ; 4
 	const STATS_SCREEN_ANIMATE_MON    ; 5
@@ -321,7 +322,7 @@ StatsScreen_GetJoypad:
 StatsScreen_JoypadAction:
 	push af
 	ld a, [wStatsScreenFlags]
-	maskbits NUM_STAT_PAGES
+	and STAT_PAGE_MASK
 	ld c, a
 	pop af
 	bit B_PAD_B, a
@@ -379,11 +380,11 @@ StatsScreen_JoypadAction:
 
 .a_button
 	ld a, c
-	cp BLUE_PAGE ; last page
+	cp YELLOW_PAGE ; last page
 	jr z, .b_button
 .d_right
 	inc c
-	ld a, BLUE_PAGE ; last page
+	ld a, YELLOW_PAGE ; last page
 	cp c
 	jr nc, .set_page
 	ld c, PINK_PAGE ; first page
@@ -392,7 +393,7 @@ StatsScreen_JoypadAction:
 .d_left
 	dec c
 	jr nz, .set_page
-	ld c, BLUE_PAGE ; last page
+	ld c, YELLOW_PAGE ; last page
 	jr .set_page
 
 .done
@@ -548,7 +549,7 @@ StatsScreen_LoadGFX:
 
 .ClearBox:
 	ld a, [wStatsScreenFlags]
-	maskbits NUM_STAT_PAGES
+	and STAT_PAGE_MASK
 	ld c, a
 	call StatsScreen_LoadPageIndicators
 	hlcoord 0, 8
@@ -558,7 +559,7 @@ StatsScreen_LoadGFX:
 
 .LoadPals:
 	ld a, [wStatsScreenFlags]
-	maskbits NUM_STAT_PAGES
+	and STAT_PAGE_MASK
 	ld c, a
 	farcall LoadStatsScreenPals
 	call DelayFrame
@@ -568,7 +569,7 @@ StatsScreen_LoadGFX:
 
 .PageTilemap:
 	ld a, [wStatsScreenFlags]
-	maskbits NUM_STAT_PAGES
+	and STAT_PAGE_MASK
 	dec a
 	ld hl, .Jumptable
 	rst JumpTable
@@ -580,6 +581,7 @@ StatsScreen_LoadGFX:
 	dw LoadPinkPage
 	dw LoadGreenPage
 	dw LoadBluePage
+	dw LoadYellowPage
 	assert_table_length NUM_STAT_PAGES
 
 LoadPinkPage:
@@ -828,6 +830,131 @@ IDNoString:
 
 OTString:
 	db "OT/@"
+
+LoadYellowPage:
+; Shows hidden stats: DVs and friendship.
+	; Vertical divider at column 9
+	hlcoord 9, 8
+	ld de, SCREEN_WIDTH
+	ld b, 10
+	ld a, $31 ; vertical divider
+.vertical_divider
+	ld [hl], a
+	add hl, de
+	dec b
+	jr nz, .vertical_divider
+
+	; ----- Left side: DV labels and values -----
+	ld de, .ATKLabel
+	hlcoord 0, 8
+	call PlaceString
+	ld de, .DEFLabel
+	hlcoord 0, 10
+	call PlaceString
+	ld de, .SPDLabel
+	hlcoord 0, 12
+	call PlaceString
+	ld de, .SPCLabel
+	hlcoord 0, 14
+	call PlaceString
+	ld de, .HPLabel
+	hlcoord 0, 16
+	call PlaceString
+
+	; ATK DV = high nibble of wTempMonDVs+0
+	ld a, [wTempMonDVs]
+	swap a
+	and $f
+	ld [wTextDecimalByte], a
+	hlcoord 7, 8
+	lb bc, PRINTNUM_LEADINGZEROS | 1, 2
+	ld de, wTextDecimalByte
+	call PrintNum
+
+	; DEF DV = low nibble of wTempMonDVs+0
+	ld a, [wTempMonDVs]
+	and $f
+	ld [wTextDecimalByte], a
+	hlcoord 7, 10
+	lb bc, PRINTNUM_LEADINGZEROS | 1, 2
+	ld de, wTextDecimalByte
+	call PrintNum
+
+	; SPD DV = high nibble of wTempMonDVs+1
+	ld a, [wTempMonDVs + 1]
+	swap a
+	and $f
+	ld [wTextDecimalByte], a
+	hlcoord 7, 12
+	lb bc, PRINTNUM_LEADINGZEROS | 1, 2
+	ld de, wTextDecimalByte
+	call PrintNum
+
+	; SPC DV = low nibble of wTempMonDVs+1
+	ld a, [wTempMonDVs + 1]
+	and $f
+	ld [wTextDecimalByte], a
+	hlcoord 7, 14
+	lb bc, PRINTNUM_LEADINGZEROS | 1, 2
+	ld de, wTextDecimalByte
+	call PrintNum
+
+	; HP DV = (ATK&1)<<3 | (DEF&1)<<2 | (SPD&1)<<1 | (SPC&1)
+	ld a, [wTempMonDVs]
+	swap a
+	and 1         ; ATK bit0
+	ld b, a
+	sla b
+	sla b
+	sla b         ; b = ATK_b0 << 3
+	ld a, [wTempMonDVs]
+	and 1         ; DEF bit0
+	sla a
+	sla a         ; a = DEF_b0 << 2
+	or b
+	ld b, a
+	ld a, [wTempMonDVs + 1]
+	swap a
+	and 1         ; SPD bit0
+	sla a         ; a = SPD_b0 << 1
+	or b
+	ld b, a
+	ld a, [wTempMonDVs + 1]
+	and 1         ; SPC bit0
+	or b          ; a = HP DV
+	ld [wTextDecimalByte], a
+	hlcoord 7, 16
+	lb bc, PRINTNUM_LEADINGZEROS | 1, 2
+	ld de, wTextDecimalByte
+	call PrintNum
+
+	; ----- Right side: Friendship and Pokérus -----
+	ld de, .FriendLabel
+	hlcoord 10, 8
+	call PlaceString
+	hlcoord 14, 9
+	lb bc, PRINTNUM_LEADINGZEROS | 1, 3
+	ld de, wTempMonHappiness
+	call PrintNum
+
+	ld de, .PkrsLabel
+	hlcoord 10, 11
+	call PlaceString
+	ld a, [wTempMonPokerusStatus]
+	ld [wTextDecimalByte], a
+	hlcoord 14, 12
+	lb bc, PRINTNUM_LEADINGZEROS | 1, 3
+	ld de, wTextDecimalByte
+	call PrintNum
+	ret
+
+.ATKLabel: db "ATK@"
+.DEFLabel: db "DEF@"
+.SPDLabel: db "SPD@"
+.SPCLabel: db "SPC@"
+.HPLabel:  db " HP@"
+.FriendLabel: db "FRIEND@"
+.PkrsLabel:   db "#RUS@"
 
 StatsScreen_PlaceFrontpic:
 	ld hl, wTempMonDVs
@@ -1112,23 +1239,42 @@ StatsScreen_AnimateEgg:
 	ret
 
 StatsScreen_LoadPageIndicators:
-	hlcoord 13, 5
+	; Draw 4 small (inactive) squares at columns 11, 13, 15, 17 on row 5
+	hlcoord 11, 5
 	ld a, $36 ; first of 4 small square tiles
 	call .load_square
+	hlcoord 13, 5
+	ld a, $36
+	call .load_square
 	hlcoord 15, 5
-	ld a, $36 ; " " " "
+	ld a, $36
 	call .load_square
 	hlcoord 17, 5
-	ld a, $36 ; " " " "
+	ld a, $36
 	call .load_square
-	ld a, c
-	cp GREEN_PAGE
+	; Draw 1 large (active) square for the current page
 	ld a, $3a ; first of 4 large square tiles
-	hlcoord 13, 5 ; PINK_PAGE (< GREEN_PAGE)
-	jr c, .load_square
-	hlcoord 15, 5 ; GREEN_PAGE (= GREEN_PAGE)
-	jr z, .load_square
-	hlcoord 17, 5 ; BLUE_PAGE (> GREEN_PAGE)
+	ld d, a
+	ld a, c
+	cp YELLOW_PAGE
+	jr z, .yellow
+	cp BLUE_PAGE
+	jr z, .blue
+	cp GREEN_PAGE
+	jr z, .green
+	; PINK_PAGE
+	hlcoord 11, 5
+	jr .do_large
+.green
+	hlcoord 13, 5
+	jr .do_large
+.blue
+	hlcoord 15, 5
+	jr .do_large
+.yellow
+	hlcoord 17, 5
+.do_large
+	ld a, d
 .load_square
 	push bc
 	ld [hli], a

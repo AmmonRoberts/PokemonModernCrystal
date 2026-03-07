@@ -175,7 +175,7 @@ RandomPokemonNames:
 	db "SHEEV@@@@@@"
 	db "VERONICA@@@"
 	db "CHARMING@@@"
-	db "STERIOIDS@@"
+	db "STEROIDS@@@"
 	db "FRENCHHORN@"
 	db "STEPHEN@@@@"
 	db "HEINZ@@@@@@"

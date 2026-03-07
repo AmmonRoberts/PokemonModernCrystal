@@ -3,4 +3,5 @@
 ; green
 	RGB 21, 31, 14
 ; blue
-	RGB 17, 31, 31
+	RGB 17, 31, 31; yellow
+        RGB 31, 29,  5
