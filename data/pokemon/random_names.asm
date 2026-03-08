@@ -166,7 +166,7 @@ RandomPokemonNames:
 	db "ANNIE@@@@@@"
 	db "FLORIDA@@@@"
 	db "DELOREAN@@@"
-	db "TIGHTPANTS"
+	db "TIGHTPANTS@"
 	db "DUNCE@@@@@@"
 	db "DONATELLO@@"
 	db "FREDWARD@@@"
@@ -229,6 +229,16 @@ RandomPokemonNames:
 	db "COW@@@@@@@@"
 	db "FIREBALL@@@"
 	db "T-BONE@@@@@"
+	db "BUTTHEAD@@@"
+	db "BEAVIS@@@@@"
+	db "BORT@@@@@@@"
+	db "CHAD@@@@@@@"
+	db "LIVER@@@@@@"
+	db "MEAT@@@@@@@"
+	db "MEAT LOAF@@"
+	db "PEPPERONI@@"
+	db "GUS GUS@@@@"
+	db "lowercase@@"
 .End
 
 DEF NUM_RANDOM_NAMES EQU (.End - RandomPokemonNames) / MON_NAME_LENGTH
