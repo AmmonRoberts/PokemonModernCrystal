@@ -4,6 +4,7 @@
 	const DEBUGROOMMENU_PAGE_2 ; 1
 	const DEBUGROOMMENU_PAGE_3 ; 2
 	const DEBUGROOMMENU_PAGE_4 ; 3
+	const DEBUGROOMMENU_PAGE_5 ; 4
 DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 
 	; _DebugRoom.Strings and _DebugRoom.Jumptable indexes
@@ -36,6 +37,13 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_RESET_ON_WIPE ; 19
 	const DEBUGROOMMENUITEM_BADGE_EDIT   ; 1a
 	const DEBUGROOMMENUITEM_RARE_CANDY_MART ; 1b
+	const DEBUGROOMMENUITEM_WILD_RANDO   ; 1c
+	const DEBUGROOMMENUITEM_STRT_RANDO   ; 1d
+	const DEBUGROOMMENUITEM_TRNR_RANDO   ; 1e
+	const DEBUGROOMMENUITEM_BERY_RANDO   ; 1f
+	const DEBUGROOMMENUITEM_TM_FREE      ; 20
+	const DEBUGROOMMENUITEM_POIS_SVL     ; 21
+	const DEBUGROOMMENUITEM_AUTO_NICK    ; 22
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -59,7 +67,18 @@ _DebugRoom::
 	cp DEBUGROOMMENU_PAGE_3
 	jr z, .page3_status
 	cp DEBUGROOMMENU_PAGE_4
+	jr z, .page4_status
+	cp DEBUGROOMMENU_PAGE_5
 	jr nz, .status_done
+.page5_status
+	call DebugRoom_PrintWildRando
+	call DebugRoom_PrintStrtRando
+	call DebugRoom_PrintTrnrRando
+	call DebugRoom_PrintBeryRando
+	call DebugRoom_PrintTMFree
+	call DebugRoom_PrintPoisSvl
+	call DebugRoom_PrintAutoNick
+	jp .status_done
 .page4_status
 	call DebugRoom_PrintExpMult
 	call DebugRoom_PrintPermafaint
@@ -92,7 +111,7 @@ _DebugRoom::
 	ld a, [wMenuSelection]
 	ld hl, .Jumptable
 	rst JumpTable
-	jr .loop
+	jp .loop
 .done
 	pop af
 	ldh [hDebugRoomMenuPage], a
@@ -141,6 +160,13 @@ _DebugRoom::
 	db "RESET WIPE@"
 	db "BADGE EDIT@"
 	db "RARE CND@"
+	db "WILD RANDO@"
+	db "STRT RANDO@"
+	db "TRNR RANDO@"
+	db "BERY RANDO@"
+	db "TM FREE@"
+	db "POIS SVL@"
+	db "AUTO NICK@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -172,6 +198,13 @@ _DebugRoom::
 	dw DebugRoomMenu_ResetOnWipe
 	dw DebugRoomMenu_BadgeEdit
 	dw DebugRoomMenu_RareCandyMart
+	dw DebugRoomMenu_WildRando
+	dw DebugRoomMenu_StrtRando
+	dw DebugRoomMenu_TrnrRando
+	dw DebugRoomMenu_BeryRando
+	dw DebugRoomMenu_TMFree
+	dw DebugRoomMenu_PoisSvl
+	dw DebugRoomMenu_AutoNick
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -219,6 +252,18 @@ _DebugRoom::
 	db DEBUGROOMMENUITEM_RESET_ON_WIPE
 	db DEBUGROOMMENUITEM_BADGE_EDIT
 	db DEBUGROOMMENUITEM_RARE_CANDY_MART
+	db DEBUGROOMMENUITEM_NEXT
+	db -1
+
+	; DEBUGROOMMENU_PAGE_5
+	db 8
+	db DEBUGROOMMENUITEM_WILD_RANDO
+	db DEBUGROOMMENUITEM_STRT_RANDO
+	db DEBUGROOMMENUITEM_TRNR_RANDO
+	db DEBUGROOMMENUITEM_BERY_RANDO
+	db DEBUGROOMMENUITEM_TM_FREE
+	db DEBUGROOMMENUITEM_POIS_SVL
+	db DEBUGROOMMENUITEM_AUTO_NICK
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -455,6 +500,181 @@ DebugRoom_PrintItemRando:
 	db " OFF@"
 .OnString:
 	db "  ON@"
+
+DebugRoomMenu_WildRando:
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_WILD_ENCOUNTERS_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintWildRando:
+	hlcoord 16, 0
+	ld de, .Label
+	call PlaceString
+	ld a, [wRandoFlags]
+	bit RANDFLAG_WILD_ENCOUNTERS_F, a
+	hlcoord 16, 1
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "WILD:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
+
+DebugRoomMenu_StrtRando:
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_STARTER_RAND_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintStrtRando:
+	hlcoord 16, 2
+	ld de, .Label
+	call PlaceString
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
+	hlcoord 16, 3
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "STRT:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
+
+DebugRoomMenu_TrnrRando:
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_TRAINER_RAND_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintTrnrRando:
+	hlcoord 16, 4
+	ld de, .Label
+	call PlaceString
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TRAINER_RAND_F, a
+	hlcoord 16, 5
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "TRNR:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
+
+DebugRoomMenu_BeryRando:
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_BERRY_RAND_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintBeryRando:
+	hlcoord 16, 6
+	ld de, .Label
+	call PlaceString
+	ld a, [wRandoFlags]
+	bit RANDFLAG_BERRY_RAND_F, a
+	hlcoord 16, 7
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "BERY:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
+
+DebugRoomMenu_TMFree:
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_TM_UNLIMITED_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintTMFree:
+	hlcoord 16, 8
+	ld de, .Label
+	call PlaceString
+	ld a, [wModFlags]
+	bit MODFLAG_TM_UNLIMITED_F, a
+	hlcoord 16, 9
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "TM:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
+
+DebugRoomMenu_PoisSvl:
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_POISON_SURVIVAL_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintPoisSvl:
+	hlcoord 16, 10
+	ld de, .Label
+	call PlaceString
+	ld a, [wModFlags]
+	bit MODFLAG_POISON_SURVIVAL_F, a
+	hlcoord 16, 11
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "POIS:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
+
+DebugRoomMenu_AutoNick:
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_AUTO_NICKNAME_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintAutoNick:
+	hlcoord 16, 15
+	ld de, .Label
+	call PlaceString
+	ld a, [wModFlags]
+	bit MODFLAG_AUTO_NICKNAME_F, a
+	hlcoord 16, 16
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "NICK:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
 
 DebugRoomMenu_ExpMult:
 	ld a, [wExpMultiplier]
