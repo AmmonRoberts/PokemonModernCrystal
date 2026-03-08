@@ -177,6 +177,7 @@ MetapodEvosAttacks:
 	db EVOLVE_LEVEL, 10, BUTTERFREE
 	db 0 ; no more evolutions
 	db 1, HARDEN
+	db 5, TACKLE
 	db 7, HARDEN
 	db 0 ; no more level-up moves
 
@@ -205,6 +206,7 @@ KakunaEvosAttacks:
 	db EVOLVE_LEVEL, 10, BEEDRILL
 	db 0 ; no more evolutions
 	db 1, HARDEN
+	db 5, TACKLE
 	db 7, HARDEN
 	db 0 ; no more level-up moves
 
@@ -512,6 +514,7 @@ JigglypuffEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, SING
 	db 4, DEFENSE_CURL
+	db 5, TACKLE
 	db 9, POUND
 	db 14, DISABLE
 	db 19, ROLLOUT
@@ -831,6 +834,7 @@ AbraEvosAttacks:
 	db EVOLVE_LEVEL, 16, KADABRA
 	db 0 ; no more evolutions
 	db 1, TELEPORT
+	db 5, TACKLE
 	db 0 ; no more level-up moves
 
 KadabraEvosAttacks:
@@ -1403,6 +1407,7 @@ CuboneEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, GROWL
 	db 5, TAIL_WHIP
+	db 5, TACKLE
 	db 9, BONE_CLUB
 	db 13, HEADBUTT
 	db 17, LEER
@@ -1654,6 +1659,7 @@ StarmieEvosAttacks:
 MrMimeEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, BARRIER
+	db 5, TACKLE
 	db 6, CONFUSION
 	db 11, SUBSTITUTE
 	db 16, MEDITATE
@@ -1755,7 +1761,7 @@ MagikarpEvosAttacks:
 	db EVOLVE_LEVEL, 20, GYARADOS
 	db 0 ; no more evolutions
 	db 1, SPLASH
-	db 15, TACKLE
+	db 5, TACKLE
 	db 30, FLAIL
 	db 0 ; no more level-up moves
 
@@ -2370,6 +2376,7 @@ IgglybuffEvosAttacks:
 	db 1, SING
 	db 1, CHARM
 	db 4, DEFENSE_CURL
+	db 5, TACKLE
 	db 9, POUND
 	db 14, SWEET_KISS
 	db 0 ; no more level-up moves
@@ -2379,6 +2386,7 @@ TogepiEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, GROWL
 	db 1, CHARM
+	db 5, TACKLE
 	db 7, METRONOME
 	db 18, SWEET_KISS
 	db 25, ENCORE
@@ -2390,6 +2398,7 @@ TogeticEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, GROWL
 	db 1, CHARM
+	db 5, TACKLE
 	db 7, METRONOME
 	db 18, SWEET_KISS
 	db 25, ENCORE
@@ -2524,7 +2533,7 @@ HoppipEvosAttacks:
 	db 1, SPLASH
 	db 5, SYNTHESIS
 	db 5, TAIL_WHIP
-	db 10, TACKLE
+	db 5, TACKLE
 	db 13, POISONPOWDER
 	db 15, STUN_SPORE
 	db 17, SLEEP_POWDER
