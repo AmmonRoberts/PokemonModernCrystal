@@ -4,9 +4,9 @@ InitCrystalData:
 	xor a
 	ld [wPlayerAge], a
 	ld [wPlayerGender], a
-	ld [wWildEncounterType], a
-	ld [wStarterRandomization], a
-	ld [wTMMode], a
+	ld [wRandoFlags], a
+	ld [wModFlags], a
+	ld [wRareCandyMart], a
 	ld a, 2 ; default EXP multiplier = 100%
 	ld [wExpMultiplier], a
 	xor a

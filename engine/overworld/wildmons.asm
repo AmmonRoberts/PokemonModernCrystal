@@ -260,8 +260,8 @@ ChooseWildEncounter:
 	inc hl
 	
 	; Check if we should use randomized encounters
-	ld a, [wWildEncounterType]
-	and a ; 0 = standard, 1 = randomized
+	ld a, [wRandoFlags]
+	bit RANDFLAG_WILD_ENCOUNTERS_F, a
 	jr nz, .randomized_encounters
 	
 	; === STANDARD ENCOUNTERS (original game logic) ===

@@ -9,18 +9,33 @@
 	const NEWGAMEOPT_PAGE1_CONTINUE   ; 5
 DEF NUM_NEWGAMEOPTIONS_PAGE1 EQU const_value ; 6
 
-; Page 2: Other options
+; Page 2: Modernization options
 	const_def
 	const NEWGAMEOPT_AUTO_NICKNAME    ; 0
 	const NEWGAMEOPT_TM_MODE          ; 1
-	const NEWGAMEOPT_POISON_SURVIVAL  ; 2
-	const NEWGAMEOPT_EXP_MULTIPLIER   ; 3
-	const NEWGAMEOPT_PERMADEATH       ; 4
-	const NEWGAMEOPT_RESET_ON_WIPE    ; 5
-	const NEWGAMEOPT_PAGE2_CONTINUE   ; 6
-DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 7
+	const NEWGAMEOPT_EXP_MULTIPLIER   ; 2
+	const NEWGAMEOPT_RARE_CANDY_MART  ; 3
+	const NEWGAMEOPT_POISON_SURVIVAL  ; 4
+	const NEWGAMEOPT_PAGE2_CONTINUE   ; 5
+DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 6
+
+; Page 3: Nuzlocke/Challenge options
+	const_def
+	const NEWGAMEOPT_PERMADEATH       ; 0
+	const NEWGAMEOPT_RESET_ON_WIPE    ; 1
+	const NEWGAMEOPT_PAGE3_CONTINUE   ; 2
+DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 3
 
 DEF NUM_NEWGAMEOPTIONS EQU NUM_NEWGAMEOPTIONS_PAGE1 ; For compatibility
+
+; Rare Candy mart modes (stored in wRareCandyMart)
+	; 0 = disabled, 1 = cheap, 2 = pricey, 3 = free
+DEF RARE_CANDY_MART_DISABLED EQU 0
+DEF RARE_CANDY_MART_CHEAP    EQU 1
+DEF RARE_CANDY_MART_PRICEY   EQU 2
+DEF RARE_CANDY_MART_FREE     EQU 3
+DEF NUM_RARE_CANDY_MART_MODES EQU 4
+DEF RARE_CANDY_CHEAP_PRICE   EQU 500
 
 _NewGameOptions:
 	; Initialize Crystal data (including all new game options to defaults)
@@ -50,11 +65,16 @@ _NewGameOptions:
 	hlcoord 2, 2
 	ld a, [wNewGameOptionsPage]
 	and a
-	jr nz, .page2
+	jr z, .page1_str
+	cp 2
+	jr z, .page3_str
+	ld de, StringNewGameOptionsPage2
+	jr .display_page
+.page1_str
 	ld de, StringNewGameOptionsPage1
 	jr .display_page
-.page2
-	ld de, StringNewGameOptionsPage2
+.page3_str
+	ld de, StringNewGameOptionsPage3
 .display_page
 	call PlaceString
 	xor a
@@ -63,11 +83,16 @@ _NewGameOptions:
 ; Display the settings of each option when the menu is opened
 	ld a, [wNewGameOptionsPage]
 	and a
-	jr nz, .page2_count
+	jr z, .page1_count
+	cp 2
+	jr z, .page3_count
+	ld c, NUM_NEWGAMEOPTIONS_PAGE2 - 1
+	jr .print_text_loop
+.page1_count
 	ld c, NUM_NEWGAMEOPTIONS_PAGE1 - 1 ; omit continue button
 	jr .print_text_loop
-.page2_count
-	ld c, NUM_NEWGAMEOPTIONS_PAGE2 - 1 ; omit continue button
+.page3_count
+	ld c, NUM_NEWGAMEOPTIONS_PAGE3 - 1
 .print_text_loop
 	push bc
 	xor a
@@ -105,13 +130,9 @@ _NewGameOptions:
 .handle_start
 	; START advances to next page or starts game
 	ld a, [wNewGameOptionsPage]
-	and a
-	jr z, .go_to_page2
-	; On page 2, start the game
-	jr .ExitOptions
-
-.go_to_page2
-	ld a, 1
+	cp 2
+	jr z, .ExitOptions
+	inc a
 	ld [wNewGameOptionsPage], a
 	jp .refresh_page
 
@@ -120,18 +141,18 @@ _NewGameOptions:
 	ld a, [wNewGameOptionsPage]
 	and a
 	jr z, .CancelNewGame ; Page 1: cancel new game
-	; Page 2: go back to page 1
-	xor a
+	dec a
 	ld [wNewGameOptionsPage], a
 	jp .refresh_page
 
 .handle_continue_button
 	; Continue button pressed
 	ld a, [wNewGameOptionsPage]
-	and a
-	jr z, .go_to_page2 ; Page 1: go to page 2
-	; Page 2: start the game
-	jr .ExitOptions
+	cp 2
+	jr z, .ExitOptions
+	inc a
+	ld [wNewGameOptionsPage], a
+	jp .refresh_page
 
 .dpad
 	call NewGameOptions_UpdateCursorPosition
@@ -158,7 +179,7 @@ _NewGameOptions:
 	ret
 
 StringNewGameOptionsPage1:
-	db "RANDOMIZERS   1/2<LF>"
+	db "RANDOMIZERS   1/3<LF>"
 	db "WILD #MON<LF>"
 	db "     :<LF>"
 	db "STARTERS<LF>"
@@ -172,15 +193,21 @@ StringNewGameOptionsPage1:
 	db "CONTINUE@"
 
 StringNewGameOptionsPage2:
-	db "OTHER OPTIONS 2/2<LF>"
+	db "MODERNIZATION 2/3<LF>"
 	db "NICKNAMES<LF>"
 	db "     :<LF>"
 	db "TM MODE<LF>"
 	db "     :<LF>"
-	db "WALKING POISON<LF>"
-	db "     :<LF>"
 	db "EXP MULTIPLIER<LF>"
 	db "     :<LF>"
+	db "RARE CANDY MART<LF>"
+	db "     :<LF>"
+	db "WALKING POISON<LF>"
+	db "     :<LF>"
+	db "CONTINUE@"
+
+StringNewGameOptionsPage3:
+	db "NUZLOCKE      3/3<LF>"
 	db "PERMADEATH<LF>"
 	db "     :<LF>"
 	db "RESET ON WIPE<LF>"
@@ -190,13 +217,17 @@ StringNewGameOptionsPage2:
 GetNewGameOptionPointer:
 	ld a, [wNewGameOptionsPage]
 	and a
-	jr nz, .page2
-	jumptable .PointersPage1, wJumptableIndex
-.page2
+	jr z, .page1
+	cp 2
+	jr z, .page3
 	jumptable .PointersPage2, wJumptableIndex
+.page1
+	jumptable .PointersPage1, wJumptableIndex
+.page3
+	jumptable .PointersPage3, wJumptableIndex
 
 .PointersPage1:
-; entries correspond to NEWGAMEOPT_* constants (Page 1)
+; entries correspond to NEWGAMEOPT_* constants (Page 1 - Randomizers)
 	dw NewGameOptions_WildEncounters
 	dw NewGameOptions_StarterRandomization
 	dw NewGameOptions_TrainerRandomization
@@ -205,28 +236,33 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_Continue
 
 .PointersPage2:
-; entries correspond to NEWGAMEOPT_* constants (Page 2)
+; entries correspond to NEWGAMEOPT_* constants (Page 2 - Modernization)
 	dw NewGameOptions_AutoNickname
 	dw NewGameOptions_TMMode
-	dw NewGameOptions_PoisonSurvival
 	dw NewGameOptions_ExpMultiplier
+	dw NewGameOptions_RareCandyMart
+	dw NewGameOptions_PoisonSurvival
+	dw NewGameOptions_Continue
+
+.PointersPage3:
+; entries correspond to NEWGAMEOPT_* constants (Page 3 - Nuzlocke/Challenge)
 	dw NewGameOptions_Permadeath
 	dw NewGameOptions_ResetOnWipe
 	dw NewGameOptions_Continue
 NewGameOptions_BerryRandomization:
-	ld a, [wBerryTreeRandomizer]
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
 	jr nz, .Toggle
 	bit B_PAD_RIGHT, a
 	jr z, .NonePressed
 .Toggle:
-	ld a, [wBerryTreeRandomizer]
-	xor 1
-	ld [wBerryTreeRandomizer], a
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_BERRY_RAND_F
+	ld [hl], a
 .NonePressed:
-	ld a, [wBerryTreeRandomizer]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_BERRY_RAND_F, a
 	jr nz, .Randomized
 	ld de, .Standard
 	jr .Display
@@ -241,19 +277,19 @@ NewGameOptions_BerryRandomization:
 .Randomized_str: db "RANDOMIZED@"
 
 NewGameOptions_ItemRandomization:
-	ld a, [wItemRandomizer]
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
 	jr nz, .Toggle
 	bit B_PAD_RIGHT, a
 	jr z, .NonePressed
 .Toggle:
-	ld a, [wItemRandomizer]
-	xor 1
-	ld [wItemRandomizer], a
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_ITEM_RAND_F
+	ld [hl], a
 .NonePressed:
-	ld a, [wItemRandomizer]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_ITEM_RAND_F, a
 	jr nz, .Randomized
 	ld de, .Standard
 	jr .Display
@@ -267,20 +303,71 @@ NewGameOptions_ItemRandomization:
 .Standard:     db "STANDARD  @"
 .Randomized_str: db "RANDOMIZED@"
 
+NewGameOptions_RareCandyMart:
+; Cycles through DISABLED / CHEAP (500) / PRICEY (4800) / FREE (0)
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
+	ld a, [wRareCandyMart]
+	inc a
+	cp NUM_RARE_CANDY_MART_MODES
+	jr c, .set
+	xor a
+	jr .set
+.Left:
+	ld a, [wRareCandyMart]
+	and a
+	jr z, .WrapLeft
+	dec a
+	jr .set
+.WrapLeft:
+	ld a, NUM_RARE_CANDY_MART_MODES - 1
+.set:
+	ld [wRareCandyMart], a
+.Display:
+	ld a, [wRareCandyMart]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 8, 10
+	call PlaceString
+	and a
+	ret
+
+.Strings:
+	dw .Disabled
+	dw .Cheap
+	dw .Pricey
+	dw .Free
+
+.Disabled: db "DISABLED @"
+.Cheap:    db "CHEAP    @"
+.Pricey:   db "PRICEY   @"
+.Free:     db "FREE     @"
+
 NewGameOptions_WildEncounters:
-	ld a, [wWildEncounterType]
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
 	jr nz, .Toggle
 	bit B_PAD_RIGHT, a
 	jr z, .NonePressed
 .Toggle:
-	ld a, [wWildEncounterType]
-	xor 1 ; Toggle between 0 and 1
-	ld [wWildEncounterType], a
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_WILD_ENCOUNTERS_F
+	ld [hl], a
 .NonePressed:
-	ld a, [wWildEncounterType]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_WILD_ENCOUNTERS_F, a
 	jr nz, .Randomized
 	ld de, .Standard
 	jr .Display
@@ -296,19 +383,19 @@ NewGameOptions_WildEncounters:
 .Randomized_str: db "RANDOMIZED@"
 
 NewGameOptions_StarterRandomization:
-	ld a, [wStarterRandomization]
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
 	jr nz, .Toggle
 	bit B_PAD_RIGHT, a
 	jr z, .NonePressed
 .Toggle:
-	ld a, [wStarterRandomization]
-	xor 1
-	ld [wStarterRandomization], a
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_STARTER_RAND_F
+	ld [hl], a
 .NonePressed:
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .Randomized
 	ld de, .Standard
 	jr .Display
@@ -324,19 +411,19 @@ NewGameOptions_StarterRandomization:
 .Randomized_str: db "RANDOMIZED@"
 
 NewGameOptions_TrainerRandomization:
-	ld a, [wTrainerRandomization]
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
 	jr nz, .Toggle
 	bit B_PAD_RIGHT, a
 	jr z, .NonePressed
 .Toggle:
-	ld a, [wTrainerRandomization]
-	xor 1
-	ld [wTrainerRandomization], a
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_TRAINER_RAND_F
+	ld [hl], a
 .NonePressed:
-	ld a, [wTrainerRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TRAINER_RAND_F, a
 	jr nz, .Randomized
 	ld de, .Standard
 	jr .Display
@@ -352,19 +439,19 @@ NewGameOptions_TrainerRandomization:
 .Randomized_str: db "RANDOMIZED@"
 
 NewGameOptions_TMMode:
-	ld a, [wTMMode]
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
 	jr nz, .Toggle
 	bit B_PAD_RIGHT, a
 	jr z, .NonePressed
 .Toggle:
-	ld a, [wTMMode]
-	xor 1
-	ld [wTMMode], a
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_TM_UNLIMITED_F
+	ld [hl], a
 .NonePressed:
-	ld a, [wTMMode]
-	and a
+	ld a, [wModFlags]
+	bit MODFLAG_TM_UNLIMITED_F, a
 	jr nz, .Unlimited
 	ld de, .Standard
 	jr .Display
@@ -380,26 +467,26 @@ NewGameOptions_TMMode:
 .Unlimited_str: db "UNLIMITED@"
 
 NewGameOptions_PoisonSurvival:
-	ld a, [wPoisonSurvival]
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
 	jr nz, .Toggle
 	bit B_PAD_RIGHT, a
 	jr z, .NonePressed
 .Toggle:
-	ld a, [wPoisonSurvival]
-	xor 1
-	ld [wPoisonSurvival], a
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_POISON_SURVIVAL_F
+	ld [hl], a
 .NonePressed:
-	ld a, [wPoisonSurvival]
-	and a
+	ld a, [wModFlags]
+	bit MODFLAG_POISON_SURVIVAL_F, a
 	jr nz, .Safe
 	ld de, .Standard
 	jr .Display
 .Safe:
 	ld de, .Safe_str
 .Display:
-	hlcoord 8, 8
+	hlcoord 8, 12
 	call PlaceString
 	and a
 	ret
@@ -408,19 +495,19 @@ NewGameOptions_PoisonSurvival:
 .Safe_str: db "SAFE    @"
 
 NewGameOptions_AutoNickname:
-	ld a, [wAutoNickname]
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
 	jr nz, .Toggle
 	bit B_PAD_RIGHT, a
 	jr z, .NonePressed
 .Toggle:
-	ld a, [wAutoNickname]
-	xor 1
-	ld [wAutoNickname], a
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_AUTO_NICKNAME_F
+	ld [hl], a
 .NonePressed:
-	ld a, [wAutoNickname]
-	and a
+	ld a, [wModFlags]
+	bit MODFLAG_AUTO_NICKNAME_F, a
 	jr nz, .On
 	ld de, .Off
 	jr .Display
@@ -473,7 +560,7 @@ NewGameOptions_ExpMultiplier:
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	hlcoord 8, 10
+	hlcoord 8, 8
 	call PlaceString
 	and a
 	ret
@@ -511,7 +598,7 @@ NewGameOptions_Permadeath:
 .On:
 	ld de, .On_str
 .Display:
-	hlcoord 8, 12
+	hlcoord 8, 4
 	call PlaceString
 	and a
 	ret
@@ -538,7 +625,7 @@ NewGameOptions_ResetOnWipe:
 .On:
 	ld de, .On_str
 .Display:
-	hlcoord 8, 14
+	hlcoord 8, 6
 	call PlaceString
 	and a
 	ret
@@ -569,7 +656,17 @@ NewGameOptionsControl:
 .DownPressed:
 	ld a, [wNewGameOptionsPage]
 	and a
-	jr nz, .page2_down
+	jr z, .page1_down
+	cp 2
+	jr z, .page3_down
+	; Page 2
+	ld a, [hl]
+	cp NEWGAMEOPT_PAGE2_CONTINUE
+	jr z, .WrapToTop
+	inc [hl]
+	scf
+	ret
+.page1_down
 	; Page 1
 	ld a, [hl]
 	cp NEWGAMEOPT_PAGE1_CONTINUE
@@ -577,10 +674,10 @@ NewGameOptionsControl:
 	inc [hl]
 	scf
 	ret
-.page2_down
-	; Page 2
+.page3_down
+	; Page 3
 	ld a, [hl]
-	cp NEWGAMEOPT_PAGE2_CONTINUE
+	cp NEWGAMEOPT_PAGE3_CONTINUE
 	jr z, .WrapToTop
 	inc [hl]
 	scf
@@ -602,14 +699,21 @@ NewGameOptionsControl:
 .WrapToBottom:
 	ld a, [wNewGameOptionsPage]
 	and a
-	jr nz, .page2_bottom
+	jr z, .page1_bottom
+	cp 2
+	jr z, .page3_bottom
+	; Page 2
+	ld [hl], NEWGAMEOPT_PAGE2_CONTINUE
+	scf
+	ret
+.page1_bottom
 	; Page 1
 	ld [hl], NEWGAMEOPT_PAGE1_CONTINUE
 	scf
 	ret
-.page2_bottom
-	; Page 2
-	ld [hl], NEWGAMEOPT_PAGE2_CONTINUE
+.page3_bottom
+	; Page 3
+	ld [hl], NEWGAMEOPT_PAGE3_CONTINUE
 	scf
 	ret
 

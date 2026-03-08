@@ -93,8 +93,8 @@ DoPoisonStep::
 	cp 1
 	jr nz, .not_at_one_hp
 	; HP is exactly 1, check if poison survival is enabled
-	ld a, [wPoisonSurvival]
-	and a
+	ld a, [wModFlags]
+	bit MODFLAG_POISON_SURVIVAL_F, a
 	jr z, .not_at_one_hp
 	; Poison survival is enabled and HP is 1, clear poison status
 	ld a, MON_STATUS

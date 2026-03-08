@@ -395,9 +395,9 @@ IncompleteCopyNameFunction: ; unreferenced
 RandomizeTrainerSpeciesIfEnabled:
 ; Check if trainer randomization is enabled
 ; If so, replace wCurPartySpecies with a random species (1-251)
-	ld a, [wTrainerRandomization]
-	and a
-	ret z ; return if randomization disabled (0 = standard)
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TRAINER_RAND_F, a
+	ret z ; return if randomization disabled
 	
 	; Randomization enabled - get random species
 .get_random_species

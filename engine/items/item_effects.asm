@@ -572,8 +572,8 @@ PokeBallEffect:
 
 .SkipPartyMonFriendBall:
 	; Check if auto-nickname is enabled
-	ld a, [wAutoNickname]
-	and a
+	ld a, [wModFlags]
+	bit MODFLAG_AUTO_NICKNAME_F, a
 	jr nz, .auto_nickname_party
 
 	ld hl, AskGiveNicknameText
@@ -661,8 +661,8 @@ PokeBallEffect:
 	call CloseSRAM
 
 	; Check if auto-nickname is enabled
-	ld a, [wAutoNickname]
-	and a
+	ld a, [wModFlags]
+	bit MODFLAG_AUTO_NICKNAME_F, a
 	jr nz, .auto_nickname_box
 
 	ld hl, AskGiveNicknameText

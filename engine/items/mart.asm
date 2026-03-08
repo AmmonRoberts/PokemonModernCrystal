@@ -232,6 +232,19 @@ FarReadMart:
 	inc de
 	cp -1
 	jr nz, .CopyMart
+	; If Rare Candy mart is enabled, inject RARE_CANDY into the item list before the -1 terminator
+	ld a, [wRareCandyMart]
+	and a
+	jr z, .skipRareCandyInject
+	dec de               ; de now points to the -1 terminator
+	ld a, RARE_CANDY     ; inject Rare Candy
+	ld [de], a           ; overwrite -1 with RARE_CANDY
+	inc de
+	ld a, -1
+	ld [de], a           ; write new -1 terminator
+	ld hl, wCurMartCount
+	inc [hl]             ; increment item count
+.skipRareCandyInject:
 	ld hl, wMartItem1BCD
 	ld de, wCurMartItems
 .ReadMartItem:
@@ -251,6 +264,23 @@ GetMartItemPrice:
 ; Return the price of item a in BCD at hl and in tiles at wStringBuffer1.
 	push hl
 	ld [wCurItem], a
+	; Check if this is RARE_CANDY with a custom mart price
+	cp RARE_CANDY
+	jr nz, .normalPrice
+	ld a, [wRareCandyMart]
+	cp RARE_CANDY_MART_FREE  ; 3 = free
+	jr z, .freePrice
+	cp RARE_CANDY_MART_CHEAP ; 1 = cheap (500)
+	jr nz, .normalPrice      ; PRICEY (2) uses normal item price
+.cheapPrice:
+	pop hl
+	ld de, RARE_CANDY_CHEAP_PRICE ; 500
+	jr GetMartPrice
+.freePrice:
+	pop hl
+	ld de, 0
+	jr GetMartPrice
+.normalPrice:
 	farcall GetItemPrice
 	pop hl
 

@@ -1472,8 +1472,8 @@ FishFunction:
 	and a
 	jr z, .nonibble
 	; Check if wild encounters should be randomized
-	ld a, [wWildEncounterType]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_WILD_ENCOUNTERS_F, a
 	jr z, .notRandFish
 .randFishLoop
 	call Random

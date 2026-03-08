@@ -874,7 +874,7 @@ _LoadData:
 	; 1=reset-on-wipe). Bit 2 is runtime-only (game-over pending) and is always cleared.
 	; Values from old saves that only used bits 0 are preserved correctly by this mask.
 	ld a, [wPermafaint]
-	and $03
+	and $03 ; preserve bits 0-1 (user settings); runtime bits 2-3 always cleared on load
 	ld [wPermafaint], a
 	ret
 
