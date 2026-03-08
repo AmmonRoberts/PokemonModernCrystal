@@ -2876,37 +2876,19 @@ wPlayerGender::
 ;	0 male
 ;	1 female
 	db
-wWildEncounterType::
-; 0 = Standard encounters
-; 1 = Randomized encounters
+wRandoFlags::
+; Bit flags for randomization options.
+; See constants/randomizer_constants.asm for RANDFLAG_* bit definitions.
 	db
-wStarterRandomization::
-; 0 = Standard starters (Chikorita, Cyndaquil, Totodile)
-; 1 = Randomized starters
+wModFlags::
+; Bit flags for modernization/quality-of-life options.
+; See constants/randomizer_constants.asm for MODFLAG_* bit definitions.
 	db
-wTMMode::
-; 0 = Unlimited use TMs
-; 1 = Standard/consumable TMs
-	db
-wTrainerRandomization::
-; 0 = Standard trainer parties
-; 1 = Randomized trainer parties
-	db
-wPoisonSurvival::
-; 0 = Standard poison (can faint)
-; 1 = Safe poison (stops at 1 HP)
-	db
-wAutoNickname::
-; 0 = Standard nicnkaming (asks for nickname)
-; 1 = Random nicknames
-	db
-wBerryTreeRandomizer::
-; 0 = Standard berry trees
-; 1 = Randomized berry trees
-	db
-wItemRandomizer::
-; 0 = Standard item balls
-; 1 = Randomized item balls
+wRareCandyMart::
+; 0 = DISABLED (Rare Candy not sold at marts)
+; 1 = CHEAP    (sold at 500)
+; 2 = PRICEY   (sold at 4800, standard price)
+; 3 = FREE     (sold at 0)
 	db
 wExpMultiplier::
 ; 0 = 50% EXP
@@ -2924,10 +2906,10 @@ wPlayerAge:: ds 1
 wPlayerPrefecture:: ds 1
 wPlayerPostalCode:: ds 4
 wPermafaint::
-; 0 = Standard (fainted Pokemon can be revived, no save wipe)
 ; bit 0 = Permadeath (fainted Pokemon are immediately released)
 ; bit 1 = Reset on party wipe (party wipe wipes the save and resets the game)
 ; bit 2 = Game-over reset pending (runtime only — set by WipePermafaintSave, cleared on load)
+; bit 3 = PC-withdraw notification pending (runtime only — set by TryPermadeathPCWithdraw)
 ; Placed last so old saves always read 0 (off) here rather than aliasing wPlayerAge
 	db
 wCrystalDataEnd::

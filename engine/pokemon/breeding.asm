@@ -321,8 +321,8 @@ HatchEggs:
 	push de
 	
 	; Check if auto-nickname is enabled
-	ld a, [wAutoNickname]
-	and a
+	ld a, [wModFlags]
+	bit MODFLAG_AUTO_NICKNAME_F, a
 	jr nz, .auto_nickname_egg
 
 	ld hl, .BreedAskNicknameText

@@ -1393,8 +1393,8 @@ ElmsLab_MapEvents:
 
 ShowStarterPokepic1:
 ; Show pokepic and play cry for starter 1 (Cyndaquil or randomized)
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .randomized
 	ld a, CYNDAQUIL
 	jr .show
@@ -1410,8 +1410,8 @@ ShowStarterPokepic1:
 
 ShowStarterPokepic2:
 ; Show pokepic and play cry for starter 2 (Totodile or randomized)
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .randomized
 	ld a, TOTODILE
 	jr .show
@@ -1427,8 +1427,8 @@ ShowStarterPokepic2:
 
 ShowStarterPokepic3:
 ; Show pokepic and play cry for starter 3 (Chikorita or randomized)
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .randomized
 	ld a, CHIKORITA
 	jr .show
@@ -1444,8 +1444,8 @@ ShowStarterPokepic3:
 
 GetStarterName1:
 ; Get name for starter 1
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .randomized
 	ld a, CYNDAQUIL
 	jr .getname
@@ -1462,8 +1462,8 @@ GetStarterName1:
 
 GetStarterName2:
 ; Get name for starter 2
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .randomized
 	ld a, TOTODILE
 	jr .getname
@@ -1480,8 +1480,8 @@ GetStarterName2:
 
 GetStarterName3:
 ; Get name for starter 3
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .randomized
 	ld a, CHIKORITA
 	jr .getname
@@ -1498,8 +1498,8 @@ GetStarterName3:
 
 GiveStarterPokemon1:
 ; Give Cyndaquil (or randomized equivalent) at level 5 with Berry
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .randomized
 	ld a, CYNDAQUIL
 	jr .give
@@ -1535,8 +1535,8 @@ GiveStarterPokemon1:
 
 GiveStarterPokemon2:
 ; Give Totodile (or randomized equivalent) at level 5 with Berry
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .randomized
 	ld a, TOTODILE
 	jr .give
@@ -1572,8 +1572,8 @@ GiveStarterPokemon2:
 
 GiveStarterPokemon3:
 ; Give Chikorita (or randomized equivalent) at level 5 with Berry
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr nz, .randomized
 	ld a, CHIKORITA
 	jr .give

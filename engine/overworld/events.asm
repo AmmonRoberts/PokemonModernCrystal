@@ -625,8 +625,8 @@ ObjectEventTypeArray:
 	ld bc, wItemBallDataEnd - wItemBallData
 	call FarCopyBytes
 	; Check if item randomizer is enabled
-	ld a, [wItemRandomizer]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_ITEM_RAND_F, a
 	jr z, .no_randomize
 	; Don't randomize key/story items
 	ld a, [wItemBallItemID]

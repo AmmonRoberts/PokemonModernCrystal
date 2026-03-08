@@ -35,8 +35,8 @@ FruitTreeScript::
 
 GetCurTreeFruit:
 	; Check if randomizer is enabled
-	ld a, [wBerryTreeRandomizer]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_BERRY_RAND_F, a
 	jr z, .normal
 	; Randomizer enabled: pick a random berry from unique list
 	ld a, NUM_UNIQUE_FRUIT_ITEMS

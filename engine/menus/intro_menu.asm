@@ -66,8 +66,8 @@ NewGame:
 	call PlayerProfileSetup
 	ret c ; If player cancelled in options menu, return to title
 	; Generate random starters if randomization is enabled
-	ld a, [wStarterRandomization]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_STARTER_RAND_F, a
 	jr z, .no_random_starters
 	farcall GenerateRandomStarters
 .no_random_starters

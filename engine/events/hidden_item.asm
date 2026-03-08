@@ -22,8 +22,8 @@ HiddenItemScript::
 
 .RandomizeIfEnabled:
 	; Check if item randomizer is enabled
-	ld a, [wItemRandomizer]
-	and a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_ITEM_RAND_F, a
 	ret z
 	; Don't randomize MACHINE_PART - it's required for progression
 	ld a, [wHiddenItemID]

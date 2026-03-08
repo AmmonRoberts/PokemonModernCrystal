@@ -6,8 +6,8 @@ GiveRandomNickname::
 	push de
 	
 	; Check if auto-nickname is enabled
-	ld a, [wAutoNickname]
-	and a
+	ld a, [wModFlags]
+	bit MODFLAG_AUTO_NICKNAME_F, a
 	jr z, .no_auto_nickname
 	
 	; Get a random name index from the list
@@ -41,8 +41,8 @@ NicknameStarterPokemon::
 	push de
 	
 	; Check if auto-nickname is enabled
-	ld a, [wAutoNickname]
-	and a
+	ld a, [wModFlags]
+	bit MODFLAG_AUTO_NICKNAME_F, a
 	jr z, .ask_for_nickname
 	
 	; Auto-nickname is enabled, apply random nickname
