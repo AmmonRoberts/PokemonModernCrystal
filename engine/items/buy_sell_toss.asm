@@ -6,6 +6,19 @@ SelectQuantityToToss:
 
 SelectQuantityToBuy:
 	farcall GetItemPrice
+	; Check if this is RARE_CANDY with a mart price override
+	ld a, [wCurItem]
+	cp RARE_CANDY
+	jr nz, RooftopSale_SelectQuantityToBuy
+	ld a, [wRareCandyMart]
+	cp RARE_CANDY_MART_FREE  ; 3 = free
+	jr z, .freePrice
+	cp RARE_CANDY_MART_CHEAP ; 1 = cheap
+	jr nz, RooftopSale_SelectQuantityToBuy ; PRICEY (2) uses normal price
+	ld de, RARE_CANDY_CHEAP_PRICE
+	jr RooftopSale_SelectQuantityToBuy
+.freePrice:
+	ld de, 0
 RooftopSale_SelectQuantityToBuy:
 	ld a, d
 	ld [wBuySellItemPrice + 0], a
