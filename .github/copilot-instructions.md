@@ -1,2 +1,2 @@
 If the host OS is Windows, run all commands in WSL.
-The command we should run for building the ROM is "make crystal11".
+The command we should run for building the ROM is "make moderncrystal".
