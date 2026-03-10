@@ -25,12 +25,6 @@
 
 Version 1.1 of Pokémon Crystal, which fixed some issues with the initial international release. `make crystal11` defines `_CRYSTAL11` so the assembly builds the changed version.
 
-
-## What is pokecrystal_au.gbc?
-
-The Australian release of Pokémon Crystal, which is based on the international 1.1 release but censors gambling references from the Game Corners. `make crystal_au` defines `_CRYSTAL11` and `_CRYSTAL_AU` so the assembly builds the changed version.
-
-
 ## I can't build the ROM, `make` just prints an error!
 
 Reread [INSTALL.md](INSTALL.md) carefully, and make sure you're following all its steps.
