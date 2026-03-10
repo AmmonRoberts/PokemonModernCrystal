@@ -7,38 +7,52 @@ Inspired by [Modern Emerald](https://github.com/resetes12/pokeemerald), this hac
 ## Features
 
 ### New Game Options Menu
-When starting a new game, you can now configure:
+When starting a new game, you can configure options across multiple pages:
 
+**Randomizers**
 - **Wild Encounters** - Standard or Randomized
 - **Starters** - Standard (Chikorita/Cyndaquil/Totodile) or Randomized
 - **Trainer Battles** - Standard or Randomized (preserves levels)
+- **Overworld Items** - Standard or Randomized
+- **Berries** - Standard or Randomized
+- **Nicknames** - Standard or Randomized
+
+**Challenge & Convenience Options**
 - **TM Mode** - Standard (consumable) or Unlimited use
 - **Poison Survival** - Standard (can faint) or Safe (stops at 1 HP with "poison faded" message)
+- **RARE CANDY in Shops** - Disabled, or available at free, cheap, or expensive price
+- **Experience Multiplier** - Adjust XP gain (0.5×, 1×, 1.5×, 2×)
+- **Permadeath** - Fainted Pokémon are permanently lost
+- **Reset on Party Wipe** - Return to last save when all Pokémon faint
 
 ### Quality of Life Improvements
-
 - **Always walk at bike speed** - No need to constantly use the bike in towns
 - **Shorter Nurse Joy interactions** - Faster Pokémon Center healing
 - **Smarter Mom dialogue** - No more phone tutorials if you say you know how to use it
 - **Modern shiny odds** - Shiny Pokémon now appear at 1 in 4096 odds (matching Generation VI+) instead of the original 1 in 8192
   - *Note*: Due to Gen II's DV-based gender system, shiny starters have a 50% chance of being female instead of the normal 12.5%
+- **Shiny indicator in battle** - A tile in the corner of the screen indicates when you encounter a shiny Pokémon
+- **Improved FIGHT menu** - Shows move base power and effectiveness; HIDDEN POWER displays its actual hidden type
+- **Expanded STATS screen** - Extra page showing all DVs, Pokérus status, and friendship level
+- **HM moves can be overwritten** - No more being locked into HM moves
+- **SELECT to reorder party** - Press SELECT in the party menu to quickly move Pokémon
+- **Self-trade NPC** - Trade with yourself to evolve trade-evolution Pokémon without a second game
+- **Catching tutorial is opt-in** - The "how to catch a Pokémon" tutorial no longer interrupts you; talk to the NPC if you want it
+- **All Pokemon have at least one attacking move at level 5** - All starter Pokémon now are guaranteed to have at least one attacking move
 
 ## Planned Features
-
 The following features are planned for future releases:
 
 - Nuzlocke mode rules enforcement
-- Randomized items and held items
-- Randomized nicknames
+- Randomized held items
 - Randomized cries
 - Randomized movesets and learnsets
 - Buy all TMs (possibly expensive)
 - No-heal Pokémon Center challenge mode
 - Access PC from phone
-- Proper sprint button (instead of always walking at bike speed)
 - Enhanced Pokédex with movesets and learnsets
-- Improved FIGHT menu
 - Improved MOVE menu
+
 
 ## Building
 
@@ -46,7 +60,6 @@ To set up the repository and build the ROM, see [INSTALL.md](INSTALL.md).
 
 
 ## See also
-
 - [**FAQ**](FAQ.md)
 - [**Documentation**][docs]
 - [**Wiki**][wiki] (includes [tutorials][tutorials])
