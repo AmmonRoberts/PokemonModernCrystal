@@ -31,6 +31,36 @@ RooftopSale_SelectQuantityToBuy:
 
 SelectQuantityToSell:
 	farcall GetItemPrice
+	; Check if this is RARE_CANDY with a mart price override
+	; If buying is enabled, sell at the mart buy price (no halving) to prevent arbitrage
+	ld a, [wCurItem]
+	cp RARE_CANDY
+	jr nz, .normalSellPrice
+	ld a, [wRareCandyMart]
+	and a ; RARE_CANDY_MART_DISABLED = 0
+	jr z, .normalSellPrice
+	; Mart is enabled - match the sell price to the mart buy price
+	cp RARE_CANDY_MART_FREE  ; 3 = free
+	jr z, .freeSellPrice
+	cp RARE_CANDY_MART_CHEAP ; 1 = cheap
+	jr nz, .priceyRareCandySell ; PRICEY uses base price from GetItemPrice
+	ld de, RARE_CANDY_CHEAP_PRICE
+	jr .rareCandySellNoHalve
+.freeSellPrice:
+	ld de, 0
+	jr .rareCandySellNoHalve
+.priceyRareCandySell:
+	; de already holds the base price from GetItemPrice
+.rareCandySellNoHalve:
+	ld a, d
+	ld [wBuySellItemPrice + 0], a
+	ld a, e
+	ld [wBuySellItemPrice + 1], a
+	ld hl, SellRareCandyItem_MenuHeader
+	call LoadMenuHeader
+	call Toss_Sell_Loop
+	ret
+.normalSellPrice:
 	ld a, d
 	ld [wBuySellItemPrice + 0], a
 	ld a, e
@@ -231,4 +261,10 @@ SellItem_MenuHeader:
 	db MENU_BACKUP_TILES ; flags
 	menu_coords 7, 15, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1
 	dw DisplaySellingPrice
+	db 0 ; default option
+
+SellRareCandyItem_MenuHeader:
+	db MENU_BACKUP_TILES ; flags
+	menu_coords 7, 15, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1
+	dw DisplayPurchasePrice ; sell at buy price, no halving
 	db 0 ; default option
