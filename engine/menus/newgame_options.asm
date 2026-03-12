@@ -23,8 +23,9 @@ DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 6
 	const_def
 	const NEWGAMEOPT_PERMADEATH       ; 0
 	const NEWGAMEOPT_RESET_ON_WIPE    ; 1
-	const NEWGAMEOPT_PAGE3_CONTINUE   ; 2
-DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 3
+	const NEWGAMEOPT_PARTY_LIMIT      ; 2
+	const NEWGAMEOPT_PAGE3_CONTINUE   ; 3
+DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 4
 
 DEF NUM_NEWGAMEOPTIONS EQU NUM_NEWGAMEOPTIONS_PAGE1 ; For compatibility
 
@@ -212,6 +213,8 @@ StringNewGameOptionsPage3:
 	db "     :<LF>"
 	db "RESET ON WIPE<LF>"
 	db "     :<LF>"
+	db "PARTY LIMIT<LF>"
+	db "     :<LF>"
 	db "CONTINUE@"
 
 GetNewGameOptionPointer:
@@ -248,6 +251,7 @@ GetNewGameOptionPointer:
 ; entries correspond to NEWGAMEOPT_* constants (Page 3 - Nuzlocke/Challenge)
 	dw NewGameOptions_Permadeath
 	dw NewGameOptions_ResetOnWipe
+	dw NewGameOptions_PartyLimit
 	dw NewGameOptions_Continue
 NewGameOptions_BerryRandomization:
 	ldh a, [hJoyPressed]
@@ -631,6 +635,58 @@ NewGameOptions_ResetOnWipe:
 	ret
 .Off:    db "OFF     @"
 .On_str: db "ON      @"
+
+NewGameOptions_PartyLimit:
+; Cycles through 1-6 (PARTY_LENGTH); default is PARTY_LENGTH
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
+	ld a, [wPartyLimit]
+	cp PARTY_LENGTH
+	jr z, .Display  ; already at max
+	inc a
+	ld [wPartyLimit], a
+	jr .Display
+.Left:
+	ld a, [wPartyLimit]
+	cp 1
+	jr z, .Display  ; already at min
+	dec a
+	ld [wPartyLimit], a
+.Display:
+	ld a, [wPartyLimit]
+	dec a           ; convert 1-6 to 0-5 for table index
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 8, 8
+	call PlaceString
+	and a
+	ret
+
+.Strings:
+	dw .str1
+	dw .str2
+	dw .str3
+	dw .str4
+	dw .str5
+	dw .str6
+
+.str1: db "1       @"
+.str2: db "2       @"
+.str3: db "3       @"
+.str4: db "4       @"
+.str5: db "5       @"
+.str6: db "6       @"
 
 NewGameOptions_Continue:
 	ldh a, [hJoyPressed]

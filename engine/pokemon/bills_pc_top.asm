@@ -63,6 +63,11 @@ _BillsPC:
 	ld a, b
 	jr nc, .loop
 .cancel
+	call BillsPC_CheckCanExit
+	jr c, .close
+	ld a, [wMenuCursorPosition]
+	jp .loop
+.close
 	call CloseWindow
 	ret
 
@@ -105,6 +110,26 @@ _BillsPC:
 BillsPC_SeeYa:
 	scf
 	ret
+
+BillsPC_CheckCanExit:
+; Returns carry if wPartyCount <= wPartyLimit (ok to exit Bills PC).
+; Shows a message and returns no-carry when wPartyCount > wPartyLimit.
+	ld a, [wPartyLimit]
+	ld b, a
+	ld a, [wPartyCount]
+	cp b
+	jr c, .ok
+	jr z, .ok
+	ld hl, .OverLimitText
+	call MenuTextboxBackup
+	and a           ; no-carry = blocked
+	ret
+.ok
+	scf             ; carry = allowed
+	ret
+.OverLimitText:
+	text_far _BillsPC_OverLimitText
+	text_end
 
 BillsPC_MovePKMNMenu:
 	call LoadStandardMenuHeader

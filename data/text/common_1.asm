@@ -1817,6 +1817,14 @@ _ComeAgainText::
 	text "Come again."
 	done
 
+_DayCare_SentToPCText::
+	text "Your party is"
+	line "full!"
+
+	para "Your #MON was"
+	line "sent to BILL's PC."
+	prompt
+
 _NotYetText::
 	text "Not yet…"
 	done

@@ -32,8 +32,8 @@ MountMortarB1FKiyoScript:
 	writetext MountMortarB1FTyrogueRewardText
 	promptbutton
 	waitsfx
-	readvar VAR_PARTYCOUNT
-	ifequal PARTY_LENGTH, .NoRoom
+	special CheckPartyAtLimit
+	iftrue .NoRoom
 	writetext MountMortarB1FReceiveMonText
 	playsound SFX_CAUGHT_MON
 	waitsfx

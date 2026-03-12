@@ -195,6 +195,10 @@ Route31MailRecipientScript:
 .TryGiveKenya:
 	writetext Text_Route31SleepyManGotMail
 	promptbutton
+	; Check PC mailbox first (handles the case where Kenya was sent to the PC box).
+	special ClaimKenyaMailFromMailbox
+	ifequal 1, .MailboxDelivery
+	; Not in mailbox: fall back to the standard party-with-mail check.
 	checkpokemail ReceivedSpearowMailText
 	ifequal POKEMAIL_WRONG_MAIL, .WrongMail
 	ifequal POKEMAIL_REFUSED, .Refused
@@ -239,6 +243,18 @@ Route31MailRecipientScript:
 	waitbutton
 	closetext
 	end
+
+.MailboxDelivery:
+	; Kenya's FLOWER_MAIL was found and removed from the PC mailbox.
+	writetext Text_Route31MailInBox
+	promptbutton
+	writetext Text_Route31ReadingMail
+	promptbutton
+	setevent EVENT_GAVE_KENYA
+	verbosegiveitem TM_NIGHTMARE
+	iffalse .NoRoomForItems
+	setevent EVENT_GOT_TM50_NIGHTMARE
+	sjump .DescribeNightmare
 
 ReceivedSpearowMailText:
 	db   "DARK CAVE leads"
@@ -389,6 +405,15 @@ Text_Route31CantTakeLastMon:
 
 	para "what are you going"
 	line "to use in battle?"
+	done
+
+Text_Route31MailInBox:
+	text "What? There's a"
+	line "MAIL for me in"
+	cont "your PC BOX?!"
+
+	para "That delivery"
+	line "still counts!"
 	done
 
 Route31YoungsterText:

@@ -23,8 +23,8 @@ RandyScript:
 	writetext Route35GoldenrodGateRandyThanksText
 	promptbutton
 	waitsfx
-	readvar VAR_PARTYCOUNT
-	ifequal PARTY_LENGTH, .partyfull
+	special CheckPartyAtLimit
+	iftrue .partyfull
 	writetext Route35GoldenrodGatePlayerReceivedAMonWithMailText
 	playsound SFX_KEY_ITEM
 	waitsfx
@@ -38,7 +38,25 @@ RandyScript:
 	end
 
 .partyfull
+	special GiveKenyaToBox
+	ifequal 1, .senttobox
+	ifequal 2, .senttobox_nomailroom
+	; wScriptVar == 0: box is also full
 	writetext Route35GoldenrodGateRandyCantCarryAnotherMonText
+	waitbutton
+	closetext
+	end
+
+.senttobox
+	writetext Route35GoldenrodGateSentKenyaToPCText
+	setevent EVENT_GOT_KENYA
+	waitbutton
+	closetext
+	end
+
+.senttobox_nomailroom
+	writetext Route35GoldenrodGateSentKenyaToPCNoMailText
+	setevent EVENT_GOT_KENYA
 	waitbutton
 	closetext
 	end
@@ -139,6 +157,25 @@ Route35GoldenrodGateRandyWeirdTreeBlockingRoadText:
 Route35GoldenrodGateRandyCantCarryAnotherMonText:
 	text "You can't carry"
 	line "another #MON…"
+	done
+
+Route35GoldenrodGateSentKenyaToPCText:
+	text "Your party's full!"
+	line "KENYA was sent"
+	cont "to your PC BOX."
+
+	para "The MAIL was sent"
+	line "to your MAIL BOX!"
+	done
+
+Route35GoldenrodGateSentKenyaToPCNoMailText:
+	text "Your party's full!"
+	line "KENYA was sent"
+	cont "to your PC BOX."
+
+	para "Sorry, your MAIL"
+	line "BOX was full, so"
+	cont "the MAIL was lost."
 	done
 
 Route35GoldenrodGateRandyOhNeverMindThenText:

@@ -270,6 +270,7 @@ _SaveGameData:
 	farcall BackupMysteryGift
 	call ValidateSave
 	call SaveOptions
+	farcall SaveCrystalData
 	call SavePlayerData
 	call SavePokemonData
 	call SaveBox
@@ -876,6 +877,13 @@ _LoadData:
 	ld a, [wPermafaint]
 	and $03 ; preserve bits 0-1 (user settings); runtime bits 2-3 always cleared on load
 	ld [wPermafaint], a
+	; Sanitize wPartyLimit: old saves will have 0 here; default to PARTY_LENGTH.
+	ld a, [wPartyLimit]
+	and a
+	jr nz, .party_limit_ok
+	ld a, PARTY_LENGTH
+	ld [wPartyLimit], a
+.party_limit_ok
 	ret
 
 GetBoxAddress:

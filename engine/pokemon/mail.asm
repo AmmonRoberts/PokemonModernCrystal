@@ -38,7 +38,7 @@ SendMailToPC:
 	scf
 	ret
 
-DeleteMailFromPC:
+DeleteMailFromPC::
 ; Shift all mail messages in the mailbox
 	ld a, BANK(sMailboxCount)
 	call OpenSRAM

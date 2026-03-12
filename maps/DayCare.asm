@@ -28,8 +28,8 @@ DayCareManScript_Inside:
 	writetext DayCareManText_GiveOddEgg
 	promptbutton
 	closetext
-	readvar VAR_PARTYCOUNT
-	ifequal PARTY_LENGTH, .PartyFull
+	special CheckPartyAtLimit
+	iftrue .PartyFull
 	special GiveOddEgg
 	opentext
 	writetext DayCareText_GotOddEgg
