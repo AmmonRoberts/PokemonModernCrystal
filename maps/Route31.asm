@@ -408,12 +408,9 @@ Text_Route31CantTakeLastMon:
 	done
 
 Text_Route31MailInBox:
-	text "What? There's a"
+	text "What? There's"
 	line "MAIL for me in"
 	cont "your PC BOX?!"
-
-	para "That delivery"
-	line "still counts!"
 	done
 
 Route31YoungsterText:

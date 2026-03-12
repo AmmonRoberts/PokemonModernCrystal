@@ -166,6 +166,8 @@ SpecialsPointers::
 	add_special BuenaPrize
 	add_special GiveDratini
 	add_special GiveDratiniToBox
+	add_special GiveEeveeToBox
+	add_special GiveTyrogueToBox
 	add_special SampleKenjiBreakCountdown
 	add_special BeastsCheck
 	add_special MonCheck

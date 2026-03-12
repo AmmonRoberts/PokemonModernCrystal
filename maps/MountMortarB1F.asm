@@ -46,7 +46,17 @@ MountMortarB1FKiyoScript:
 	end
 
 .NoRoom:
+	special GiveTyrogueToBox
+	ifequal 1, .SentToBox
+	; wScriptVar == 0: box is also full
 	writetext MountMortarB1FKiyoFullPartyText
+	waitbutton
+	closetext
+	end
+
+.SentToBox:
+	writetext MountMortarB1FKiyoSentTyrogue
+	setevent EVENT_GOT_TYROGUE_FROM_KIYO
 	waitbutton
 	closetext
 	end
@@ -130,6 +140,14 @@ MountMortarB1FKiyoGotTyrogueText:
 MountMortarB1FKiyoFullPartyText:
 	text "You have no room"
 	line "in your party!"
+	done
+
+MountMortarB1FKiyoSentTyrogue:
+	text "Your party is"
+	line "full!"
+
+	para "TYROGUE was sent"
+	line "to BILL's PC."
 	done
 
 MountMortarB1F_MapEvents:

@@ -160,18 +160,22 @@ Route35GoldenrodGateRandyCantCarryAnotherMonText:
 	done
 
 Route35GoldenrodGateSentKenyaToPCText:
-	text "Your party's full!"
-	line "KENYA was sent"
-	cont "to your PC BOX."
+	text "Your party is"
+	line "full!"
+	
+	para "KENYA was sent"
+	cont "to BILL's PC."
 
 	para "The MAIL was sent"
 	line "to your MAIL BOX!"
 	done
 
 Route35GoldenrodGateSentKenyaToPCNoMailText:
-	text "Your party's full!"
-	line "KENYA was sent"
-	cont "to your PC BOX."
+	text "Your party is"
+	line "full!"
+	
+	para "KENYA was sent"
+	cont "to BILL's PC."
 
 	para "Sorry, your MAIL"
 	line "BOX was full, so"

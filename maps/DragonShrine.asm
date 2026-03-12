@@ -536,7 +536,7 @@ DragonShrineSentDratiniToPCText:
 	line "full!"
 
 	para "DRATINI was sent"
-	cont "to BILL's PC."
+	line "to BILL's PC."
 	done
 
 DragonShrineSymbolicDragonText:
