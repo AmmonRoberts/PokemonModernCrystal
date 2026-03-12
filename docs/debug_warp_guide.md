@@ -130,7 +130,7 @@ The GROUP and MAP values are in **hex**, matching the display in the debug room.
 | Team Rocket Base B2F | `03H` | `32H` |
 | Team Rocket Base B3F | `03H` | `33H` |
 | Ilex Forest | `03H` | `34H` |
-| **Goldenrod Underground** ⭐ | `03H` | `35H` |
+| Goldenrod Underground | `03H` | `35H` |
 | Goldenrod Underground Switch Room | `03H` | `36H` |
 | Goldenrod Dept Store B1F | `03H` | `37H` |
 | Goldenrod Underground Warehouse | `03H` | `38H` |
@@ -138,7 +138,7 @@ The GROUP and MAP values are in **hex**, matching the display in the debug room.
 | Mt. Mortar 1F Inside | `03H` | `3AH` |
 | Mt. Mortar 2F Inside | `03H` | `3BH` |
 | Mt. Mortar B1F | `03H` | `3CH` |
-| **Ice Path 1F** ⭐ | `03H` | `3DH` |
+| Ice Path 1F  | `03H` | `3DH` |
 | Ice Path B1F | `03H` | `3EH` |
 | Ice Path B2F (Mahogany side) | `03H` | `3FH` |
 | Ice Path B2F (Blackthorn side) | `03H` | `40H` |
@@ -221,7 +221,7 @@ The GROUP and MAP values are in **hex**, matching the display in the debug room.
 | Trade Speech House | `07H` | `03H` |
 | Cerulean Pokécenter 1F | `07H` | `04H` |
 | Cerulean Pokécenter 2F (Beta) | `07H` | `05H` |
-| **Cerulean Gym** ⭐ | `07H` | `06H` |
+| Cerulean Gym | `07H` | `06H` |
 | Cerulean Mart | `07H` | `07H` |
 | Route 10 Pokécenter 1F | `07H` | `08H` |
 | Route 10 Pokécenter 2F (Beta) | `07H` | `09H` |
