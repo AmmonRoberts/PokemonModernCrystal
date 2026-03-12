@@ -18,6 +18,7 @@ ManiaScript:
 	iffalse .refusetotakeshuckie
 	special GiveShuckle
 	iffalse .partyfull
+	ifequal 2, .senttopc
 	writetext ManiaText_TakeCareOfShuckle
 	promptbutton
 	waitsfx
@@ -34,6 +35,13 @@ ManiaScript:
 	writetext ManiaText_TakeCareOfShuckle
 	waitbutton
 	closetext
+	end
+
+.senttopc
+	writetext ManiaText_SentToPC
+	waitbutton
+	closetext
+	setevent EVENT_GOT_SHUCKIE
 	end
 
 .partyfull
@@ -133,6 +141,14 @@ ManiaText_TakeCareOfShuckle:
 ManiaText_GotShuckle:
 	text "<PLAYER> received a"
 	line "#MON."
+	done
+
+ManiaText_SentToPC:
+	text "Your party is"
+	line "full!"
+	
+	para "SHUCKIE was sent"
+	line "to your PC."
 	done
 
 ManiaText_PartyFull:

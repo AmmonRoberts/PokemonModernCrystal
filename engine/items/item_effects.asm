@@ -215,9 +215,11 @@ PokeBallEffect:
 	dec a
 	jp nz, UseBallInTrainerBattle
 
+	ld a, [wPartyLimit]
+	ld b, a
 	ld a, [wPartyCount]
-	cp PARTY_LENGTH
-	jr nz, .room_in_party
+	cp b
+	jr c, .room_in_party
 
 	ld a, BANK(sBoxCount)
 	call OpenSRAM
@@ -545,9 +547,11 @@ PokeBallEffect:
 	set BATTLERESULT_CAUGHT_CELEBI, [hl]
 .not_celebi
 
+	ld a, [wPartyLimit]
+	ld b, a
 	ld a, [wPartyCount]
-	cp PARTY_LENGTH
-	jp z, .SendToPC
+	cp b
+	jp nc, .SendToPC
 
 	xor a ; PARTYMON
 	ld [wMonType], a

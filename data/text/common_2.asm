@@ -997,6 +997,14 @@ _PCCantTakeText::
 	line "more #MON."
 	prompt
 
+_BillsPC_OverLimitText::
+	text "Your party is over"
+	line "the limit!"
+	
+	para "Deposit some"
+	line "#MON first."
+	prompt
+
 _ContestCaughtMonText::
 	text "Caught @"
 	text_ram wStringBuffer1

@@ -2912,6 +2912,10 @@ wPermafaint::
 ; bit 3 = PC-withdraw notification pending (runtime only — set by TryPermadeathPCWithdraw)
 ; Placed last so old saves always read 0 (off) here rather than aliasing wPlayerAge
 	db
+wPartyLimit::
+; Maximum number of Pokémon allowed in the active party (1-6, default PARTY_LENGTH)
+; Old saves will have 0 here, which is treated as PARTY_LENGTH on load
+	db
 wCrystalDataEnd::
 
 wCrystalFlags::

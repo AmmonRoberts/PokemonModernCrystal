@@ -208,8 +208,8 @@ DragonShrineElder1Script:
 .GiveDratini:
 	writetext DragonShrineTakeThisDratiniText
 	waitbutton
-	readvar VAR_PARTYCOUNT
-	ifequal PARTY_LENGTH, .PartyFull
+	special CheckPartyAtLimit
+	iftrue .PartyFull
 	writetext DragonShrinePlayerReceivedDratiniText
 	playsound SFX_CAUGHT_MON
 	waitsfx
@@ -224,7 +224,18 @@ DragonShrineElder1Script:
 	end
 
 .PartyFull:
+	special GiveDratiniToBox
+	ifequal 1, .SentToBox
+	; wScriptVar == 0: box is also full
 	writetext DragonShrinePartyFullText
+	waitbutton
+	closetext
+	end
+
+.SentToBox:
+	writetext DragonShrineSentDratiniToPCText
+	setevent EVENT_GOT_DRATINI
+	setevent EVENT_TEMPORARY_UNTIL_MAP_RELOAD_7
 	waitbutton
 	closetext
 	end
@@ -518,6 +529,14 @@ DragonShrinePlayerReceivedDratiniText:
 DragonShrinePartyFullText:
 	text "Hm? Your #MON"
 	line "party is full."
+	done
+
+DragonShrineSentDratiniToPCText:
+	text "Your party is"
+	line "full!"
+
+	para "DRATINI was sent"
+	line "to BILL's PC."
 	done
 
 DragonShrineSymbolicDragonText:

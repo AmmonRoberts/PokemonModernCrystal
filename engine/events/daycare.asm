@@ -20,6 +20,7 @@
 	const DAYCARETEXT_NOT_ENOUGH_MONEY
 	const DAYCARETEXT_OH_FINE
 	const DAYCARETEXT_COME_AGAIN
+	const DAYCARETEXT_SENT_TO_PC
 
 DayCareMan:
 	ld hl, wDayCareMan
@@ -45,11 +46,20 @@ DayCareMan:
 	call DayCare_AskWithdrawBreedMon
 	jr c, .print_text
 	farcall RetrieveMonFromDayCareMan
+	jr c, .print_box_full
 	call DayCare_GetBackMonForMoney
+	ldh a, [hDayCareBoxResult]       ; 0 = party, 1 = PC box
+	and a
+	jr z, .clear_man                 ; 0 → went to party, no box msg
+	ld a, DAYCARETEXT_SENT_TO_PC
+	call PrintDayCareText
+.clear_man:
 	ld hl, wDayCareMan
 	res DAYCAREMAN_HAS_MON_F, [hl]
 	res DAYCAREMAN_MONS_COMPATIBLE_F, [hl]
 	jr .cancel
+.print_box_full:
+	ld a, DAYCARETEXT_PARTY_FULL
 
 .print_text
 	call PrintDayCareText
@@ -83,12 +93,21 @@ DayCareLady:
 	call DayCare_AskWithdrawBreedMon
 	jr c, .print_text
 	farcall RetrieveMonFromDayCareLady
+	jr c, .print_box_full
 	call DayCare_GetBackMonForMoney
+	ldh a, [hDayCareBoxResult]       ; 0 = party, 1 = PC box
+	and a
+	jr z, .clear_lady                ; 0 → went to party, no box msg
+	ld a, DAYCARETEXT_SENT_TO_PC
+	call PrintDayCareText
+.clear_lady:
 	ld hl, wDayCareLady
 	res DAYCARELADY_HAS_MON_F, [hl]
 	ld hl, wDayCareMan
 	res DAYCAREMAN_MONS_COMPATIBLE_F, [hl]
 	jr .cancel
+.print_box_full:
+	ld a, DAYCARETEXT_PARTY_FULL
 
 .print_text
 	call PrintDayCareText
@@ -204,9 +223,6 @@ DayCare_AskWithdrawBreedMon:
 	ld bc, wStringBuffer2 + 2
 	farcall CompareMoney
 	jr c, .not_enough_money
-	ld a, [wPartyCount]
-	cp PARTY_LENGTH
-	jr nc, .party_full
 	and a
 	ret
 
@@ -217,11 +233,6 @@ DayCare_AskWithdrawBreedMon:
 
 .not_enough_money
 	ld a, DAYCARETEXT_NOT_ENOUGH_MONEY
-	scf
-	ret
-
-.party_full
-	ld a, DAYCARETEXT_PARTY_FULL
 	scf
 	ret
 
@@ -293,6 +304,7 @@ PrintDayCareText:
 	dw .NotEnoughMoneyText ; 11
 	dw .OhFineThenText ; 12
 	dw .ComeAgainText ; 13
+	dw .SentToPCText ; 14
 
 .DayCareManIntroText:
 	text_far _DayCareManIntroText
@@ -374,6 +386,10 @@ PrintDayCareText:
 	text_far _ComeAgainText
 	text_end
 
+.SentToPCText:
+	text_far _DayCare_SentToPCText
+	text_end
+
 DayCareManOutside:
 	ld hl, wDayCareMan
 	bit DAYCAREMAN_HAS_EGG_F, [hl]
@@ -391,8 +407,10 @@ DayCareManOutside:
 	call PrintText
 	call YesNoBox
 	jr c, .Declined
+	ld a, [wPartyLimit]
+	ld b, a
 	ld a, [wPartyCount]
-	cp PARTY_LENGTH
+	cp b
 	jr nc, .PartyFull
 	call DayCare_GiveEgg
 	ld hl, wDayCareMan
@@ -447,8 +465,10 @@ DayCare_GiveEgg:
 	ld a, [wEggMonLevel]
 	ld [wCurPartyLevel], a
 	ld hl, wPartyCount
+	ld a, [wPartyLimit]
+	ld b, a
 	ld a, [hl]
-	cp PARTY_LENGTH
+	cp b
 	jr nc, .PartyFull
 	inc a
 	ld [hl], a

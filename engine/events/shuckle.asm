@@ -61,6 +61,34 @@ GiveShuckle:
 	ret
 
 .NotGiven:
+; Party is at wPartyLimit — try sending to the current PC box instead.
+	ld a, [wCurPartySpecies]
+	ld [wTempEnemyMonSpecies], a
+	farcall LoadEnemyMon
+	farcall SendMonIntoBox
+	jr nc, .BoxFull
+; Sent to box successfully — patch OT name, nickname, and OT ID so ReturnShuckie still works.
+	ld a, BANK(sBoxMonOTs)
+	call OpenSRAM
+	ld hl, sBoxMonOTs
+	ld de, SpecialShuckleOT
+	call CopyName2           ; "MANIA@" → OT slot 1
+	ld hl, sBoxMonNicknames
+	ld de, SpecialShuckleNickname
+	call CopyName2           ; "SHUCKIE@" → nickname slot 1
+	ld hl, sBoxMon1 + 1 + 1 + NUM_MOVES ; offset to OT ID field
+	ld a, HIGH(MANIA_OT_ID)
+	ld [hli], a
+	ld a, LOW(MANIA_OT_ID)
+	ld [hl], a
+	call CloseSRAM
+; Set daily flag and signal the script.
+	ld hl, wDailyFlags1
+	set DAILYFLAGS1_GOT_SHUCKIE_TODAY_F, [hl]
+	ld a, 2
+	ld [wScriptVar], a
+	ret
+.BoxFull:
 	xor a
 	ld [wScriptVar], a
 	ret

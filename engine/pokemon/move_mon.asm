@@ -6,15 +6,28 @@ TryAddMonToParty:
 	ld de, wPartyCount
 	ld a, [wMonType]
 	and $f
-	jr z, .getpartylocation ; PARTYMON
+	jr z, .player_party ; PARTYMON → enforce wPartyLimit
 	ld de, wOTPartyCount
 
 .getpartylocation
-	; Do we have room for it?
+	; Do we have room for it? (OT/enemy party — always hard cap)
 	ld a, [de]
 	inc a
 	cp PARTY_LENGTH + 1
 	ret nc
+	jr .got_room
+
+.player_party
+	; Player party — enforce wPartyLimit
+	ld a, [wPartyLimit]
+	inc a          ; threshold = wPartyLimit + 1
+	ld b, a
+	ld a, [de]
+	inc a
+	cp b
+	ret nc
+
+.got_room
 	; Increase the party count
 	ld [de], a
 	ld a, [de] ; Why are we doing this?
@@ -805,11 +818,12 @@ RetrieveMonFromDayCareLady:
 
 RetrieveBreedmon:
 	ld hl, wPartyCount
+	ld a, [wPartyLimit]
+	ld b, a
 	ld a, [hl]
-	cp PARTY_LENGTH
-	jr nz, .room_in_party
-	scf
-	ret
+	cp b
+	jr c, .room_in_party
+	jp RetrieveBreedmon_ToBox
 
 .room_in_party
 	inc a
@@ -897,7 +911,64 @@ RetrieveBreedmon:
 	ld [hli], a
 	ldh a, [hMultiplicand + 2]
 	ld [hl], a
+	xor a                   ; clear hDayCareBoxResult: mon went to party
+	ldh [hDayCareBoxResult], a
+	ret
+
+RetrieveBreedmon_ToBox:
+; Deposit a daycare mon into the current PC box when the party is at wPartyLimit.
+; wPokemonWithdrawDepositParameter: 0 = man's mon (wBreedMon1), nonzero = lady's (wBreedMon2).
+; Returns no-carry on success, carry if the box is also full.
+	ld a, BANK(sBoxCount)
+	call OpenSRAM
+	ld a, [sBoxCount]
+	cp MONS_PER_BOX
+	jr nc, .BoxFull
+	ld [wCurPartyMon], a    ; append: insert at slot = old sBoxCount
+	call CloseSRAM
+	ld a, [wPokemonWithdrawDepositParameter]
 	and a
+	jr z, .man
+	; Lady's mon (wBreedMon2)
+	ld hl, wBreedMon2
+	ld de, wBufferMon
+	ld bc, BOXMON_STRUCT_LENGTH
+	call CopyBytes
+	ld hl, wBreedMon2Nickname
+	ld de, wBufferMonNickname
+	ld bc, MON_NAME_LENGTH
+	call CopyBytes
+	ld hl, wBreedMon2OT
+	ld de, wBufferMonOT
+	ld bc, NAME_LENGTH
+	call CopyBytes
+	ld a, [wBreedMon2Species]
+	jr .insert
+.man
+	; Man's mon (wBreedMon1)
+	ld hl, wBreedMon1
+	ld de, wBufferMon
+	ld bc, BOXMON_STRUCT_LENGTH
+	call CopyBytes
+	ld hl, wBreedMon1Nickname
+	ld de, wBufferMonNickname
+	ld bc, MON_NAME_LENGTH
+	call CopyBytes
+	ld hl, wBreedMon1OT
+	ld de, wBufferMonOT
+	ld bc, NAME_LENGTH
+	call CopyBytes
+	ld a, [wBreedMon1Species]
+.insert
+	ld [wCurPartySpecies], a
+	callfar InsertPokemonIntoBox
+	ld a, 1                 ; set hDayCareBoxResult: mon sent to PC box
+	ldh [hDayCareBoxResult], a
+	and a                   ; no-carry = success
+	ret
+.BoxFull:
+	call CloseSRAM
+	scf
 	ret
 
 GetLastPartyMon:

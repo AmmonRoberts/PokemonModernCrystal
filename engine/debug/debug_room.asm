@@ -44,6 +44,7 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_TM_FREE      ; 20
 	const DEBUGROOMMENUITEM_POIS_SVL     ; 21
 	const DEBUGROOMMENUITEM_AUTO_NICK    ; 22
+	const DEBUGROOMMENUITEM_PARTY_LIMIT  ; 23
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -84,6 +85,7 @@ _DebugRoom::
 	call DebugRoom_PrintPermafaint
 	call DebugRoom_PrintResetOnWipe
 	call DebugRoom_PrintRareCandyMart
+	call DebugRoom_PrintPartyLimit
 	jr .status_done
 .page3_status
 	call DebugRoom_PrintTelDebug
@@ -167,6 +169,7 @@ _DebugRoom::
 	db "TM FREE@"
 	db "POIS SVL@"
 	db "AUTO NICK@"
+	db "PARTY LIM@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -205,6 +208,7 @@ _DebugRoom::
 	dw DebugRoomMenu_TMFree
 	dw DebugRoomMenu_PoisSvl
 	dw DebugRoomMenu_AutoNick
+	dw DebugRoomMenu_PartyLimit
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -246,12 +250,13 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_4
-	db 6
+	db 7
 	db DEBUGROOMMENUITEM_EXP_MULT
 	db DEBUGROOMMENUITEM_PERMAFAINT
 	db DEBUGROOMMENUITEM_RESET_ON_WIPE
 	db DEBUGROOMMENUITEM_BADGE_EDIT
 	db DEBUGROOMMENUITEM_RARE_CANDY_MART
+	db DEBUGROOMMENUITEM_PARTY_LIMIT
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -707,6 +712,49 @@ DebugRoomMenu_RareCandyMart:
 .ok
 	ld [wRareCandyMart], a
 	ret
+
+DebugRoomMenu_PartyLimit:
+	ld a, [wPartyLimit]
+	inc a
+	cp PARTY_LENGTH + 1
+	jr c, .ok
+	ld a, 1
+.ok
+	ld [wPartyLimit], a
+	ret
+
+DebugRoom_PrintPartyLimit:
+	hlcoord 16, 5
+	ld de, .Label
+	call PlaceString
+	ld a, [wPartyLimit]
+	dec a              ; 1-6 → 0-5
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 16, 6
+	call PlaceString
+	ret
+
+.Label:   db "PTYL:@"
+.Strings:
+	dw .str_1
+	dw .str_2
+	dw .str_3
+	dw .str_4
+	dw .str_5
+	dw .str_6
+.str_1: db "   1@"
+.str_2: db "   2@"
+.str_3: db "   3@"
+.str_4: db "   4@"
+.str_5: db "   5@"
+.str_6: db "   6@"
 
 DebugRoom_PrintPermafaint:
 	hlcoord 16, 3

@@ -139,6 +139,9 @@ SpecialsPointers::
 	add_special Function11ba38
 	add_special CheckForBattleTowerRules
 	add_special GiveOddEgg
+	add_special CheckPartyAtLimit
+	add_special GiveKenyaToBox
+	add_special ClaimKenyaMailFromMailbox
 	add_special Reset ; bank 0
 	add_special Function1011f1
 	add_special Function101220
@@ -162,6 +165,9 @@ SpecialsPointers::
 	add_special BuenasPassword
 	add_special BuenaPrize
 	add_special GiveDratini
+	add_special GiveDratiniToBox
+	add_special GiveEeveeToBox
+	add_special GiveTyrogueToBox
 	add_special SampleKenjiBreakCountdown
 	add_special BeastsCheck
 	add_special MonCheck

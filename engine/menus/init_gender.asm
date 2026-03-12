@@ -14,6 +14,9 @@ InitCrystalData:
 	ld [wRandomStarter2], a
 	ld [wRandomStarter3], a
 	ld [wPermafaint], a
+	ld a, PARTY_LENGTH
+	ld [wPartyLimit], a
+	xor a
 	ld [wPlayerPostalCode], a
 	ld [wPlayerPostalCode+1], a
 	ld [wPlayerPostalCode+2], a

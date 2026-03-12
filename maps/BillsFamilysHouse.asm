@@ -19,8 +19,8 @@ BillScript:
 	writetext BillImCountingOnYouText
 	promptbutton
 	waitsfx
-	readvar VAR_PARTYCOUNT
-	ifequal PARTY_LENGTH, .NoRoom
+	special CheckPartyAtLimit
+	iftrue .NoRoom
 	writetext ReceivedEeveeText
 	playsound SFX_CAUGHT_MON
 	waitsfx
@@ -32,7 +32,17 @@ BillScript:
 	end
 
 .NoRoom:
+	special GiveEeveeToBox
+	ifequal 1, .SentToBox
+	; wScriptVar == 0: box is also full
 	writetext BillPartyFullText
+	waitbutton
+	closetext
+	end
+
+.SentToBox:
+	writetext BillEeveeSentToPCText
+	setevent EVENT_GOT_EEVEE
 	waitbutton
 	closetext
 	end
@@ -157,6 +167,14 @@ BillPartyFullText:
 	text "Whoa, wait. You"
 	line "can't carry any"
 	cont "more #MON."
+	done
+
+BillEeveeSentToPCText:
+	text "Your party is"
+	line "full!"
+	
+	para "EEVEE was sent to"
+	line "BILL's PC."
 	done
 
 BillNoEeveeText:
