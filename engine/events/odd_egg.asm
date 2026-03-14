@@ -1,6 +1,7 @@
-_GiveOddEgg:
+PrepareOddEggData:
+; Selects a random OddEgg entry, copies it into wOddEgg, optionally
+; randomises the species and moveset, then removes the EGG_TICKET.
 	; Figure out which egg to give.
-
 	; Compare a random word to probabilities out of $ffff.
 	call Random
 	ld hl, OddEggProbabilities
@@ -109,6 +110,10 @@ _GiveOddEgg:
 	ld [wCurItemQuantity], a
 	ld hl, wNumItems
 	call TossItem
+	ret
+
+_GiveOddEgg:
+	call PrepareOddEggData
 
 	; load species in wMobileMonSpecies
 	ld a, EGG
@@ -151,9 +156,11 @@ INCLUDE "data/events/odd_eggs.asm"
 
 GiveOddEggToBox::
 ; Deposits the Odd Egg into the current PC box when the party is at limit.
-; Preserves the egg's DVs, moves, and hatch counter from wOddEgg.
+; Calls PrepareOddEggData to select/randomise the egg and remove the ticket,
+; then sends it to the box. Preserves DVs, moves, and hatch counter.
 ; Sets wScriptVar: 0 = box also full, 1 = sent to box successfully.
-	; Set EGG as the species entry in the box species list.
+	call PrepareOddEggData
+	; Set EGG as the species entry in the box species list; EGG_LEVEL for exp.
 	ld a, EGG
 	ld [wCurPartySpecies], a
 	ld a, EGG_LEVEL
