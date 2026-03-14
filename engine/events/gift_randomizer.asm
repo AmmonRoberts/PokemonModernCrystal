@@ -125,6 +125,11 @@ GiftAskNicknameBox::
 	ld a, [wModFlags]
 	bit MODFLAG_AUTO_NICKNAME_F, a
 	jr nz, .AutoNickname
+	; _CaughtAskNicknameText uses wStringBuffer1 for the species name — copy it there
+	ld hl, wMonOrItemNameBuffer
+	ld de, wStringBuffer1
+	ld bc, MON_NAME_LENGTH
+	call CopyBytes
 	; Manual path: ask the player
 	farcall GiveANickname_YesNo
 	ret c                        ; player said no — species name already in sBoxMonNicknames
@@ -161,7 +166,12 @@ GiftAskNicknameBox::
 GiftAskNicknameParty::
 	ld a, [wModFlags]
 	bit MODFLAG_AUTO_NICKNAME_F, a
-	jr nz, GiftAutoNicknameParty ; auto-nickname path (jumps there, which rets)
+	jp nz, GiftAutoNicknameParty ; auto-nickname path (jumps there, which rets)
+	; _CaughtAskNicknameText uses wStringBuffer1 for the species name — copy it there
+	ld hl, wMonOrItemNameBuffer
+	ld de, wStringBuffer1
+	ld bc, MON_NAME_LENGTH
+	call CopyBytes
 	; Ask the player
 	farcall GiveANickname_YesNo
 	ret c                ; carry = player said "no" → keep species name

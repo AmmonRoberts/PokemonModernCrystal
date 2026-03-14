@@ -161,8 +161,8 @@ MountMortarB1FKiyoSentTyrogue:
 	text "Your party is"
 	line "full!"
 
-	para "The #MON was sent"
-	line "to BILL's PC."
+	para "The #MON was"
+	line "sent to BILL's PC."
 	done
 
 MountMortarB1F_MapEvents:

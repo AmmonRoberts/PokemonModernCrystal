@@ -150,8 +150,8 @@ ManiaText_SentToPC:
 	text "Your party is"
 	line "full!"
 	
-	para "The #MON was sent"
-	line "to your PC."
+	para "The #MON was"
+	line "sent to BILL's PC."
 	done
 
 ManiaText_PartyFull:
