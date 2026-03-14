@@ -729,7 +729,7 @@ DebugRoomMenu_PartyLimit:
 	ret
 
 DebugRoom_PrintPartyLimit:
-	hlcoord 16, 5
+	hlcoord 16, 9
 	ld de, .Label
 	call PlaceString
 	ld a, [wPartyLimit]
@@ -742,7 +742,7 @@ DebugRoom_PrintPartyLimit:
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	hlcoord 16, 6
+	hlcoord 16, 10
 	call PlaceString
 	ret
 
@@ -772,7 +772,7 @@ DebugRoomMenu_GiftRando:
 	ret
 
 DebugRoom_PrintGiftRando:
-	hlcoord 16, 12
+	hlcoord 16, 15
 	ld de, .Label
 	call PlaceString
 	ld a, [wGiftRandMode]
@@ -784,7 +784,7 @@ DebugRoom_PrintGiftRando:
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	hlcoord 16, 13
+	hlcoord 16, 16
 	call PlaceString
 	ret
 
