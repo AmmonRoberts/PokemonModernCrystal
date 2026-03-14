@@ -173,7 +173,7 @@ Route35GoldenrodGateSentKenyaToPCText:
 	line "full!"
 	
 	para "KENYA was sent"
-	cont "to BILL's PC."
+	line "to BILL's PC."
 
 	para "The MAIL was sent"
 	line "to your MAIL BOX!"
@@ -184,7 +184,7 @@ Route35GoldenrodGateSentKenyaToPCNoMailText:
 	line "full!"
 	
 	para "KENYA was sent"
-	cont "to BILL's PC."
+	line "to BILL's PC."
 
 	para "Sorry, your MAIL"
 	line "BOX was full, so"
