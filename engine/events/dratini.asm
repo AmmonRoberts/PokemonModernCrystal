@@ -127,7 +127,7 @@ GiveDratiniToBox::
 ; Deposits the prepared gift mon (lv. 15) into the current PC box when the party is at limit.
 ; In STANDARD mode, applies the Extremespeed moveset unless EVENT_ANSWERED_DRAGON_MASTER_QUIZ_WRONG
 ; is set — mirroring GiveDratini's logic.
-; In RANDOMIZED mode, EXTREMESPEED (if quiz was passed) is taught by TeachExtremeSpeedGift.
+; In RANDOMIZED mode, teaches EXTREMESPEED if quiz was passed (handles this internally).
 ; Sets wScriptVar: 0 = box also full, 1 = sent to box successfully.
 	ld a, [wCurPartySpecies] ; species set by PrepareDratiniGift
 	ld [wTempEnemyMonSpecies], a
@@ -137,11 +137,192 @@ GiveDratiniToBox::
 	ld [wMonType], a
 	farcall LoadEnemyMon
 	farcall SendMonIntoBox
-	jr nc, .BoxFull
-; Successfully sent to box. In STANDARD mode, patch the moveset and PP in the new box mon.
+	jp nc, .BoxFull
+; Successfully sent to box.
+; In STANDARD mode, patch the moveset based on quiz result.
+; In RANDOMIZED mode, teach EXTREMESPEED if quiz was passed.
 	ld a, [wGiftRandMode]
 	cp GIFT_RAND_STANDARD
-	jr nz, .SkipMoveset
+	jp z, .StandardMoveset
+	cp GIFT_RAND_RANDOMIZED
+	jp nz, .SkipMoveset
+	; RANDOMIZED mode: teach EXTREMESPEED only if quiz was passed
+	ld de, EVENT_ANSWERED_DRAGON_MASTER_QUIZ_WRONG
+	ld b, CHECK_FLAG
+	call EventFlagAction
+	ld a, c
+	and a
+	jp nz, .SkipMoveset        ; quiz wrong — skip
+	; Find best slot: empty first, then highest PP, tie-break = first non-damaging.
+	; wCurPartyLevel is safe scratch (already consumed by LoadEnemyMon).
+	ld a, BANK(sBoxMon1)
+	call OpenSRAM
+
+	; Phase 1 — find the first empty slot (move id = 0)
+	ld b, 0              ; b = slot index
+.BoxEmptySearch:
+	ld hl, sBoxMon1 + 2
+	ld a, l
+	add b
+	ld l, a
+	jr nc, .BES_NC
+	inc h
+.BES_NC:
+	ld a, [hl]
+	and a
+	jp z, .BoxWriteES    ; empty → b = slot index, write directly
+	inc b
+	ld a, b
+	cp NUM_MOVES
+	jr nz, .BoxEmptySearch
+
+	; Pass A — highest PP across all occupied slots → wCurPartyLevel
+	ld b, 0              ; b = best PP
+	ld d, 0              ; d = slot index
+.BoxPassA:
+	ld hl, sBoxMon1 + 2
+	ld a, l
+	add d
+	ld l, a
+	jr nc, .BPassANC
+	inc h
+.BPassANC:
+	ld a, [hl]
+	and a
+	jr z, .BoxPassANext
+	push bc
+	push de
+	dec a
+	ld hl, Moves + MOVE_PP
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	pop de
+	pop bc
+	cp b
+	jr c, .BoxPassANext
+	ld b, a
+.BoxPassANext:
+	inc d
+	ld a, d
+	cp NUM_MOVES
+	jr nz, .BoxPassA
+	ld a, b
+	ld [wCurPartyLevel], a   ; save best PP
+
+	; Pass B — first non-damaging slot with PP == best PP
+	ld b, NUM_MOVES
+	ld d, 0
+.BoxPassB:
+	ld hl, sBoxMon1 + 2
+	ld a, l
+	add d
+	ld l, a
+	jr nc, .BPassBNC
+	inc h
+.BPassBNC:
+	ld a, [hl]
+	and a
+	jr z, .BoxPassBNext
+	push bc
+	push de
+	ld e, a
+	dec a
+	ld hl, Moves + MOVE_PP
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	ld b, a
+	ld a, [wCurPartyLevel]
+	cp b
+	jr nz, .BoxPassBPop
+	ld a, e
+	dec a
+	ld hl, Moves + MOVE_POWER
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	and a
+	jr nz, .BoxPassBPop
+	pop de
+	pop bc
+	ld b, d
+	jr .BoxWriteES
+.BoxPassBPop:
+	pop de
+	pop bc
+.BoxPassBNext:
+	inc d
+	ld a, d
+	cp NUM_MOVES
+	jr nz, .BoxPassB
+	ld a, b
+	cp NUM_MOVES
+	jr nz, .BoxWriteES
+
+	; Pass C — first slot (any type) with PP == best PP
+	ld b, NUM_MOVES - 1
+	ld d, 0
+.BoxPassC:
+	ld hl, sBoxMon1 + 2
+	ld a, l
+	add d
+	ld l, a
+	jr nc, .BPassCNC
+	inc h
+.BPassCNC:
+	ld a, [hl]
+	and a
+	jr z, .BoxPassCNext
+	push bc
+	push de
+	dec a
+	ld hl, Moves + MOVE_PP
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	ld c, a
+	ld a, [wCurPartyLevel]
+	cp c
+	pop de
+	pop bc
+	jr nz, .BoxPassCNext
+	ld b, d
+	jr .BoxWriteES
+.BoxPassCNext:
+	inc d
+	ld a, d
+	cp NUM_MOVES
+	jr nz, .BoxPassC
+
+.BoxWriteES:
+	; b = target slot index (0-3)
+	ld hl, sBoxMon1 + 2
+	ld a, l
+	add b
+	ld l, a
+	jr nc, .BWriteNC
+	inc h
+.BWriteNC:
+	ld [hl], EXTREMESPEED
+	ld bc, MON_PP - MON_MOVES
+	add hl, bc                 ; hl = PP slot for EXTREMESPEED
+	push hl
+	ld a, EXTREMESPEED - 1     ; 0-based move index
+	ld hl, Moves + MOVE_PP
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte            ; a = max PP of EXTREMESPEED
+	pop hl
+	ld [hl], a
+	call CloseSRAM
+	jp .SkipMoveset
+.StandardMoveset:
 	ld de, EVENT_ANSWERED_DRAGON_MASTER_QUIZ_WRONG
 	ld b, CHECK_FLAG
 	call EventFlagAction

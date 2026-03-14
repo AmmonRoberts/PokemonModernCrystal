@@ -199,9 +199,9 @@ GiftAskNicknameParty::
 ; TeachExtremeSpeedToLastPartyMon
 ; ---------------------------------------------------------------------------
 ; Teaches EXTREMESPEED to the party mon at index wCurPartyMon.
-; If a free move slot exists, uses it; otherwise replaces the slot holding the
-; lowest non-zero base power (the "weakest damaging" move).  If every move is
-; a status move (power = 0), slot 3 (the last move) is used as a fallback.
+; If a free move slot exists, uses it; otherwise picks the occupied slot with
+; the highest PP (a proxy for "early/weak move"). On a PP tie, the first
+; non-damaging (status) move wins; if still tied, the first match is used.
 ;
 ; Input:  wCurPartyMon = party index of the target mon
 ; Destroys: A, B, C, D, E, HL
@@ -217,60 +217,150 @@ TeachExtremeSpeedToLastPartyMon::
 .EmptySearch:
 	ld a, [hli]               ; read slot, advance HL
 	and a
-	jr z, .GotSlot            ; empty → b = slot index
+	jp z, .GotSlot            ; empty -> b = slot index
 	inc b
 	ld a, b
 	cp NUM_MOVES
 	jr nz, .EmptySearch
 
-	; ── Phase 2: find the weakest damaging move ──────────────────────────────
-	; Stack: [BASE_A]
+	; ── Phase 2: highest PP; tie-break → first non-damaging slot ─────────────
+	; wCurPartyMon is safe scratch after its initial read above.
+	; Stack throughout phase 2: [BASE]
+
+	; Pass A — find the highest PP across all occupied slots → wCurPartyMon
 	pop hl
-	push hl                   ; restore BASE on stack
-	ld b, NUM_MOVES - 1       ; b = best slot (default = last slot)
-	ld c, $00                 ; c = lowest power found so far (0 = none yet)
-	ld d, 0                   ; d = current slot index
-.PowerSearch:
-	pop hl                    ; BASE_A
-	push hl                   ; restore
+	push hl
+	ld b, 0              ; b = highest PP seen
+	ld d, 0              ; d = current slot index
+.PassA:
+	pop hl
+	push hl              ; HL = BASE
 	ld a, l
 	add d
 	ld l, a
-	jr nc, .PSNoCarry
+	jr nc, .PassANoCarry
 	inc h
-.PSNoCarry:
-	ld a, [hl]                ; move id in slot d
+.PassANoCarry:
+	ld a, [hl]
 	and a
-	jr z, .PSNext             ; empty slot — skip
+	jr z, .PassANext     ; empty slot — skip
 	push bc
 	push de
-	dec a                     ; 0-based move index
+	dec a
+	ld hl, Moves + MOVE_PP
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte      ; a = max PP
+	pop de
+	pop bc
+	cp b
+	jr c, .PassANext     ; a < b -> not higher, skip
+	ld b, a              ; new best PP
+.PassANext:
+	inc d
+	ld a, d
+	cp NUM_MOVES
+	jr nz, .PassA
+	ld a, b
+	ld [wCurPartyMon], a ; save best PP
+
+	; Pass B — first non-damaging slot whose PP == best PP
+	pop hl
+	push hl
+	ld b, NUM_MOVES      ; NUM_MOVES = "not found"
+	ld d, 0
+.PassB:
+	pop hl
+	push hl
+	ld a, l
+	add d
+	ld l, a
+	jr nc, .PassBNoCarry
+	inc h
+.PassBNoCarry:
+	ld a, [hl]
+	and a
+	jr z, .PassBNext
+	push bc
+	push de
+	ld e, a              ; save move id (1-based)
+	dec a
+	ld hl, Moves + MOVE_PP
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte      ; a = PP
+	ld b, a
+	ld a, [wCurPartyMon]
+	cp b
+	jr nz, .PassBPop     ; PP != best, skip
+	; PP matches — check power
+	ld a, e
+	dec a
 	ld hl, Moves + MOVE_POWER
 	ld bc, MOVE_LENGTH
 	call AddNTimes
 	ld a, BANK(Moves)
-	call GetFarByte           ; a = base power
+	call GetFarByte      ; a = power
+	and a
+	jr nz, .PassBPop     ; damaging — skip
+	; Found: first non-damaging slot with best PP
 	pop de
 	pop bc
-	and a                     ; power = 0 → status move, skip
-	jr z, .PSNext
-	; Compare: looking for the LOWEST non-zero power
-	ld e, a                   ; e = this move's power
-	ld a, c
-	and a                     ; c = 0 means no damaging move found yet
-	jr z, .PSFirstDamaging
-	ld a, e
-	cp c                      ; is this power < current lowest?
-	jr nc, .PSNext            ; no, skip
-.PSFirstDamaging:
-	ld c, e                   ; new lowest power
-	ld b, d                   ; this slot is the candidate
-.PSNext:
+	ld b, d
+	jr .GotSlot
+.PassBPop:
+	pop de
+	pop bc
+.PassBNext:
 	inc d
 	ld a, d
 	cp NUM_MOVES
-	jr nz, .PowerSearch
-	; b = target slot index
+	jr nz, .PassB
+	; If Pass B found something (b != NUM_MOVES) use it
+	ld a, b
+	cp NUM_MOVES
+	jr nz, .GotSlot
+
+	; Pass C — first slot (any type) with PP == best PP
+	pop hl
+	push hl
+	ld b, NUM_MOVES - 1  ; fallback: last slot
+	ld d, 0
+.PassC:
+	pop hl
+	push hl
+	ld a, l
+	add d
+	ld l, a
+	jr nc, .PassCNoCarry
+	inc h
+.PassCNoCarry:
+	ld a, [hl]
+	and a
+	jr z, .PassCNext
+	push bc
+	push de
+	dec a
+	ld hl, Moves + MOVE_PP
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	ld c, a
+	ld a, [wCurPartyMon]
+	cp c
+	pop de
+	pop bc
+	jr nz, .PassCNext
+	ld b, d
+	jr .GotSlot
+.PassCNext:
+	inc d
+	ld a, d
+	cp NUM_MOVES
+	jr nz, .PassC
 
 .GotSlot:
 	; b = target slot (0-3)
