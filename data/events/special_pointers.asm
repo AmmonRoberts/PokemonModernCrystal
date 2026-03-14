@@ -139,6 +139,7 @@ SpecialsPointers::
 	add_special Function11ba38
 	add_special CheckForBattleTowerRules
 	add_special GiveOddEgg
+	add_special GiveOddEggToBox
 	add_special CheckPartyAtLimit
 	add_special GiveKenyaToBox
 	add_special ClaimKenyaMailFromMailbox
