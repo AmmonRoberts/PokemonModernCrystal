@@ -206,6 +206,8 @@ DragonShrineElder1Script:
 	end
 
 .GiveDratini:
+	special PrepareDratiniGift
+	ifequal GIFT_RESULT_DISABLED, .DontGiveDratiniYet
 	writetext DragonShrineTakeThisDratiniText
 	waitbutton
 	special CheckPartyAtLimit
@@ -213,11 +215,16 @@ DragonShrineElder1Script:
 	writetext DragonShrinePlayerReceivedDratiniText
 	playsound SFX_CAUGHT_MON
 	waitsfx
-	givepoke DRATINI, 15
+	promptbutton
+	special GiveGiftMonToParty
 	checkevent EVENT_ANSWERED_DRAGON_MASTER_QUIZ_WRONG
 	special GiveDratini
+	special TeachExtremeSpeedGift
 	setevent EVENT_GOT_DRATINI
 	setevent EVENT_TEMPORARY_UNTIL_MAP_RELOAD_7
+	special GiftAskNicknameParty
+	closetext
+	opentext
 	writetext DragonShrineSymbolicDragonText
 	waitbutton
 	closetext
@@ -233,6 +240,9 @@ DragonShrineElder1Script:
 	end
 
 .SentToBox:
+	special GiftAskNicknameBox
+	closetext
+	opentext
 	writetext DragonShrineSentDratiniToPCText
 	setevent EVENT_GOT_DRATINI
 	setevent EVENT_TEMPORARY_UNTIL_MAP_RELOAD_7
@@ -522,8 +532,9 @@ DragonShrineTakeThisDratiniText:
 	done
 
 DragonShrinePlayerReceivedDratiniText:
-	text "<PLAYER> received"
-	line "DRATINI!"
+	text "<PLAYER> received<LINE>@"
+	text_ram wMonOrItemNameBuffer
+	text "!"
 	done
 
 DragonShrinePartyFullText:
@@ -535,7 +546,7 @@ DragonShrineSentDratiniToPCText:
 	text "Your party is"
 	line "full!"
 
-	para "DRATINI was sent"
+	para "The #MON was sent"
 	line "to BILL's PC."
 	done
 

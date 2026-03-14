@@ -45,6 +45,7 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_POIS_SVL     ; 21
 	const DEBUGROOMMENUITEM_AUTO_NICK    ; 22
 	const DEBUGROOMMENUITEM_PARTY_LIMIT  ; 23
+	const DEBUGROOMMENUITEM_GIFT_RANDO   ; 24
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -86,6 +87,7 @@ _DebugRoom::
 	call DebugRoom_PrintResetOnWipe
 	call DebugRoom_PrintRareCandyMart
 	call DebugRoom_PrintPartyLimit
+	call DebugRoom_PrintGiftRando
 	jr .status_done
 .page3_status
 	call DebugRoom_PrintTelDebug
@@ -170,6 +172,7 @@ _DebugRoom::
 	db "POIS SVL@"
 	db "AUTO NICK@"
 	db "PARTY LIM@"
+	db "GIFT RANDO@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -209,6 +212,7 @@ _DebugRoom::
 	dw DebugRoomMenu_PoisSvl
 	dw DebugRoomMenu_AutoNick
 	dw DebugRoomMenu_PartyLimit
+	dw DebugRoomMenu_GiftRando
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -250,13 +254,14 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_4
-	db 7
+	db 8
 	db DEBUGROOMMENUITEM_EXP_MULT
 	db DEBUGROOMMENUITEM_PERMAFAINT
 	db DEBUGROOMMENUITEM_RESET_ON_WIPE
 	db DEBUGROOMMENUITEM_BADGE_EDIT
 	db DEBUGROOMMENUITEM_RARE_CANDY_MART
 	db DEBUGROOMMENUITEM_PARTY_LIMIT
+	db DEBUGROOMMENUITEM_GIFT_RANDO
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -755,6 +760,42 @@ DebugRoom_PrintPartyLimit:
 .str_4: db "   4@"
 .str_5: db "   5@"
 .str_6: db "   6@"
+
+DebugRoomMenu_GiftRando:
+	ld a, [wGiftRandMode]
+	inc a
+	cp NUM_GIFT_RAND_MODES
+	jr c, .ok
+	xor a
+.ok
+	ld [wGiftRandMode], a
+	ret
+
+DebugRoom_PrintGiftRando:
+	hlcoord 16, 12
+	ld de, .Label
+	call PlaceString
+	ld a, [wGiftRandMode]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 16, 13
+	call PlaceString
+	ret
+
+.Label:      db "GIFT:@"
+.Strings:
+	dw .Standard
+	dw .Randomized
+	dw .Disabled
+.Standard:   db " STD@"
+.Randomized: db "RAND@"
+.Disabled:   db " DIS@"
 
 DebugRoom_PrintPermafaint:
 	hlcoord 16, 3

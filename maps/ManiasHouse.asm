@@ -16,6 +16,8 @@ ManiaScript:
 	writetext ManiaText_AskLookAfterShuckle
 	yesorno
 	iffalse .refusetotakeshuckie
+	special PrepareShuckieGift
+	ifequal GIFT_RESULT_DISABLED, .partyfull
 	special GiveShuckle
 	iffalse .partyfull
 	ifequal 2, .senttopc
@@ -139,15 +141,16 @@ ManiaText_TakeCareOfShuckle:
 	done
 
 ManiaText_GotShuckle:
-	text "<PLAYER> received a"
-	line "#MON."
+	text "<PLAYER> received<LINE>@"
+	text_ram wMonOrItemNameBuffer
+	text "!"
 	done
 
 ManiaText_SentToPC:
 	text "Your party is"
 	line "full!"
 	
-	para "SHUCKIE was sent"
+	para "The #MON was sent"
 	line "to your PC."
 	done
 

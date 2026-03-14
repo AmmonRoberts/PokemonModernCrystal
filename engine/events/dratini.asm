@@ -1,7 +1,20 @@
+PrepareDratiniGift::
+	ld a, DRATINI
+	ld [wCurPartySpecies], a  ; set default before farcall (farcall clobbers A)
+	farcall PrepareGiftMon
+	ld a, 15
+	ld [wCurPartyLevel], a
+	ret
+
 GiveDratini:
-; if wScriptVar is 0 or 1, change the moveset of the last Dratini in the party.
+; if wScriptVar is 0 or 1, change the moveset of the last matching species in the party.
 ;  0: give it a special moveset with Extremespeed.
 ;  1: give it the normal moveset of a level 15 Dratini.
+; In RANDOMIZED mode, the species won't be DRATINI so this function is a no-op;
+; TeachExtremeSpeedGift handles EXTREMESPEED for randomized species.
+	ld a, [wGiftRandMode]
+	cp GIFT_RAND_STANDARD
+	ret nz ; RANDOMIZED / DISABLED — skip Dratini-specific moveset
 
 	ld a, [wScriptVar]
 	cp $2
@@ -111,12 +124,12 @@ GiveDratini:
 	ret
 
 GiveDratiniToBox::
-; Deposits Dratini (lv. 15) into the current PC box when the party is at limit.
-; Applies the Extremespeed moveset unless EVENT_ANSWERED_DRAGON_MASTER_QUIZ_WRONG is set,
-; in which case the standard level-15 moveset is used — mirroring GiveDratini's logic.
+; Deposits the prepared gift mon (lv. 15) into the current PC box when the party is at limit.
+; In STANDARD mode, applies the Extremespeed moveset unless EVENT_ANSWERED_DRAGON_MASTER_QUIZ_WRONG
+; is set — mirroring GiveDratini's logic.
+; In RANDOMIZED mode, EXTREMESPEED (if quiz was passed) is taught by TeachExtremeSpeedGift.
 ; Sets wScriptVar: 0 = box also full, 1 = sent to box successfully.
-	ld a, DRATINI
-	ld [wCurPartySpecies], a
+	ld a, [wCurPartySpecies] ; species set by PrepareDratiniGift
 	ld [wTempEnemyMonSpecies], a
 	ld a, 15
 	ld [wCurPartyLevel], a
@@ -125,7 +138,10 @@ GiveDratiniToBox::
 	farcall LoadEnemyMon
 	farcall SendMonIntoBox
 	jr nc, .BoxFull
-; Successfully sent to box. Patch the moveset and PP in the new box mon.
+; Successfully sent to box. In STANDARD mode, patch the moveset and PP in the new box mon.
+	ld a, [wGiftRandMode]
+	cp GIFT_RAND_STANDARD
+	jr nz, .SkipMoveset
 	ld de, EVENT_ANSWERED_DRAGON_MASTER_QUIZ_WRONG
 	ld b, CHECK_FLAG
 	call EventFlagAction
@@ -162,6 +178,7 @@ GiveDratiniToBox::
 	jr .Loop
 .Done:
 	call CloseSRAM
+.SkipMoveset:
 	ld a, 1
 	ld [wScriptVar], a
 	ret

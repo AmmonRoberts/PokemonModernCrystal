@@ -22,9 +22,10 @@ VioletPokecenter1F_ElmsAideScript:
 .AskTakeEgg:
 	yesorno
 	iffalse .RefusedEgg
-	special CheckPartyAtLimit
-	iftrue .PartyFull
-	giveegg TOGEPI, EGG_LEVEL
+	special GiveTogepiGift
+	ifequal GIFT_RESULT_DISABLED, .RefusedEgg
+	ifequal GIFT_RESULT_FULL, .PartyFull
+	; GIFT_RESULT_PARTY (1) — egg added to party
 	getstring STRING_BUFFER_4, .eggname
 	scall .AideGivesEgg
 	setevent EVENT_GOT_TOGEPI_EGG_FROM_ELMS_AIDE

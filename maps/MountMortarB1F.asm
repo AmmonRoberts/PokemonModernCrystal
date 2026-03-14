@@ -32,13 +32,24 @@ MountMortarB1FKiyoScript:
 	writetext MountMortarB1FTyrogueRewardText
 	promptbutton
 	waitsfx
+	special PrepareTyrogueGift
+	ifequal GIFT_RESULT_DISABLED, .GotTyrogue
 	special CheckPartyAtLimit
 	iftrue .NoRoom
 	writetext MountMortarB1FReceiveMonText
 	playsound SFX_CAUGHT_MON
 	waitsfx
-	givepoke TYROGUE, 10
+	promptbutton
+	special GiveGiftMonToParty
 	setevent EVENT_GOT_TYROGUE_FROM_KIYO
+	special GiftAskNicknameParty
+	closetext
+	opentext
+	writetext MountMortarB1FKiyoGotTyrogueText
+	waitbutton
+	closetext
+	end
+
 .GotTyrogue:
 	writetext MountMortarB1FKiyoGotTyrogueText
 	waitbutton
@@ -55,6 +66,9 @@ MountMortarB1FKiyoScript:
 	end
 
 .SentToBox:
+	special GiftAskNicknameBox
+	closetext
+	opentext
 	writetext MountMortarB1FKiyoSentTyrogue
 	setevent EVENT_GOT_TYROGUE_FROM_KIYO
 	waitbutton
@@ -119,8 +133,9 @@ MountMortarB1FTyrogueRewardText:
 	done
 
 MountMortarB1FReceiveMonText:
-	text "<PLAYER> received"
-	line "TYROGUE."
+	text "<PLAYER> received<LINE>@"
+	text_ram wMonOrItemNameBuffer
+	text "!"
 	done
 
 MountMortarB1FKiyoGotTyrogueText:
@@ -146,7 +161,7 @@ MountMortarB1FKiyoSentTyrogue:
 	text "Your party is"
 	line "full!"
 
-	para "TYROGUE was sent"
+	para "The #MON was sent"
 	line "to BILL's PC."
 	done
 

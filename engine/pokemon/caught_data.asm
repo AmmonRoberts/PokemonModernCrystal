@@ -258,8 +258,52 @@ SaveCrystalData::
 	call CopyBytes
 	jp CloseSRAM
 
-CheckPartyAtLimit::
-; Sets wScriptVar = 1 if wPartyCount >= wPartyLimit, 0 otherwise.
+; ---------------------------------------------------------------------------
+; GiveGiftMonToParty
+; ---------------------------------------------------------------------------
+; Adds wCurPartySpecies / wCurPartyLevel to the player's party (or box if full).
+; Sets wCurItem = 0 (no held item for standard gift mons).
+; Output: wScriptVar = GIFT_RESULT_PARTY (1), GIFT_RESULT_BOX (2), GIFT_RESULT_FULL (3)
+GiveGiftMonToParty::
+	xor a
+	ld [wCurItem], a     ; no held item
+	ld [wMonType], a     ; PARTYMON
+	predef TryAddMonToParty
+	jr nc, .TryBox
+
+	; ── Added to party ──────────────────────────────────────────────────────
+	ld a, [wPartyCount]
+	dec a
+	ld [wCurPartyMon], a
+	ld b, CAUGHT_BY_UNKNOWN
+	call SetGiftPartyMonCaughtData ; same bank — direct call, no farcall needed
+	ld a, GIFT_RESULT_PARTY
+	ld [wScriptVar], a
+	ret
+
+.TryBox:
+	; ── Party full: try PC box ───────────────────────────────────────────────
+	ld a, [wCurPartySpecies]
+	ld [wTempEnemyMonSpecies], a
+	farcall LoadEnemyMon
+	farcall SendMonIntoBox
+	jr nc, .Full
+	ld a, BOXMON
+	ld [wMonType], a
+	xor a
+	ld [wCurPartyMon], a
+	ld b, CAUGHT_BY_UNKNOWN
+	call SetGiftBoxMonCaughtData   ; same bank — direct call
+	ld a, GIFT_RESULT_BOX
+	ld [wScriptVar], a
+	ret
+
+.Full:
+	ld a, GIFT_RESULT_FULL
+	ld [wScriptVar], a
+	ret
+
+CheckPartyAtLimit::; Sets wScriptVar = 1 if wPartyCount >= wPartyLimit, 0 otherwise.
 ; Used by scripts as: special CheckPartyAtLimit / iftrue .PartyFull
 	ld a, [wPartyLimit]
 	ld b, a
@@ -289,12 +333,69 @@ KenyaOTName:
 KenyaNickname:
 	db "KENYA@"
 
-GiveKenyaToBox::
-; Deposits Kenya (SPEAROW lv.10) into the current PC box when the party is at limit.
-; Also writes the FLOWER_MAIL to the PC mailbox if there is room.
-; Sets wScriptVar: 0 = box full, 1 = sent to box + mail deposited, 2 = sent to box + mailbox full
+PrepareKenyaGift::
+; Determines the gift species (SPEAROW or random), stores it in wCurPartySpecies,
+; fills wMonOrItemNameBuffer with its name, and sets wScriptVar:
+;   GIFT_RESULT_PARTY (1) = proceed with the gift
+;   GIFT_RESULT_DISABLED (0) = gift mode is DISABLED — skip entirely
 	ld a, SPEAROW
-	ld [wCurPartySpecies], a
+	ld [wCurPartySpecies], a  ; set default before farcall (farcall clobbers A)
+	farcall PrepareGiftMon   ; in engine/events/gift_randomizer.asm
+	ret
+
+GiveKenyaToParty::
+; Adds the Pokémon at wCurPartySpecies (set by PrepareKenyaGift) to the party
+; with the KENYA nickname and RANDY as OT/ID (level 10, no held item).
+; Sets wScriptVar: GIFT_RESULT_PARTY (1) = added; GIFT_RESULT_DISABLED (0) = party full.
+	ld a, 10
+	ld [wCurPartyLevel], a
+	xor a
+	ld [wCurItem], a
+	xor a ; PARTYMON
+	ld [wMonType], a
+	predef TryAddMonToParty
+	jr nc, .Full
+	ld a, [wPartyCount]
+	dec a
+	ld [wCurPartyMon], a
+	; Nickname = "KENYA"
+	ld hl, wPartyMonNicknames
+	call SkipNames
+	ld de, KenyaNickname
+	call CopyName2
+	; OT = "RANDY"
+	ld a, [wPartyCount]
+	dec a
+	ld hl, wPartyMonOTs
+	call SkipNames
+	ld de, KenyaOTName
+	call CopyName2
+	; OT ID = RANDY_OT_ID
+	ld a, [wPartyCount]
+	dec a
+	ld hl, wPartyMon1ID
+	ld bc, PARTYMON_STRUCT_LENGTH
+	call AddNTimes
+	ld a, HIGH(RANDY_OT_ID)
+	ld [hli], a
+	ld [hl], LOW(RANDY_OT_ID)
+	; Caught data
+	ld b, CAUGHT_BY_UNKNOWN
+	farcall SetGiftPartyMonCaughtData
+	ld a, GIFT_RESULT_PARTY
+	ld [wScriptVar], a
+	ret
+.Full:
+	ld a, GIFT_RESULT_DISABLED
+	ld [wScriptVar], a
+	ret
+
+GiveKenyaToBox::
+; Deposits the Pokémon at wCurPartySpecies (set by PrepareKenyaGift) lv.10 into
+; the current PC box and writes the FLOWER_MAIL to the mailbox if there is room.
+; Sets wScriptVar: 0 = box full, 1 = sent to box + mail deposited,
+;                  2 = sent to box + mailbox full
+	ld a, [wCurPartySpecies]  ; set by PrepareKenyaGift (SPEAROW or random)
 	ld [wTempEnemyMonSpecies], a
 	ld a, 10
 	ld [wCurPartyLevel], a
@@ -350,8 +451,8 @@ GiveKenyaToBox::
 	ld a, LOW(RANDY_OT_ID)
 	ld [de], a
 	inc de
-; Write Species (1 byte)
-	ld a, SPEAROW
+; Write Species (1 byte) — use the actual species that was given
+	ld a, [wCurPartySpecies]
 	ld [de], a
 	inc de
 ; Write Type / mail item (1 byte)

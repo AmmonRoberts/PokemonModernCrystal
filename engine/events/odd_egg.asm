@@ -47,6 +47,19 @@ _GiveOddEgg:
 	ld bc, NICKNAMED_MON_STRUCT_LENGTH + NAME_LENGTH
 	call CopyBytes
 
+	; In RANDOMIZED mode, override the species byte with a random Pokémon.
+	ld a, [wGiftRandMode]
+	cp GIFT_RAND_RANDOMIZED
+	jr nz, .KeepSpecies
+.RandomiseOddEgg:
+	call Random
+	and a                ; species 0 is invalid
+	jr z, .RandomiseOddEgg
+	cp NUM_POKEMON + 1   ; must be 1-251
+	jr nc, .RandomiseOddEgg
+	ld [wOddEgg], a      ; first byte of wOddEgg is the species
+.KeepSpecies:
+
 	ld a, EGG_TICKET
 	ld [wCurItem], a
 	ld a, 1

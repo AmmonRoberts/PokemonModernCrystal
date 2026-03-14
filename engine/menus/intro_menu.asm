@@ -353,6 +353,7 @@ Continue:
 	farcall TryLoadSaveFile
 	jr c, .FailToLoad
 	farcall _LoadData
+	call SanitizeGiftRandMode
 	call LoadStandardMenuHeader
 	call DisplaySaveInfoOnContinue
 	ld a, $1

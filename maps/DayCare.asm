@@ -28,6 +28,8 @@ DayCareManScript_Inside:
 	writetext DayCareManText_GiveOddEgg
 	promptbutton
 	closetext
+	special PrepareOddEggGift
+	ifequal GIFT_RESULT_DISABLED, .GiftsDisabled
 	special CheckPartyAtLimit
 	iftrue .PartyFull
 	special GiveOddEgg
@@ -44,6 +46,13 @@ DayCareManScript_Inside:
 .PartyFull:
 	opentext
 	writetext DayCareText_PartyFull
+	waitbutton
+	closetext
+	end
+
+.GiftsDisabled:
+	opentext
+	writetext DayCareText_NoEggRightNow
 	waitbutton
 	closetext
 	end
@@ -151,6 +160,12 @@ DayCareText_DescribeOddEgg:
 DayCareText_PartyFull:
 	text "You've no room for"
 	line "this."
+	done
+
+DayCareText_NoEggRightNow:
+	text "I don't have an"
+	line "EGG to give you"
+	cont "right now."
 	done
 
 DayCare_MapEvents:

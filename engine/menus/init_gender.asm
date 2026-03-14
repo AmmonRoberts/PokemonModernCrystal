@@ -17,6 +17,8 @@ InitCrystalData:
 	ld a, PARTY_LENGTH
 	ld [wPartyLimit], a
 	xor a
+	ld [wGiftRandMode], a  ; default = GIFT_RAND_STANDARD
+	xor a
 	ld [wPlayerPostalCode], a
 	ld [wPlayerPostalCode+1], a
 	ld [wPlayerPostalCode+2], a
