@@ -178,6 +178,7 @@ SpecialsPointers::
 	add_special PrepareShuckieGift
 	add_special PrepareOddEggGift
 	add_special GiveTogepiGift
+	add_special GetGiftRandMode
 	add_special GiftAskNicknameParty
 	add_special GiftAutoNicknameBox
 	add_special GiftAskNicknameBox

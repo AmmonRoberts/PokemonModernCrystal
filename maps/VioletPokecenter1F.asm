@@ -16,6 +16,8 @@ VioletPokecenterNurse:
 VioletPokecenter1F_ElmsAideScript:
 	faceplayer
 	opentext
+	special GetGiftRandMode
+	ifequal GIFT_RAND_DISABLED, .DisabledMode
 	checkevent EVENT_REFUSED_TO_TAKE_EGG_FROM_ELMS_AIDE
 	iftrue .SecondTimeAsking
 	writetext VioletPokecenterElmsAideFavorText
@@ -23,9 +25,8 @@ VioletPokecenter1F_ElmsAideScript:
 	yesorno
 	iffalse .RefusedEgg
 	special GiveTogepiGift
-	ifequal GIFT_RESULT_DISABLED, .RefusedEgg
 	ifequal GIFT_RESULT_FULL, .PartyFull
-	; GIFT_RESULT_PARTY (1) — egg added to party
+	; GIFT_RESULT_PARTY (1) — egg added to party (disabled handled above)
 	getstring STRING_BUFFER_4, .eggname
 	scall .AideGivesEgg
 	setevent EVENT_GOT_TOGEPI_EGG_FROM_ELMS_AIDE
@@ -64,6 +65,30 @@ VioletPokecenter1F_ElmsAideScript:
 	writetext VioletCityElmsAideFullPartyText
 	waitbutton
 	closetext
+	end
+
+.GiftsDisabled:
+; Placeholder — disabled mode is now caught above before the yes/no.
+; This label is unreachable but kept for assembler bookkeeping.
+	end
+
+.DisabledMode:
+; Gifts are disabled — show the egg briefly, advance quest without giving it.
+	writetext VioletPokecenterElmsAideShowsEggText
+	waitbutton
+	closetext
+	setevent EVENT_GOT_TOGEPI_EGG_FROM_ELMS_AIDE
+	setevent EVENT_TOGEPI_HATCHED
+	setevent EVENT_EGG_FROM_AIDE_WAS_DISABLED
+	clearevent EVENT_ELMS_AIDE_IN_LAB
+	setmapscene ROUTE_32, SCENE_ROUTE32_OFFER_SLOWPOKETAIL
+	readvar VAR_FACING
+	ifequal UP, .AideWalksAroundPlayer
+	turnobject PLAYER, DOWN
+	applymovement VIOLETPOKECENTER1F_ELMS_AIDE, MovementData_AideWalksStraightOutOfPokecenter
+	playsound SFX_EXIT_BUILDING
+	disappear VIOLETPOKECENTER1F_ELMS_AIDE
+	waitsfx
 	end
 
 .RefusedEgg:
@@ -146,6 +171,22 @@ VioletCityElmsAideFullPartyText:
 	para "I'll wait here"
 	line "while you make"
 	cont "room for the EGG."
+	done
+
+VioletPokecenterElmsAideShowsEggText:
+	text "<PLAY_G>! PROF.ELM"
+	line "wanted me to carry"
+	cont "the EGG you"
+
+	para "brought!"
+	line "It hatched into a"
+
+	para "#MON we've never"
+	line "seen before."
+
+	para "Please visit him"
+	line "at the lab when"
+	cont "you can, OK?"
 	done
 
 VioletPokecenterElmsAideRefuseText:

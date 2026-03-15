@@ -160,8 +160,11 @@ GiveOddEggToBox::
 ; then sends it to the box. Preserves DVs, moves, and hatch counter.
 ; Sets wScriptVar: 0 = box also full, 1 = sent to box successfully.
 	call PrepareOddEggData
-	; Set EGG as the species entry in the box species list; EGG_LEVEL for exp.
-	ld a, EGG
+	; Use the ACTUAL hatched species (not EGG) for SendMonIntoBox.
+	; Using EGG ($fd) would call GetBaseData on an out-of-table entry,
+	; returning garbage base stats and a bad growth rate — corrupting WRAM
+	; (causes DayCare Lady to malfunction) and giving wrong exp (level 4 on hatch).
+	ld a, [wOddEgg]           ; actual hatched species
 	ld [wCurPartySpecies], a
 	ld a, EGG_LEVEL
 	ld [wCurPartyLevel], a
@@ -177,10 +180,18 @@ GiveOddEggToBox::
 	call CopyBytes
 	farcall SendMonIntoBox
 	jr nc, .BoxFull
-	; SendMonIntoBox overwrites the happiness byte with BASE_HAPPINESS.
-	; Restore the real hatch counter from wOddEgg.
+	; SendMonIntoBox set the box species list and nickname to the actual species.
+	; Patch both back to EGG so the egg doesn't prematurely reveal its contents.
+	; Also restore the real hatch counter (SendMonIntoBox overwrites with BASE_HAPPINESS).
 	ld a, BANK(sBoxMon1)
 	call OpenSRAM
+	ld hl, sBoxSpecies        ; new mon is always prepended to front of species list
+	ld a, EGG
+	ld [hl], a
+	ld hl, wOddEggName        ; "EGG" — populated by PrepareOddEggData's CopyBytes
+	ld de, sBoxMonNicknames   ; new mon's nickname slot is also at front
+	ld bc, MON_NAME_LENGTH
+	call CopyBytes
 	ld hl, sBoxMon1 + MON_HAPPINESS
 	ld a, [wOddEgg + MON_HAPPINESS]
 	ld [hl], a

@@ -424,6 +424,46 @@ SanitizeGiftRandMode::
 	ret
 
 ; ---------------------------------------------------------------------------
+; SetTogepiHatchedFlag
+; ---------------------------------------------------------------------------
+; Called from breeding.asm (bank5) via farcall to keep bank5 from overflowing.
+; Sets EVENT_TOGEPI_HATCHED if:
+;   - the hatched species is TOGEPI, OR
+;   - EVENT_GOT_TOGEPI_EGG_FROM_ELMS_AIDE is set (aide egg hatched as a
+;     randomized species in GIFT_RAND_RANDOMIZED mode).
+; wCurPartySpecies must be set to the hatched species before calling.
+SetTogepiHatchedFlag::
+	ld a, [wCurPartySpecies]
+	cp TOGEPI
+	jr z, .Set
+	; Not Togepi — check whether the aide egg was in play
+	ld de, EVENT_GOT_TOGEPI_EGG_FROM_ELMS_AIDE
+	ld b, CHECK_FLAG
+	call EventFlagAction
+	ld a, c
+	and a
+	ret z               ; no aide egg in progress — nothing to do
+.Set
+	ld de, EVENT_TOGEPI_HATCHED
+	ld b, SET_FLAG
+	call EventFlagAction
+	ret
+
+; ---------------------------------------------------------------------------
+; GetGiftRandMode
+; ---------------------------------------------------------------------------
+; Loads wGiftRandMode into wScriptVar so scripts can branch on the current
+; gift randomizer mode before deciding whether to offer a yes/no choice.
+;
+; Output: wScriptVar = GIFT_RAND_STANDARD   (0)
+;                      GIFT_RAND_RANDOMIZED (1)
+;                      GIFT_RAND_DISABLED   (2)
+GetGiftRandMode::
+	ld a, [wGiftRandMode]
+	ld [wScriptVar], a
+	ret
+
+; ---------------------------------------------------------------------------
 ; PrepareOddEggGift
 ; ---------------------------------------------------------------------------
 ; Checks wGiftRandMode and sets wScriptVar for the Odd Egg.
@@ -455,6 +495,13 @@ PrepareOddEggGift::
 ;                      GIFT_RESULT_PARTY    (1) – egg added to party
 ;                      GIFT_RESULT_FULL     (3) – party is full
 GiveTogepiGift::
+	; Check party capacity before attempting to give the egg.
+	; GiveEgg always returns carry clear so we cannot rely on it for the full check.
+	ld a, [wPartyLimit]
+	ld b, a
+	ld a, [wPartyCount]
+	cp b                     ; carry set if wPartyCount < wPartyLimit (has room)
+	jr nc, .Full             ; no carry = count >= limit = party full
 	ld a, TOGEPI
 	ld [wCurPartySpecies], a  ; set before call so GetRandomGiftSpecies can read the default
 	call GetRandomGiftSpecies ; A = effective species, carry = disabled
@@ -467,8 +514,7 @@ GiveTogepiGift::
 	ld [wCurPartyLevel], a
 	xor a ; PARTYMON
 	ld [wMonType], a
-	farcall GiveEgg           ; returns carry set = party full (failed)
-	jr nc, .Full
+	farcall GiveEgg
 	ld a, GIFT_RESULT_PARTY
 	ld [wScriptVar], a
 	ret
