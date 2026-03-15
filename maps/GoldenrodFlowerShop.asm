@@ -8,28 +8,6 @@ GoldenrodFlowerShop_MapScripts:
 	def_callbacks
 
 FlowerShopTeacherScript:
-	checkevent EVENT_FOUGHT_SUDOWOODO
-	iftrue .Lalala
-	checkevent EVENT_GOT_SQUIRTBOTTLE
-	iftrue .GotSquirtbottle
-	checkevent EVENT_MET_FLORIA
-	iffalse .HaventMetFloria
-	checkevent EVENT_TALKED_TO_FLORIA_AT_FLOWER_SHOP
-	iffalse .Lalala
-	checkflag ENGINE_PLAINBADGE
-	iffalse .NoPlainBadge
-	faceplayer
-	opentext
-	writetext GoldenrodFlowerShopTeacherHeresTheSquirtbottleText
-	promptbutton
-	verbosegiveitem SQUIRTBOTTLE
-	setevent EVENT_GOT_SQUIRTBOTTLE
-	closetext
-	setevent EVENT_FLORIA_AT_SUDOWOODO
-	clearevent EVENT_FLORIA_AT_FLOWER_SHOP
-	end
-
-.Lalala:
 	turnobject GOLDENRODFLOWERSHOP_TEACHER, LEFT
 	opentext
 	writetext GoldenrodFlowerShopTeacherLalalaHavePlentyOfWaterText
@@ -37,32 +15,12 @@ FlowerShopTeacherScript:
 	closetext
 	end
 
-.GotSquirtbottle:
-	jumptextfaceplayer GoldenrodFlowerShopTeacherDontDoAnythingDangerousText
-
-.NoPlainBadge:
-	jumptextfaceplayer GoldenrodFlowerShopTeacherAskWantToBorrowWaterBottleText
-
-.HaventMetFloria:
-	jumptextfaceplayer GoldenrodFlowerShopTeacherMySisterWentToSeeWigglyTreeRoute36Text
-
 FlowerShopFloriaScript:
 	faceplayer
 	opentext
 	checkevent EVENT_FOUGHT_SUDOWOODO
 	iftrue .FoughtSudowoodo
-	checkevent EVENT_GOT_SQUIRTBOTTLE
-	iftrue .GotSquirtbottle
 	writetext GoldenrodFlowerShopFloriaWonderIfSisWillLendWaterBottleText
-	waitbutton
-	closetext
-	setevent EVENT_TALKED_TO_FLORIA_AT_FLOWER_SHOP
-	setevent EVENT_FLORIA_AT_FLOWER_SHOP
-	clearevent EVENT_FLORIA_AT_SUDOWOODO
-	end
-
-.GotSquirtbottle:
-	writetext GoldenrodFlowerShopFloriaYouBeatWhitneyText
 	waitbutton
 	closetext
 	end

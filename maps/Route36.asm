@@ -99,26 +99,34 @@ DidntCatchSudowoodo:
 Route36FloriaScript:
 	faceplayer
 	opentext
-	checkevent EVENT_TALKED_TO_FLORIA_AT_FLOWER_SHOP
-	iftrue .SecondTimeTalking
+	checkevent EVENT_FOUGHT_SUDOWOODO
+	iftrue .FoughtSudowoodo
+	checkevent EVENT_GOT_SQUIRTBOTTLE
+	iftrue .AlreadyGot
 	setevent EVENT_MET_FLORIA
+	checkflag ENGINE_PLAINBADGE
+	iffalse .NoBadge
 	writetext FloriaText1
+	promptbutton
+	verbosegiveitem SQUIRTBOTTLE
+	setevent EVENT_GOT_SQUIRTBOTTLE
+	closetext
+	end
+
+.NoBadge:
+	writetext FloriaTextNoBadgeText
 	waitbutton
 	closetext
-	clearevent EVENT_FLORIA_AT_FLOWER_SHOP
-	readvar VAR_FACING
-	ifequal UP, .Up
-	applymovement ROUTE36_FLORIA, FloriaMovement1
-	disappear ROUTE36_FLORIA
 	end
 
-.Up:
-	applymovement ROUTE36_FLORIA, FloriaMovement2
-	disappear ROUTE36_FLORIA
-	end
-
-.SecondTimeTalking:
+.AlreadyGot:
 	writetext FloriaText2
+	waitbutton
+	closetext
+	end
+
+.FoughtSudowoodo:
+	writetext FloriaFoughtSudowoodoText
 	waitbutton
 	closetext
 	end
@@ -431,40 +439,65 @@ FloriaText1:
 	text "I'm the FLOWER"
 	line "SHOP's FLORIA!"
 
-	para "Listen, listen!"
-
 	para "When I sprinkled"
 	line "water on that"
 
 	para "wiggly tree, it"
 	line "jumped right up!"
 
-	para "It just has to be"
-	line "a #MON."
+	para "It's a #MON"
+	line "in disguise!"
 
-	para "I bet it would be"
-	line "shocked out of its"
+	para "Here, take my"
+	line "SQUIRTBOTTLE!"
 
-	para "disguise if you"
-	line "soaked it!"
-
-	para "I know! I'll tell"
-	line "my sis and borrow"
-	cont "her water bottle!"
+	para "Give that tree a"
+	line "good soaking!"
 	done
 
 FloriaText2:
-	text "When I told my sis"
-	line "about the jiggly"
+	text "That weird tree is"
+	line "definitely a"
+	cont "#MON!"
 
-	para "tree, she said"
-	line "it's dangerous."
+	para "Try soaking it"
+	line "with the"
 
-	para "If I beat WHITNEY,"
-	line "I wonder if she'll"
+	para "SQUIRTBOTTLE I"
+	line "gave you!"
+	done
 
-	para "lend me her water"
-	line "bottle…"
+FloriaTextNoBadgeText:
+	text "I'm FLORIA from"
+	line "the FLOWER SHOP!"
+
+	para "This weird tree"
+	line "jumped when I"
+	cont "watered it!"
+
+	para "It's a #MON in"
+	line "disguise!"
+
+	para "I'd lend you my"
+	line "SQUIRTBOTTLE, but"
+
+	para "I don't know if"
+	line "you're strong"
+	
+	para "enough to handle"
+	line "it."
+
+	para "Come back after"
+	line "you beat WHITNEY,"
+	cont "OK?"
+	done
+
+FloriaFoughtSudowoodoText:
+	text "It really was a"
+	line "#MON all along!"
+
+	para "Good thing you had"
+	line "my SQUIRTBOTTLE!"
 	done
 
 RockSmashGuyText1:
