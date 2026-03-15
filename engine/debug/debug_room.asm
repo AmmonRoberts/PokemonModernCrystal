@@ -925,6 +925,11 @@ DebugRoom_PrintExpMult:
 .str_150: db "1.50@"
 
 DebugRoomMenu_WarpTo:
+	; Initialise the last-group tracker so the auto function doesn't fire a
+	; spurious group-change reset on the very first frame, which would clobber
+	; the intended default MAP_NEW_BARK_TOWN starting value.
+	ld a, MAPGROUP_NEW_BARK
+	ld [wDebugRoomLastWarpGroup], a
 	ld hl, .PagedValuesHeader
 	call DebugRoom_EditPagedValues
 	ret
@@ -933,19 +938,19 @@ DebugRoomMenu_WarpTo:
 	dw NULL ; A function
 	dw NULL ; Select function
 	dw DebugRoom_DoWarp ; Start function
-	dw NULL ; Auto function
+	dw DebugRoom_WarpToAuto ; Auto function
 	db 1 ; # pages
 	dw .Page1Values
 
 .Page1Values:
 	db 2
-	; paged_value wDebugRoomWarpGroup, 0, NUM_MAP_GROUPS - 1, GROUP_NEW_BARK_TOWN, .GroupString, NULL, TRUE
+	; paged_value wDebugRoomWarpGroup, 1, NUM_MAP_GROUPS, MAPGROUP_NEW_BARK, .GroupString, DebugRoom_PrintWarpGroupName, TRUE
 	dw wDebugRoomWarpGroup  ; value address
 	db 1                    ; min value (group 1 = OLIVINE)
 	db NUM_MAP_GROUPS       ; max value (group 26 = CHERRYGROVE)
 	db MAPGROUP_NEW_BARK    ; initial value
 	dw .GroupString         ; label string
-	dw NULL                 ; value name function
+	dw DebugRoom_PrintWarpGroupName ; value name function
 	db TRUE                 ; is hex value?
 	; MAP paged value
 	dw wDebugRoomWarpMap    ; value address
@@ -953,13 +958,222 @@ DebugRoomMenu_WarpTo:
 	db 91                   ; max value (largest group has 91 maps)
 	db MAP_NEW_BARK_TOWN    ; initial value
 	dw .MapString          ; label string
-	dw NULL                ; value name function
+	dw DebugRoom_PrintWarpMapName ; value name function
 	db TRUE                ; is hex value?
 
 .GroupString:
 	db "GROUP@"
 .MapString:
 	db "MAP  @"
+
+WarpGroupMaxMaps:
+; Maximum valid map number for each of the 26 map groups (index = group_number - 1).
+	db NUM_OLIVINE_MAPS      ;  1 OLIVINE
+	db NUM_MAHOGANY_MAPS     ;  2 MAHOGANY
+	db NUM_DUNGEONS_MAPS     ;  3 DUNGEONS
+	db NUM_ECRUTEAK_MAPS     ;  4 ECRUTEAK
+	db NUM_BLACKTHORN_MAPS   ;  5 BLACKTHORN
+	db NUM_CINNABAR_MAPS     ;  6 CINNABAR
+	db NUM_CERULEAN_MAPS     ;  7 CERULEAN
+	db NUM_AZALEA_MAPS       ;  8 AZALEA
+	db NUM_LAKE_OF_RAGE_MAPS ;  9 LAKE_OF_RAGE
+	db NUM_VIOLET_MAPS       ; 10 VIOLET
+	db NUM_GOLDENROD_MAPS    ; 11 GOLDENROD
+	db NUM_VERMILION_MAPS    ; 12 VERMILION
+	db NUM_PALLET_MAPS       ; 13 PALLET
+	db NUM_PEWTER_MAPS       ; 14 PEWTER
+	db NUM_FAST_SHIP_MAPS    ; 15 FAST_SHIP
+	db NUM_INDIGO_MAPS       ; 16 INDIGO
+	db NUM_FUCHSIA_MAPS      ; 17 FUCHSIA
+	db NUM_LAVENDER_MAPS     ; 18 LAVENDER
+	db NUM_SILVER_MAPS       ; 19 SILVER
+	db NUM_CABLE_CLUB_MAPS   ; 20 CABLE_CLUB
+	db NUM_CELADON_MAPS      ; 21 CELADON
+	db NUM_CIANWOOD_MAPS     ; 22 CIANWOOD
+	db NUM_VIRIDIAN_MAPS     ; 23 VIRIDIAN
+	db NUM_NEW_BARK_MAPS     ; 24 NEW_BARK
+	db NUM_SAFFRON_MAPS      ; 25 SAFFRON
+	db NUM_CHERRYGROVE_MAPS  ; 26 CHERRYGROVE
+
+DebugRoom_PrintWarpGroupName:
+; Value name function for the GROUP paged value.
+; Input: a = group number (1-26), bc = tilemap position for the name row.
+	push bc           ; save tilemap position
+	dec a             ; 0-index (group 1 -> 0)
+	add a             ; multiply by 2 (each pointer is 2 bytes)
+	ld c, a
+	ld b, 0
+	ld hl, .GroupNamePointers
+	add hl, bc        ; hl = &.GroupNamePointers[group-1]
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a           ; hl = group name string pointer
+	ld d, h
+	ld e, l           ; de = group name string (preserved across pop)
+	pop hl            ; hl = tilemap position
+	push hl
+	lb bc, 1, 12
+	call ClearBox
+	pop hl
+	call PlaceString
+	ret
+
+.GroupNamePointers:
+	dw .Olivine
+	dw .Mahogany
+	dw .Dungeons
+	dw .Ecruteak
+	dw .Blackthorn
+	dw .Cinnabar
+	dw .Cerulean
+	dw .Azalea
+	dw .LakeOfRage
+	dw .Violet
+	dw .Goldenrod
+	dw .Vermilion
+	dw .Pallet
+	dw .Pewter
+	dw .FastShip
+	dw .Indigo
+	dw .Fuchsia
+	dw .Lavender
+	dw .Silver
+	dw .CableClub
+	dw .Celadon
+	dw .Cianwood
+	dw .Viridian
+	dw .NewBark
+	dw .Saffron
+	dw .Cherrygrove
+
+.Olivine:     db "OLIVINE@"
+.Mahogany:    db "MAHOGANY@"
+.Dungeons:    db "DUNGEONS@"
+.Ecruteak:    db "ECRUTEAK@"
+.Blackthorn:  db "BLACKTHORN@"
+.Cinnabar:    db "CINNABAR@"
+.Cerulean:    db "CERULEAN@"
+.Azalea:      db "AZALEA@"
+.LakeOfRage:  db "LAKE OF RAGE@"
+.Violet:      db "VIOLET@"
+.Goldenrod:   db "GOLDENROD@"
+.Vermilion:   db "VERMILION@"
+.Pallet:      db "PALLET@"
+.Pewter:      db "PEWTER@"
+.FastShip:    db "FAST SHIP@"
+.Indigo:      db "INDIGO@"
+.Fuchsia:     db "FUCHSIA@"
+.Lavender:    db "LAVENDER@"
+.Silver:      db "SILVER@"
+.CableClub:   db "CABLE CLUB@"
+.Celadon:     db "CELADON@"
+.Cianwood:    db "CIANWOOD@"
+.Viridian:    db "VIRIDIAN@"
+.NewBark:     db "NEW BARK@"
+.Saffron:     db "SAFFRON@"
+.Cherrygrove: db "CHERRYGROVE@"
+
+DebugRoom_PrintWarpMapName:
+; Value name function for the MAP paged value.
+; Input: a = map number (1-91), bc = tilemap position for the name row.
+; Uses the map's landmark ID to look up and display the area name.
+; If the map number is out of range for the current group, the row is blanked.
+	push bc           ; save tilemap position
+	push af           ; save map number
+	; Bounds-check map number against the max for the current group
+	ld hl, WarpGroupMaxMaps
+	ld a, [wDebugRoomWarpGroup]
+	dec a             ; 0-index
+	ld c, a
+	ld b, 0
+	add hl, bc        ; hl = &WarpGroupMaxMaps[group-1]
+	pop af            ; a = map number
+	cp [hl]           ; compare with group max
+	jr z, .in_range
+	jr c, .in_range
+	; Map number exceeds the group's max — blank the name row
+	pop hl            ; hl = tilemap position
+	lb bc, 1, 15
+	call ClearBox
+	ret
+.in_range
+	; Look up the landmark ID from the map's group entry
+	ld c, a           ; c = map number
+	ld a, [wDebugRoomWarpGroup]
+	ld b, a           ; b = map group
+	ld de, MAP_LOCATION
+	call GetAnyMapField ; b=group, c=map, de=offset -> c = landmark ID
+	ld e, c           ; e = landmark ID (input for GetLandmarkName)
+	; Copy the landmark name into wStringBuffer1
+	farcall GetLandmarkName
+	; Sanitize the landmark name:
+	; - replace <BSP> ($1f, the "breakable space" used on the Town Map) with a
+	;   regular space so it renders correctly in a single-line context
+	; - cap the string at 15 characters to keep it within the textbox boundary
+	;   (name row starts at col 4; last usable inner col is 18; 18-4+1 = 15)
+	ld hl, wStringBuffer1
+	ld b, 15
+.sanitize
+	ld a, [hl]
+	cp '@'
+	jr z, .sanitized  ; string already ends before the cap — leave it alone
+	cp $1f            ; <BSP> character?
+	jr nz, .not_bsp
+	ld [hl], ' '      ; replace with a regular space
+.not_bsp
+	inc hl
+	dec b
+	jr nz, .sanitize
+	ld [hl], '@'      ; cap at 15 characters
+.sanitized
+	; Display the name
+	pop hl            ; hl = tilemap position
+	push hl
+	lb bc, 1, 15
+	call ClearBox
+	pop hl
+	ld de, wStringBuffer1
+	call PlaceString
+	ret
+
+DebugRoom_WarpToAuto:
+; Auto function: called every frame while the WARP TO screen is open.
+; Resets MAP to 01 when GROUP changes, and clamps MAP to the group's valid max.
+	ld a, [wDebugRoomWarpGroup]
+	ld b, a
+	ld a, [wDebugRoomLastWarpGroup]
+	cp b
+	jr z, .same_group
+	; Group has changed — save new group and reset MAP to 1
+	ld a, [wDebugRoomWarpGroup]
+	ld [wDebugRoomLastWarpGroup], a
+	ld a, 1
+	ld [wDebugRoomWarpMap], a
+	ld b, 0
+	ld c, 1
+	call DebugRoom_PrintPagedValue
+	ret
+.same_group
+	; Check whether current MAP exceeds the max for this group
+	ld hl, WarpGroupMaxMaps
+	ld a, b           ; b = current group (set above)
+	dec a             ; 0-index
+	ld c, a
+	ld b, 0
+	add hl, bc        ; hl = &WarpGroupMaxMaps[group-1]
+	ld a, [wDebugRoomWarpMap]
+	cp [hl]           ; compare MAP with group max
+	jr z, .done
+	jr c, .done
+	; MAP > max — clamp to this group's max
+	ld a, [hl]
+	ld [wDebugRoomWarpMap], a
+	ld b, 0
+	ld c, 1
+	call DebugRoom_PrintPagedValue
+	ret
+.done
+	ret
 
 DebugRoom_DoWarp:
 	; Set up a door warp to the selected map group and map number
