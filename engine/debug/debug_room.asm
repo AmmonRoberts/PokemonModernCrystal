@@ -2647,8 +2647,11 @@ DebugRoom_InitBadgesOnce:
 	ret
 
 DebugRoom_SaveBadges:
+	ld hl, .ConfirmText
+	call MenuTextbox
 	call YesNoBox
-	ret c
+	jr c, .cancel
+	call CloseWindow
 	; Pack Johto badge scratch bytes back (read RISING..ZEPHYR, shift into byte)
 	ld hl, wDebugRoomBadges + NUM_JOHTO_BADGES - 1
 	xor a
@@ -2689,7 +2692,21 @@ DebugRoom_SaveBadges:
 	ld [sPlayerData + (wKantoBadges - wPlayerData)], a
 	call CloseSRAM
 	call DebugRoom_SaveChecksum
+	ld hl, .SavedText
+	call MenuTextbox
+	call DebugRoom_JoyWaitABSelect
+	call CloseWindow
 	ret
+.cancel
+	call CloseWindow
+	ret
+
+.ConfirmText:
+	text "Save badges?"
+	done
+.SavedText:
+	text "Badges saved!"
+	done
 
 DebugRoomMenu_BadgeEdit_Page1Values:
 	db 8
