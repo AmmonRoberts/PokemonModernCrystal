@@ -64,6 +64,10 @@ _DebugRoom::
 	ld bc, wTilemapEnd - wTilemap
 	ld a, ' '
 	call ByteFill
+	ld hl, wAttrmap
+	ld bc, wAttrmapEnd - wAttrmap
+	ld a, PAL_BG_TEXT
+	call ByteFill
 	call DebugRoom_PrintStackBottomTop
 	call DebugRoom_PrintWindowStackBottomTop
 	ldh a, [hDebugRoomMenuPage]
