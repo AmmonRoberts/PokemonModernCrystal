@@ -52,6 +52,9 @@ _DebugRoom::
 	and PAD_SELECT | PAD_START
 	cp PAD_SELECT | PAD_START
 	ret nz
+	xor a
+	ldh [hSCX], a
+	ldh [hSCY], a
 	ldh a, [hDebugRoomMenuPage]
 	push af
 	xor a
@@ -106,6 +109,11 @@ _DebugRoom::
 	call SetUpMenu
 .wait
 	call GetScrollingMenuJoypad
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .turn_right
+	bit B_PAD_LEFT, a
+	jr nz, .turn_left
 	ld a, [wMenuJoypad]
 	and PAD_A | PAD_B
 	jr z, .wait
@@ -115,6 +123,26 @@ _DebugRoom::
 	ld a, [wMenuSelection]
 	ld hl, .Jumptable
 	rst JumpTable
+	jp .loop
+.turn_right
+	call CloseWindow
+	ldh a, [hDebugRoomMenuPage]
+	inc a
+	cp DEBUGROOMMENU_NUM_PAGES
+	jr c, .set_page
+	xor a
+	jr .set_page
+.turn_left
+	call CloseWindow
+	ldh a, [hDebugRoomMenuPage]
+	and a
+	jr z, .left_wrap
+	dec a
+	jr .set_page
+.left_wrap
+	ld a, DEBUGROOMMENU_NUM_PAGES - 1
+.set_page
+	ldh [hDebugRoomMenuPage], a
 	jp .loop
 .done
 	pop af
@@ -168,8 +196,8 @@ _DebugRoom::
 	db "STRT RANDO@"
 	db "TRNR RANDO@"
 	db "BERY RANDO@"
-	db "TM FREE@"
-	db "POIS SVL@"
+	db "TM REUSE@"
+	db "POIS FADE@"
 	db "AUTO NICK@"
 	db "PARTY LIM@"
 	db "GIFT RANDO@"
@@ -505,7 +533,7 @@ DebugRoom_PrintItemRando:
 	ret
 
 .RandoString:
-	db "RNDO:@"
+	db "ITR:@"
 .OffString:
 	db " OFF@"
 .OnString:
@@ -532,7 +560,7 @@ DebugRoom_PrintWildRando:
 	call PlaceString
 	ret
 
-.Label:     db "WILD:@"
+.Label:     db "WIL:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -557,7 +585,7 @@ DebugRoom_PrintStrtRando:
 	call PlaceString
 	ret
 
-.Label:     db "STRT:@"
+.Label:     db "STR:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -582,7 +610,7 @@ DebugRoom_PrintTrnrRando:
 	call PlaceString
 	ret
 
-.Label:     db "TRNR:@"
+.Label:     db "TRR:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -607,7 +635,7 @@ DebugRoom_PrintBeryRando:
 	call PlaceString
 	ret
 
-.Label:     db "BERY:@"
+.Label:     db "BER:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -657,7 +685,7 @@ DebugRoom_PrintPoisSvl:
 	call PlaceString
 	ret
 
-.Label:     db "POIS:@"
+.Label:     db "PSN:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -682,7 +710,7 @@ DebugRoom_PrintAutoNick:
 	call PlaceString
 	ret
 
-.Label:     db "NICK:@"
+.Label:     db "NIR:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -746,7 +774,7 @@ DebugRoom_PrintPartyLimit:
 	call PlaceString
 	ret
 
-.Label:   db "PTYL:@"
+.Label:   db "PTY:@"
 .Strings:
 	dw .str_1
 	dw .str_2
@@ -788,7 +816,7 @@ DebugRoom_PrintGiftRando:
 	call PlaceString
 	ret
 
-.Label:      db "GIFT:@"
+.Label:      db "GFT:@"
 .Strings:
 	dw .Standard
 	dw .Randomized
@@ -811,7 +839,7 @@ DebugRoom_PrintPermafaint:
 	call PlaceString
 	ret
 
-.Label:     db "PRMA:@"
+.Label:     db "PRM:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -829,7 +857,7 @@ DebugRoom_PrintResetOnWipe:
 	call PlaceString
 	ret
 
-.Label:     db "RWIP:@"
+.Label:     db "RWP:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
