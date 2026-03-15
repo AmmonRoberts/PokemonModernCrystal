@@ -13,6 +13,8 @@ BillScript:
 	opentext
 	checkevent EVENT_GOT_EEVEE
 	iftrue .GotEevee
+	special PrepareEeveeGift
+	ifequal GIFT_RESULT_DISABLED, .GotEevee
 	writetext BillTakeThisEeveeText
 	yesorno
 	iffalse .Refused
@@ -24,8 +26,12 @@ BillScript:
 	writetext ReceivedEeveeText
 	playsound SFX_CAUGHT_MON
 	waitsfx
-	givepoke EEVEE, 20
+	promptbutton
+	special GiveGiftMonToParty
 	setevent EVENT_GOT_EEVEE
+	special GiftAskNicknameParty
+	closetext
+	opentext
 	writetext BillEeveeMayEvolveText
 	waitbutton
 	closetext
@@ -41,6 +47,9 @@ BillScript:
 	end
 
 .SentToBox:
+	special GiftAskNicknameBox
+	closetext
+	opentext
 	writetext BillEeveeSentToPCText
 	setevent EVENT_GOT_EEVEE
 	waitbutton
@@ -151,8 +160,9 @@ BillImCountingOnYouText:
 	done
 
 ReceivedEeveeText:
-	text "<PLAYER> received"
-	line "EEVEE!"
+	text "<PLAYER> received<LINE>@"
+	text_ram wMonOrItemNameBuffer
+	text "!"
 	done
 
 BillEeveeMayEvolveText:
@@ -173,8 +183,8 @@ BillEeveeSentToPCText:
 	text "Your party is"
 	line "full!"
 	
-	para "EEVEE was sent to"
-	line "BILL's PC."
+	para "The #MON was"
+	line "sent to BILL's PC."
 	done
 
 BillNoEeveeText:

@@ -17,6 +17,9 @@ RandyScript:
 	iftrue .questcomplete
 	checkevent EVENT_GOT_KENYA
 	iftrue .alreadyhavekenya
+	; Determine the gift species and check if gifts are disabled.
+	special PrepareKenyaGift
+	ifequal GIFT_RESULT_DISABLED, .giftsDisabled
 	writetext Route35GoldenrodGateRandyAskTakeThisMonToMyFriendText
 	yesorno
 	iffalse .refused
@@ -28,7 +31,7 @@ RandyScript:
 	writetext Route35GoldenrodGatePlayerReceivedAMonWithMailText
 	playsound SFX_KEY_ITEM
 	waitsfx
-	givepoke SPEAROW, 10, NO_ITEM, GiftSpearowName, GiftSpearowOTName
+	special GiveKenyaToParty         ; uses wCurPartySpecies (set by PrepareKenyaGift)
 	givepokemail GiftSpearowMail
 	setevent EVENT_GOT_KENYA
 .alreadyhavekenya
@@ -37,8 +40,14 @@ RandyScript:
 	closetext
 	end
 
+.giftsDisabled
+	writetext Route35GoldenrodGateGiftsUnavailableText
+	waitbutton
+	closetext
+	end
+
 .partyfull
-	special GiveKenyaToBox
+	special GiveKenyaToBox           ; uses wCurPartySpecies (set by PrepareKenyaGift)
 	ifequal 1, .senttobox
 	ifequal 2, .senttobox_nomailroom
 	; wScriptVar == 0: box is also full
@@ -164,7 +173,7 @@ Route35GoldenrodGateSentKenyaToPCText:
 	line "full!"
 	
 	para "KENYA was sent"
-	cont "to BILL's PC."
+	line "to BILL's PC."
 
 	para "The MAIL was sent"
 	line "to your MAIL BOX!"
@@ -175,7 +184,7 @@ Route35GoldenrodGateSentKenyaToPCNoMailText:
 	line "full!"
 	
 	para "KENYA was sent"
-	cont "to BILL's PC."
+	line "to BILL's PC."
 
 	para "Sorry, your MAIL"
 	line "BOX was full, so"
@@ -185,6 +194,12 @@ Route35GoldenrodGateSentKenyaToPCNoMailText:
 Route35GoldenrodGateRandyOhNeverMindThenText:
 	text "Oh… Never mind,"
 	line "then…"
+	done
+
+Route35GoldenrodGateGiftsUnavailableText:
+	text "I don't have a"
+	line "#MON to give"
+	cont "you right now."
 	done
 
 Route35GoldenrodGateRandySomethingForYourTroubleText:

@@ -124,7 +124,25 @@ ElmEggHatchedScript:
 	setval TOGETIC
 	special FindPartyMonThatSpeciesYourTrainerID
 	iftrue ShowElmTogepiScript
-	sjump ElmCheckGotEggAgain
+	sjump ElmEggWasDisabledScript
+
+ElmEggWasDisabledScript:
+; EVENT_TOGEPI_HATCHED is set but no Togepi/Togetic found in the party.
+; Two cases distinguished by EVENT_EGG_FROM_AIDE_WAS_DISABLED:
+;   Set:   gift was disabled — aide never gave an egg; use "kept in lab" dialog.
+;   Clear: gift was randomized — a non-Togepi species hatched; reuse the
+;          generic ShowElmTogepiScript (its texts use #MON, not "TOGEPI").
+	checkevent EVENT_EGG_FROM_AIDE_WAS_DISABLED
+	iftrue .WasDisabled
+	sjump ShowElmTogepiScript
+
+.WasDisabled:
+	writetext ElmEggUnavailableText1
+	promptbutton
+	writetext ElmEggUnavailableText2
+	promptbutton
+	setevent EVENT_SHOWED_TOGEPI_TO_ELM
+	sjump ElmGiveEverstoneScript
 
 ElmCheckTogepiEgg:
 	checkevent EVENT_GOT_TOGEPI_EGG_FROM_ELMS_AIDE
@@ -1073,6 +1091,27 @@ ShowElmTogepiText3:
 	para "Wow, there's still"
 	line "a lot of research"
 	cont "to be done."
+	done
+
+ElmEggUnavailableText1:
+	text "About that EGG my"
+	line "aide showed you…"
+
+	para "I had him keep it"
+	line "with him to study."
+
+	para "We made a great"
+	line "discovery!"
+	done
+
+ElmEggUnavailableText2:
+	text "#MON EGGS need"
+	line "to be carried"
+	cont "by a trainer."
+
+	para "With other active"
+	line "#MON nearby,"
+	cont "EGGs will hatch!"
 	done
 
 ElmGiveEverstoneText1:

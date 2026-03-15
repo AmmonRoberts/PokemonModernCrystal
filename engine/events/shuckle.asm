@@ -1,13 +1,17 @@
 DEF MANIA_OT_ID EQU 00518
 
+PrepareShuckieGift::
+	ld a, SHUCKLE
+	ld [wCurPartySpecies], a  ; set default before farcall (farcall clobbers A)
+	farcall PrepareGiftMon
+	ret
+
 GiveShuckle:
 ; Adding to the party.
 	xor a ; PARTYMON
 	ld [wMonType], a
 
-; Level 15 Shuckle.
-	ld a, SHUCKLE
-	ld [wCurPartySpecies], a
+; Level 15 gift mon (species set by PrepareShuckieGift).
 	ld a, 15
 	ld [wCurPartyLevel], a
 

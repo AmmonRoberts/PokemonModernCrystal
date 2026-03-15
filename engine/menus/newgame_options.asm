@@ -6,8 +6,9 @@
 	const NEWGAMEOPT_TRAINER_RAND     ; 2
 	const NEWGAMEOPT_BERRY_RAND       ; 3
 	const NEWGAMEOPT_ITEM_RAND        ; 4
-	const NEWGAMEOPT_PAGE1_CONTINUE   ; 5
-DEF NUM_NEWGAMEOPTIONS_PAGE1 EQU const_value ; 6
+	const NEWGAMEOPT_GIFT_RAND        ; 5
+	const NEWGAMEOPT_PAGE1_CONTINUE   ; 6
+DEF NUM_NEWGAMEOPTIONS_PAGE1 EQU const_value ; 7
 
 ; Page 2: Modernization options
 	const_def
@@ -191,6 +192,8 @@ StringNewGameOptionsPage1:
 	db "     :<LF>"
 	db "ITEMS<LF>"
 	db "     :<LF>"
+	db "GIFT #MON<LF>"
+	db "     :<LF>"
 	db "CONTINUE@"
 
 StringNewGameOptionsPage2:
@@ -236,6 +239,7 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_TrainerRandomization
 	dw NewGameOptions_BerryRandomization
 	dw NewGameOptions_ItemRandomization
+	dw NewGameOptions_GiftRandomization
 	dw NewGameOptions_Continue
 
 .PointersPage2:
@@ -306,6 +310,53 @@ NewGameOptions_ItemRandomization:
 	ret
 .Standard:     db "STANDARD  @"
 .Randomized_str: db "RANDOMIZED@"
+
+NewGameOptions_GiftRandomization:
+; Cycles: GIFT_RAND_STANDARD (0) → GIFT_RAND_RANDOMIZED (1) → GIFT_RAND_DISABLED (2) → wrap
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
+	ld a, [wGiftRandMode]
+	inc a
+	cp NUM_GIFT_RAND_MODES
+	jr c, .set
+	xor a
+	jr .set
+.Left:
+	ld a, [wGiftRandMode]
+	and a
+	jr z, .WrapLeft
+	dec a
+	jr .set
+.WrapLeft:
+	ld a, NUM_GIFT_RAND_MODES - 1
+.set:
+	ld [wGiftRandMode], a
+.Display:
+	ld a, [wGiftRandMode]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 8, 14
+	call PlaceString
+	and a
+	ret
+.Strings:
+	dw .Standard
+	dw .Randomized
+	dw .Disabled
+.Standard:   db "STANDARD  @"
+.Randomized: db "RANDOMIZED@"
+.Disabled:   db "DISABLED  @"
 
 NewGameOptions_RareCandyMart:
 ; Cycles through DISABLED / CHEAP (500) / PRICEY (4800) / FREE (0)

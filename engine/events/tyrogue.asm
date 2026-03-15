@@ -1,8 +1,15 @@
-GiveTyrogueToBox::
-; Deposits Tyrogue (lv. 10) into the current PC box when the party is at limit.
-; Sets wScriptVar: 0 = box also full, 1 = sent to box successfully.
+PrepareTyrogueGift::
 	ld a, TYROGUE
-	ld [wCurPartySpecies], a
+	ld [wCurPartySpecies], a  ; set default before farcall (farcall clobbers A)
+	farcall PrepareGiftMon
+	ld a, 10
+	ld [wCurPartyLevel], a
+	ret
+
+GiveTyrogueToBox::
+; Deposits the prepared gift mon (lv. 10) into the current PC box when the party is at limit.
+; Sets wScriptVar: 0 = box also full, 1 = sent to box successfully.
+	ld a, [wCurPartySpecies] ; species set by PrepareTyrogueGift
 	ld [wTempEnemyMonSpecies], a
 	ld a, 10
 	ld [wCurPartyLevel], a

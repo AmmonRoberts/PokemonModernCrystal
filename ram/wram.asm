@@ -2916,6 +2916,13 @@ wPartyLimit::
 ; Maximum number of Pokémon allowed in the active party (1-6, default PARTY_LENGTH)
 ; Old saves will have 0 here, which is treated as PARTY_LENGTH on load
 	db
+wGiftRandMode::
+; Gift Pokémon randomizer mode (see constants/randomizer_constants.asm)
+; 0 = GIFT_RAND_STANDARD  (default): give standard gift species
+; 1 = GIFT_RAND_RANDOMIZED: replace gift species with a random one
+; 2 = GIFT_RAND_DISABLED:  do not give gift Pokémon at all
+; Old saves have 0 here on load (treated as STANDARD).
+	db
 wCrystalDataEnd::
 
 wCrystalFlags::

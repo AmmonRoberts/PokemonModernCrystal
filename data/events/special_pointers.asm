@@ -168,6 +168,20 @@ SpecialsPointers::
 	add_special GiveDratiniToBox
 	add_special GiveEeveeToBox
 	add_special GiveTyrogueToBox
+	add_special GiveGiftMonToParty
+	add_special PrepareKenyaGift
+	add_special GiveKenyaToParty
+	add_special PrepareEeveeGift
+	add_special PrepareDratiniGift
+	add_special TeachExtremeSpeedGift
+	add_special PrepareTyrogueGift
+	add_special PrepareShuckieGift
+	add_special PrepareOddEggGift
+	add_special GiveTogepiGift
+	add_special GetGiftRandMode
+	add_special GiftAskNicknameParty
+	add_special GiftAutoNicknameBox
+	add_special GiftAskNicknameBox
 	add_special SampleKenjiBreakCountdown
 	add_special BeastsCheck
 	add_special MonCheck
@@ -190,3 +204,4 @@ SpecialsPointers::
 	add_special InitialClearDSTFlag
 	add_special UnusedDummySpecial ; unused
 	add_special SelfTrade
+	add_special GiveOddEggToBox

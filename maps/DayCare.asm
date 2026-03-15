@@ -25,6 +25,8 @@ DayCareManScript_Inside:
 	opentext
 	checkevent EVENT_GOT_ODD_EGG
 	iftrue .AlreadyHaveOddEgg
+	special PrepareOddEggGift
+	ifequal GIFT_RESULT_DISABLED, .AlreadyHaveOddEgg
 	writetext DayCareManText_GiveOddEgg
 	promptbutton
 	closetext
@@ -42,8 +44,18 @@ DayCareManScript_Inside:
 	end
 
 .PartyFull:
+	special GiveOddEggToBox
+	ifequal 1, .SentToBox
 	opentext
 	writetext DayCareText_PartyFull
+	waitbutton
+	closetext
+	end
+
+.SentToBox:
+	setevent EVENT_GOT_ODD_EGG
+	opentext
+	writetext DayCareText_SentOddEggToPC
 	waitbutton
 	closetext
 	end
@@ -151,6 +163,11 @@ DayCareText_DescribeOddEgg:
 DayCareText_PartyFull:
 	text "You've no room for"
 	line "this."
+	done
+
+DayCareText_SentOddEggToPC:
+	text "ODD EGG was sent"
+	line "to BILL's PC."
 	done
 
 DayCare_MapEvents:

@@ -236,14 +236,10 @@ HatchEggs:
 	dec a
 	call SetSeenAndCaughtMon
 
-	ld a, [wCurPartySpecies]
-	cp TOGEPI
-	jr nz, .nottogepi
-	; set the event flag for hatching togepi
-	ld de, EVENT_TOGEPI_HATCHED
-	ld b, SET_FLAG
-	call EventFlagAction
-.nottogepi
+	; Set EVENT_TOGEPI_HATCHED when TOGEPI hatches, or when any egg hatches
+	; while an aide egg is in progress (RANDOMIZED mode).
+	; Logic lives in gift_randomizer.asm (bank1) to avoid bank5 overflow.
+	farcall SetTogepiHatchedFlag
 
 	pop de
 

@@ -1,6 +1,7 @@
-_GiveOddEgg:
+PrepareOddEggData:
+; Selects a random OddEgg entry, copies it into wOddEgg, optionally
+; randomises the species and moveset, then removes the EGG_TICKET.
 	; Figure out which egg to give.
-
 	; Compare a random word to probabilities out of $ffff.
 	call Random
 	ld hl, OddEggProbabilities
@@ -47,6 +48,60 @@ _GiveOddEgg:
 	ld bc, NICKNAMED_MON_STRUCT_LENGTH + NAME_LENGTH
 	call CopyBytes
 
+	; In RANDOMIZED mode, override the species byte with a random Pokémon.
+	ld a, [wGiftRandMode]
+	cp GIFT_RAND_RANDOMIZED
+	jr nz, .KeepSpecies
+.RandomiseOddEgg:
+	call Random
+	and a                ; species 0 is invalid
+	jr z, .RandomiseOddEgg
+	cp NUM_POKEMON + 1   ; must be 1-251
+	jr nc, .RandomiseOddEgg
+	ld [wOddEgg], a      ; first byte of wOddEgg is the species
+	; Replace the vanilla special moveset with default level-up moves for this species.
+	ld [wCurPartySpecies], a
+	ld a, EGG_LEVEL
+	ld [wCurPartyLevel], a
+	ld hl, wOddEgg + MON_MOVES
+	xor a
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
+	ld [wSkipMovesBeforeLevelUp], a
+	ld de, wOddEgg + MON_MOVES
+	predef FillMoves
+	; Fill the PP slots for the newly assigned moves.
+	ld b, NUM_MOVES
+	ld hl, wOddEgg + MON_MOVES
+	ld de, wOddEgg + MON_PP
+.FillOddEggPP:
+	ld a, [hli]
+	and a
+	jr z, .OddEggNoPP    ; empty slot → 0 PP
+	push bc
+	push hl
+	push de
+	dec a
+	ld hl, Moves + MOVE_PP
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte      ; a = max PP of this move
+	pop de
+	pop hl
+	pop bc
+	jr .OddEggSetPP
+.OddEggNoPP:
+	xor a
+.OddEggSetPP:
+	ld [de], a
+	inc de
+	dec b
+	jr nz, .FillOddEggPP
+.KeepSpecies:
+
 	ld a, EGG_TICKET
 	ld [wCurItem], a
 	ld a, 1
@@ -55,6 +110,10 @@ _GiveOddEgg:
 	ld [wCurItemQuantity], a
 	ld hl, wNumItems
 	call TossItem
+	ret
+
+_GiveOddEgg:
+	call PrepareOddEggData
 
 	; load species in wMobileMonSpecies
 	ld a, EGG
@@ -94,3 +153,53 @@ _GiveOddEgg:
 	dname "ODD", MON_NAME_LENGTH + 1
 
 INCLUDE "data/events/odd_eggs.asm"
+
+GiveOddEggToBox::
+; Deposits the Odd Egg into the current PC box when the party is at limit.
+; Calls PrepareOddEggData to select/randomise the egg and remove the ticket,
+; then sends it to the box. Preserves DVs, moves, and hatch counter.
+; Sets wScriptVar: 0 = box also full, 1 = sent to box successfully.
+	call PrepareOddEggData
+	; Use the ACTUAL hatched species (not EGG) for SendMonIntoBox.
+	; Using EGG ($fd) would call GetBaseData on an out-of-table entry,
+	; returning garbage base stats and a bad growth rate — corrupting WRAM
+	; (causes DayCare Lady to malfunction) and giving wrong exp (level 4 on hatch).
+	ld a, [wOddEgg]           ; actual hatched species
+	ld [wCurPartySpecies], a
+	ld a, EGG_LEVEL
+	ld [wCurPartyLevel], a
+	; Copy species, item, and moves from wOddEgg into wEnemyMon.
+	ld hl, wOddEgg
+	ld de, wEnemyMon
+	ld bc, 1 + 1 + NUM_MOVES
+	call CopyBytes
+	; Copy DVs and PP from wOddEgg into wEnemyMonDVs.
+	ld hl, wOddEgg + MON_DVS
+	ld de, wEnemyMonDVs
+	ld bc, 2 + NUM_MOVES
+	call CopyBytes
+	farcall SendMonIntoBox
+	jr nc, .BoxFull
+	; SendMonIntoBox set the box species list and nickname to the actual species.
+	; Patch both back to EGG so the egg doesn't prematurely reveal its contents.
+	; Also restore the real hatch counter (SendMonIntoBox overwrites with BASE_HAPPINESS).
+	ld a, BANK(sBoxMon1)
+	call OpenSRAM
+	ld hl, sBoxSpecies        ; new mon is always prepended to front of species list
+	ld a, EGG
+	ld [hl], a
+	ld hl, wOddEggName        ; "EGG" — populated by PrepareOddEggData's CopyBytes
+	ld de, sBoxMonNicknames   ; new mon's nickname slot is also at front
+	ld bc, MON_NAME_LENGTH
+	call CopyBytes
+	ld hl, sBoxMon1 + MON_HAPPINESS
+	ld a, [wOddEgg + MON_HAPPINESS]
+	ld [hl], a
+	call CloseSRAM
+	ld a, 1
+	ld [wScriptVar], a
+	ret
+.BoxFull:
+	xor a
+	ld [wScriptVar], a
+	ret
