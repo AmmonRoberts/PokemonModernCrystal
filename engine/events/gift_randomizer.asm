@@ -486,39 +486,65 @@ PrepareOddEggGift::
 ; GiveTogepiGift
 ; ---------------------------------------------------------------------------
 ; Gives a Togepi egg (or a random-species egg when GIFT_RAND_RANDOMIZED) to
-; the party.  Respects GIFT_RAND_DISABLED.  If the party is full, reports FULL
-; (eggs cannot be boxed directly via this routine).
+; the party, or to the PC box if the party is full.
+; Respects GIFT_RAND_DISABLED.
 ;
 ; Sets wMonOrItemNameBuffer to the egg species name (for the received text).
 ;
 ; Output: wScriptVar = GIFT_RESULT_DISABLED (0)
 ;                      GIFT_RESULT_PARTY    (1) – egg added to party
-;                      GIFT_RESULT_FULL     (3) – party is full
+;                      GIFT_RESULT_BOX      (2) – party full, egg sent to PC box
+;                      GIFT_RESULT_FULL     (3) – party and PC box both full
 GiveTogepiGift::
-	; Check party capacity before attempting to give the egg.
-	; GiveEgg always returns carry clear so we cannot rely on it for the full check.
-	ld a, [wPartyLimit]
-	ld b, a
-	ld a, [wPartyCount]
-	cp b                     ; carry set if wPartyCount < wPartyLimit (has room)
-	jr nc, .Full             ; no carry = count >= limit = party full
 	ld a, TOGEPI
 	ld [wCurPartySpecies], a  ; set before call so GetRandomGiftSpecies can read the default
 	call GetRandomGiftSpecies ; A = effective species, carry = disabled
 	jr c, .Disabled
-	; Store effective species and load the display name
 	ld [wCurPartySpecies], a
 	call LoadGiftMonName      ; wMonOrItemNameBuffer = species name
-	; Give as an EGG (uses wCurPartySpecies, level EGG_LEVEL)
 	ld a, EGG_LEVEL
 	ld [wCurPartyLevel], a
 	xor a ; PARTYMON
 	ld [wMonType], a
+	; Check party capacity.
+	; GiveEgg always returns carry clear so we cannot rely on it for the full check.
+	ld a, [wPartyLimit]
+	ld b, a
+	ld a, [wPartyCount]
+	cp b                      ; carry set if wPartyCount < wPartyLimit (has room)
+	jr nc, .TryBox            ; no carry = count >= limit = party full — try PC box
 	farcall GiveEgg
 	ld a, GIFT_RESULT_PARTY
 	ld [wScriptVar], a
 	ret
-.Full:
+.TryBox:
+	; Party is full — try to send the egg to the PC box instead.
+	ld a, [wCurPartySpecies]
+	ld [wTempEnemyMonSpecies], a ; LoadEnemyMon reads species from wTempEnemyMonSpecies
+	farcall LoadEnemyMon          ; fills wEnemyMon; GetBaseData sets wBaseEggSteps
+	farcall SendMonIntoBox        ; carry set = deposited OK, clear = box also full
+	jr nc, .BoxFull
+	; Patch the new box entry so it looks like an unhatched egg.
+	ld a, BANK(sBoxMon1)
+	call OpenSRAM
+	ld hl, sBoxSpecies
+	ld a, EGG
+	ld [hl], a                    ; species list: real species → EGG token
+	ld hl, sBoxMonNicknames
+	ld de, .eggName
+	call CopyName2                ; nickname → "EGG"
+	ld hl, sBoxMon1 + MON_HP
+	xor a
+	ld [hli], a
+	ld [hl], a                    ; HP high + low byte = 0 (eggs show no HP)
+	ld hl, sBoxMon1 + MON_HAPPINESS
+	ld a, [wBaseEggSteps]         ; SendMonIntoBox called GetBaseData; wBaseEggSteps is valid
+	ld [hl], a                    ; hatch counter = base egg-cycle steps for this species
+	call CloseSRAM
+	ld a, GIFT_RESULT_BOX
+	ld [wScriptVar], a
+	ret
+.BoxFull:
 	ld a, GIFT_RESULT_FULL
 	ld [wScriptVar], a
 	ret
@@ -526,3 +552,5 @@ GiveTogepiGift::
 	ld a, GIFT_RESULT_DISABLED
 	ld [wScriptVar], a
 	ret
+.eggName
+	db "EGG@"

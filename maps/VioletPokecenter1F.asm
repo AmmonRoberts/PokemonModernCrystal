@@ -26,6 +26,7 @@ VioletPokecenter1F_ElmsAideScript:
 	iffalse .RefusedEgg
 	special GiveTogepiGift
 	ifequal GIFT_RESULT_FULL, .PartyFull
+	ifequal GIFT_RESULT_BOX, .EggSentToBox
 	; GIFT_RESULT_PARTY (1) — egg added to party (disabled handled above)
 	getstring STRING_BUFFER_4, .eggname
 	scall .AideGivesEgg
@@ -65,6 +66,26 @@ VioletPokecenter1F_ElmsAideScript:
 	writetext VioletCityElmsAideFullPartyText
 	waitbutton
 	closetext
+	end
+
+.EggSentToBox:
+; Party is full but the egg was sent to the PC box — set events and walk out.
+	writetext VioletPokecenterElmsAideSentEggToBoxText
+	waitbutton
+	writetext VioletPokecenterElmsAideGiveEggText
+	waitbutton
+	closetext
+	setevent EVENT_GOT_TOGEPI_EGG_FROM_ELMS_AIDE
+	clearevent EVENT_ELMS_AIDE_IN_LAB
+	clearevent EVENT_TOGEPI_HATCHED
+	setmapscene ROUTE_32, SCENE_ROUTE32_OFFER_SLOWPOKETAIL
+	readvar VAR_FACING
+	ifequal UP, .AideWalksAroundPlayer
+	turnobject PLAYER, DOWN
+	applymovement VIOLETPOKECENTER1F_ELMS_AIDE, MovementData_AideWalksStraightOutOfPokecenter
+	playsound SFX_EXIT_BUILDING
+	disappear VIOLETPOKECENTER1F_ELMS_AIDE
+	waitsfx
 	end
 
 .GiftsDisabled:
@@ -164,13 +185,23 @@ VioletPokecenterElmsAideGiveEggText:
 	done
 
 VioletCityElmsAideFullPartyText:
-	text "Oh, no. You can't"
-	line "carry any more"
-	cont "#MON with you."
+	text "Oh, no. Your"
+	line "party AND PC BOX"
+	cont "are both full!"
 
-	para "I'll wait here"
-	line "while you make"
-	cont "room for the EGG."
+	para "Make room for the"
+	line "EGG and come"
+	cont "back!"
+	done
+
+VioletPokecenterElmsAideSentEggToBoxText:
+	text "Your party was"
+	line "full, so I sent"
+	cont "the EGG to your"
+
+	para "PC BOX instead."
+	line "Grab it whenever"
+	cont "you're ready!"
 	done
 
 VioletPokecenterElmsAideShowsEggText:
