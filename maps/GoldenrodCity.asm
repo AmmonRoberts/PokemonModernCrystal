@@ -25,10 +25,14 @@ GoldenrodCity_MapScripts:
 GoldenrodCityFlypointAndFloriaCallback:
 	setflag ENGINE_FLYPOINT_GOLDENROD
 	setflag ENGINE_REACHED_GOLDENROD
-	checkevent EVENT_MET_FLORIA
-	iftrue .FloriaDone
+	; Ensure Floria is at Route 36 until the player acquires the Squirtbottle.
+	; This also recovers saves where the old callback had cleared this event.
+	checkevent EVENT_GOT_SQUIRTBOTTLE
+	iftrue .Done
+	checkevent EVENT_FOUGHT_SUDOWOODO
+	iftrue .Done
 	clearevent EVENT_FLORIA_AT_SUDOWOODO
-.FloriaDone:
+.Done:
 	endcallback
 
 GoldenrodCityMoveTutorCallback:
