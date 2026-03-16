@@ -174,6 +174,9 @@ if DEF(_DEBUG)
 hDebugRoomMenuPage::
 endc
 hClockResetTrigger:: db
+if DEF(_DEBUG)
+hDebugRoomMenuCursor::
+endc
 hDayCareBoxResult:: db ; 0 = mon went to party; 1 = mon sent to PC box
 
 	ds 18

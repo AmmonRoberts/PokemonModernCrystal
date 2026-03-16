@@ -52,14 +52,22 @@ _DebugRoom::
 	and PAD_SELECT | PAD_START
 	cp PAD_SELECT | PAD_START
 	ret nz
+	xor a
+	ldh [hSCX], a
+	ldh [hSCY], a
 	ldh a, [hDebugRoomMenuPage]
 	push af
 	xor a
 	ldh [hDebugRoomMenuPage], a
+	ldh [hDebugRoomMenuCursor], a
 .loop
 	ld hl, wTilemap
 	ld bc, wTilemapEnd - wTilemap
 	ld a, ' '
+	call ByteFill
+	ld hl, wAttrmap
+	ld bc, wAttrmapEnd - wAttrmap
+	ld a, PAL_BG_TEXT
 	call ByteFill
 	call DebugRoom_PrintStackBottomTop
 	call DebugRoom_PrintWindowStackBottomTop
@@ -103,9 +111,26 @@ _DebugRoom::
 	ld [wWhichIndexSet], a
 	ld hl, .MenuHeader
 	call LoadMenuHeader
+	; Restore the saved cursor position into wMenuCursorPosition so that
+	; InitVerticalMenuCursor (called by SetUpMenu) places the cursor correctly.
+	; On first entry hDebugRoomMenuCursor = 0, which _InitVerticalMenuCursor
+	; treats the same as 1 ("go to top"), so the default behaviour is preserved.
+	ldh a, [hDebugRoomMenuCursor]
+	ld [wMenuCursorPosition], a
 	call SetUpMenu
 .wait
 	call GetScrollingMenuJoypad
+	; GetScrollingMenuJoypad always runs its .done path, which writes the
+	; current wMenuCursorY back into wMenuCursorPosition. Save it here,
+	; before CloseWindow / ExitMenu pops the window stack and restores
+	; wMenuCursorPosition to the push-time default of 1.
+	ld a, [wMenuCursorPosition]
+	ldh [hDebugRoomMenuCursor], a
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .turn_right
+	bit B_PAD_LEFT, a
+	jr nz, .turn_left
 	ld a, [wMenuJoypad]
 	and PAD_A | PAD_B
 	jr z, .wait
@@ -115,6 +140,26 @@ _DebugRoom::
 	ld a, [wMenuSelection]
 	ld hl, .Jumptable
 	rst JumpTable
+	jp .loop
+.turn_right
+	call CloseWindow
+	ldh a, [hDebugRoomMenuPage]
+	inc a
+	cp DEBUGROOMMENU_NUM_PAGES
+	jr c, .set_page
+	xor a
+	jr .set_page
+.turn_left
+	call CloseWindow
+	ldh a, [hDebugRoomMenuPage]
+	and a
+	jr z, .left_wrap
+	dec a
+	jr .set_page
+.left_wrap
+	ld a, DEBUGROOMMENU_NUM_PAGES - 1
+.set_page
+	ldh [hDebugRoomMenuPage], a
 	jp .loop
 .done
 	pop af
@@ -139,40 +184,40 @@ _DebugRoom::
 	db "SP CLEAR@"
 	db "WIN WORK CLR@"
 	db "#MON GET!@"
-	db "#DEX COMP@"
+	db "#DEX COMP.@"
 	db "TIMER RESET@"
 	db "DECORATE ALL@"
 	db "PC ITEM GET!@"
 	db "RTC EDIT@"
 	db "NEXT@"
 	db "GB ID SET@"
-	db "BTL REC CLR@"
-	db "#DEX CLR@"
+	db "BATTLE RECORD@"
+	db "#DEX CLEAR@"
 	db "HALT CHK CLR@"
 	db "BATTLE SKIP@"
-	db "HOF CLEAR@"
+	db "HALL OF FAME@"
 	db "ROM CHECKSUM@"
-	db "TEL DEBUG@"
-	db "SUM RECALC@"
+	db "PHONE DEBUG@"
+	db "CHECKSUM CALC@"
 	db "RAM FLAG CLR@"
 	db "CHANGE SEX@"
 	db "BT BUG POKE@"
-	db "ITEM RANDO@"
+	db "ITEM RANDOM@"
 	db "WARP TO@"
 	db "EXP MULT@"
 	db "PERMAFAINT@"
 	db "RESET WIPE@"
 	db "BADGE EDIT@"
-	db "RARE CND@"
-	db "WILD RANDO@"
-	db "STRT RANDO@"
-	db "TRNR RANDO@"
-	db "BERY RANDO@"
-	db "TM FREE@"
-	db "POIS SVL@"
-	db "AUTO NICK@"
-	db "PARTY LIM@"
-	db "GIFT RANDO@"
+	db "BUY CANDY@"
+	db "WILD RANDOM@"
+	db "STARTER RANDO@"
+	db "TRAINER RANDO@"
+	db "BERRY RANDO@"
+	db "TM REUSE@"
+	db "POISON FADE@"
+	db "AUTO NICKNAME@"
+	db "PARTY LIMIT@"
+	db "GIFT RANDOM@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -505,7 +550,7 @@ DebugRoom_PrintItemRando:
 	ret
 
 .RandoString:
-	db "RNDO:@"
+	db "ITR:@"
 .OffString:
 	db " OFF@"
 .OnString:
@@ -532,7 +577,7 @@ DebugRoom_PrintWildRando:
 	call PlaceString
 	ret
 
-.Label:     db "WILD:@"
+.Label:     db "WIL:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -557,7 +602,7 @@ DebugRoom_PrintStrtRando:
 	call PlaceString
 	ret
 
-.Label:     db "STRT:@"
+.Label:     db "STR:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -582,7 +627,7 @@ DebugRoom_PrintTrnrRando:
 	call PlaceString
 	ret
 
-.Label:     db "TRNR:@"
+.Label:     db "TRR:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -607,7 +652,7 @@ DebugRoom_PrintBeryRando:
 	call PlaceString
 	ret
 
-.Label:     db "BERY:@"
+.Label:     db "BER:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -657,7 +702,7 @@ DebugRoom_PrintPoisSvl:
 	call PlaceString
 	ret
 
-.Label:     db "POIS:@"
+.Label:     db "PSN:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -682,7 +727,7 @@ DebugRoom_PrintAutoNick:
 	call PlaceString
 	ret
 
-.Label:     db "NICK:@"
+.Label:     db "NIR:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -746,7 +791,7 @@ DebugRoom_PrintPartyLimit:
 	call PlaceString
 	ret
 
-.Label:   db "PTYL:@"
+.Label:   db "PTY:@"
 .Strings:
 	dw .str_1
 	dw .str_2
@@ -788,7 +833,7 @@ DebugRoom_PrintGiftRando:
 	call PlaceString
 	ret
 
-.Label:      db "GIFT:@"
+.Label:      db "GFT:@"
 .Strings:
 	dw .Standard
 	dw .Randomized
@@ -811,7 +856,7 @@ DebugRoom_PrintPermafaint:
 	call PlaceString
 	ret
 
-.Label:     db "PRMA:@"
+.Label:     db "PRM:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -829,7 +874,7 @@ DebugRoom_PrintResetOnWipe:
 	call PlaceString
 	ret
 
-.Label:     db "RWIP:@"
+.Label:     db "RWP:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
@@ -850,7 +895,7 @@ DebugRoom_PrintRareCandyMart:
 	call PlaceString
 	ret
 
-.Label:   db "RCM:@"
+.Label:   db "BRC:@"
 .Strings:
 	dw .Disabled
 	dw .Cheap
@@ -893,6 +938,11 @@ DebugRoom_PrintExpMult:
 .str_150: db "1.50@"
 
 DebugRoomMenu_WarpTo:
+	; Initialise the last-group tracker so the auto function doesn't fire a
+	; spurious group-change reset on the very first frame, which would clobber
+	; the intended default MAP_NEW_BARK_TOWN starting value.
+	ld a, MAPGROUP_NEW_BARK
+	ld [wDebugRoomLastWarpGroup], a
 	ld hl, .PagedValuesHeader
 	call DebugRoom_EditPagedValues
 	ret
@@ -901,19 +951,19 @@ DebugRoomMenu_WarpTo:
 	dw NULL ; A function
 	dw NULL ; Select function
 	dw DebugRoom_DoWarp ; Start function
-	dw NULL ; Auto function
+	dw DebugRoom_WarpToAuto ; Auto function
 	db 1 ; # pages
 	dw .Page1Values
 
 .Page1Values:
 	db 2
-	; paged_value wDebugRoomWarpGroup, 0, NUM_MAP_GROUPS - 1, GROUP_NEW_BARK_TOWN, .GroupString, NULL, TRUE
+	; paged_value wDebugRoomWarpGroup, 1, NUM_MAP_GROUPS, MAPGROUP_NEW_BARK, .GroupString, DebugRoom_PrintWarpGroupName, TRUE
 	dw wDebugRoomWarpGroup  ; value address
 	db 1                    ; min value (group 1 = OLIVINE)
 	db NUM_MAP_GROUPS       ; max value (group 26 = CHERRYGROVE)
 	db MAPGROUP_NEW_BARK    ; initial value
 	dw .GroupString         ; label string
-	dw NULL                 ; value name function
+	dw DebugRoom_PrintWarpGroupName ; value name function
 	db TRUE                 ; is hex value?
 	; MAP paged value
 	dw wDebugRoomWarpMap    ; value address
@@ -921,13 +971,222 @@ DebugRoomMenu_WarpTo:
 	db 91                   ; max value (largest group has 91 maps)
 	db MAP_NEW_BARK_TOWN    ; initial value
 	dw .MapString          ; label string
-	dw NULL                ; value name function
+	dw DebugRoom_PrintWarpMapName ; value name function
 	db TRUE                ; is hex value?
 
 .GroupString:
 	db "GROUP@"
 .MapString:
 	db "MAP  @"
+
+WarpGroupMaxMaps:
+; Maximum valid map number for each of the 26 map groups (index = group_number - 1).
+	db NUM_OLIVINE_MAPS      ;  1 OLIVINE
+	db NUM_MAHOGANY_MAPS     ;  2 MAHOGANY
+	db NUM_DUNGEONS_MAPS     ;  3 DUNGEONS
+	db NUM_ECRUTEAK_MAPS     ;  4 ECRUTEAK
+	db NUM_BLACKTHORN_MAPS   ;  5 BLACKTHORN
+	db NUM_CINNABAR_MAPS     ;  6 CINNABAR
+	db NUM_CERULEAN_MAPS     ;  7 CERULEAN
+	db NUM_AZALEA_MAPS       ;  8 AZALEA
+	db NUM_LAKE_OF_RAGE_MAPS ;  9 LAKE_OF_RAGE
+	db NUM_VIOLET_MAPS       ; 10 VIOLET
+	db NUM_GOLDENROD_MAPS    ; 11 GOLDENROD
+	db NUM_VERMILION_MAPS    ; 12 VERMILION
+	db NUM_PALLET_MAPS       ; 13 PALLET
+	db NUM_PEWTER_MAPS       ; 14 PEWTER
+	db NUM_FAST_SHIP_MAPS    ; 15 FAST_SHIP
+	db NUM_INDIGO_MAPS       ; 16 INDIGO
+	db NUM_FUCHSIA_MAPS      ; 17 FUCHSIA
+	db NUM_LAVENDER_MAPS     ; 18 LAVENDER
+	db NUM_SILVER_MAPS       ; 19 SILVER
+	db NUM_CABLE_CLUB_MAPS   ; 20 CABLE_CLUB
+	db NUM_CELADON_MAPS      ; 21 CELADON
+	db NUM_CIANWOOD_MAPS     ; 22 CIANWOOD
+	db NUM_VIRIDIAN_MAPS     ; 23 VIRIDIAN
+	db NUM_NEW_BARK_MAPS     ; 24 NEW_BARK
+	db NUM_SAFFRON_MAPS      ; 25 SAFFRON
+	db NUM_CHERRYGROVE_MAPS  ; 26 CHERRYGROVE
+
+DebugRoom_PrintWarpGroupName:
+; Value name function for the GROUP paged value.
+; Input: a = group number (1-26), bc = tilemap position for the name row.
+	push bc           ; save tilemap position
+	dec a             ; 0-index (group 1 -> 0)
+	add a             ; multiply by 2 (each pointer is 2 bytes)
+	ld c, a
+	ld b, 0
+	ld hl, .GroupNamePointers
+	add hl, bc        ; hl = &.GroupNamePointers[group-1]
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a           ; hl = group name string pointer
+	ld d, h
+	ld e, l           ; de = group name string (preserved across pop)
+	pop hl            ; hl = tilemap position
+	push hl
+	lb bc, 1, 12
+	call ClearBox
+	pop hl
+	call PlaceString
+	ret
+
+.GroupNamePointers:
+	dw .Olivine
+	dw .Mahogany
+	dw .Dungeons
+	dw .Ecruteak
+	dw .Blackthorn
+	dw .Cinnabar
+	dw .Cerulean
+	dw .Azalea
+	dw .LakeOfRage
+	dw .Violet
+	dw .Goldenrod
+	dw .Vermilion
+	dw .Pallet
+	dw .Pewter
+	dw .FastShip
+	dw .Indigo
+	dw .Fuchsia
+	dw .Lavender
+	dw .Silver
+	dw .CableClub
+	dw .Celadon
+	dw .Cianwood
+	dw .Viridian
+	dw .NewBark
+	dw .Saffron
+	dw .Cherrygrove
+
+.Olivine:     db "OLIVINE@"
+.Mahogany:    db "MAHOGANY@"
+.Dungeons:    db "DUNGEONS@"
+.Ecruteak:    db "ECRUTEAK@"
+.Blackthorn:  db "BLACKTHORN@"
+.Cinnabar:    db "CINNABAR@"
+.Cerulean:    db "CERULEAN@"
+.Azalea:      db "AZALEA@"
+.LakeOfRage:  db "LAKE OF RAGE@"
+.Violet:      db "VIOLET@"
+.Goldenrod:   db "GOLDENROD@"
+.Vermilion:   db "VERMILION@"
+.Pallet:      db "PALLET@"
+.Pewter:      db "PEWTER@"
+.FastShip:    db "FAST SHIP@"
+.Indigo:      db "INDIGO@"
+.Fuchsia:     db "FUCHSIA@"
+.Lavender:    db "LAVENDER@"
+.Silver:      db "SILVER@"
+.CableClub:   db "CABLE CLUB@"
+.Celadon:     db "CELADON@"
+.Cianwood:    db "CIANWOOD@"
+.Viridian:    db "VIRIDIAN@"
+.NewBark:     db "NEW BARK@"
+.Saffron:     db "SAFFRON@"
+.Cherrygrove: db "CHERRYGROVE@"
+
+DebugRoom_PrintWarpMapName:
+; Value name function for the MAP paged value.
+; Input: a = map number (1-91), bc = tilemap position for the name row.
+; Uses the map's landmark ID to look up and display the area name.
+; If the map number is out of range for the current group, the row is blanked.
+	push bc           ; save tilemap position
+	push af           ; save map number
+	; Bounds-check map number against the max for the current group
+	ld hl, WarpGroupMaxMaps
+	ld a, [wDebugRoomWarpGroup]
+	dec a             ; 0-index
+	ld c, a
+	ld b, 0
+	add hl, bc        ; hl = &WarpGroupMaxMaps[group-1]
+	pop af            ; a = map number
+	cp [hl]           ; compare with group max
+	jr z, .in_range
+	jr c, .in_range
+	; Map number exceeds the group's max — blank the name row
+	pop hl            ; hl = tilemap position
+	lb bc, 1, 15
+	call ClearBox
+	ret
+.in_range
+	; Look up the landmark ID from the map's group entry
+	ld c, a           ; c = map number
+	ld a, [wDebugRoomWarpGroup]
+	ld b, a           ; b = map group
+	ld de, MAP_LOCATION
+	call GetAnyMapField ; b=group, c=map, de=offset -> c = landmark ID
+	ld e, c           ; e = landmark ID (input for GetLandmarkName)
+	; Copy the landmark name into wStringBuffer1
+	farcall GetLandmarkName
+	; Sanitize the landmark name:
+	; - replace <BSP> ($1f, the "breakable space" used on the Town Map) with a
+	;   regular space so it renders correctly in a single-line context
+	; - cap the string at 15 characters to keep it within the textbox boundary
+	;   (name row starts at col 4; last usable inner col is 18; 18-4+1 = 15)
+	ld hl, wStringBuffer1
+	ld b, 15
+.sanitize
+	ld a, [hl]
+	cp '@'
+	jr z, .sanitized  ; string already ends before the cap — leave it alone
+	cp $1f            ; <BSP> character?
+	jr nz, .not_bsp
+	ld [hl], ' '      ; replace with a regular space
+.not_bsp
+	inc hl
+	dec b
+	jr nz, .sanitize
+	ld [hl], '@'      ; cap at 15 characters
+.sanitized
+	; Display the name
+	pop hl            ; hl = tilemap position
+	push hl
+	lb bc, 1, 15
+	call ClearBox
+	pop hl
+	ld de, wStringBuffer1
+	call PlaceString
+	ret
+
+DebugRoom_WarpToAuto:
+; Auto function: called every frame while the WARP TO screen is open.
+; Resets MAP to 01 when GROUP changes, and clamps MAP to the group's valid max.
+	ld a, [wDebugRoomWarpGroup]
+	ld b, a
+	ld a, [wDebugRoomLastWarpGroup]
+	cp b
+	jr z, .same_group
+	; Group has changed — save new group and reset MAP to 1
+	ld a, [wDebugRoomWarpGroup]
+	ld [wDebugRoomLastWarpGroup], a
+	ld a, 1
+	ld [wDebugRoomWarpMap], a
+	ld b, 0
+	ld c, 1
+	call DebugRoom_PrintPagedValue
+	ret
+.same_group
+	; Check whether current MAP exceeds the max for this group
+	ld hl, WarpGroupMaxMaps
+	ld a, b           ; b = current group (set above)
+	dec a             ; 0-index
+	ld c, a
+	ld b, 0
+	add hl, bc        ; hl = &WarpGroupMaxMaps[group-1]
+	ld a, [wDebugRoomWarpMap]
+	cp [hl]           ; compare MAP with group max
+	jr z, .done
+	jr c, .done
+	; MAP > max — clamp to this group's max
+	ld a, [hl]
+	ld [wDebugRoomWarpMap], a
+	ld b, 0
+	ld c, 1
+	call DebugRoom_PrintPagedValue
+	ret
+.done
+	ret
 
 DebugRoom_DoWarp:
 	; Set up a door warp to the selected map group and map number
@@ -2401,8 +2660,11 @@ DebugRoom_InitBadgesOnce:
 	ret
 
 DebugRoom_SaveBadges:
+	ld hl, .ConfirmText
+	call MenuTextbox
 	call YesNoBox
-	ret c
+	jr c, .cancel
+	call CloseWindow
 	; Pack Johto badge scratch bytes back (read RISING..ZEPHYR, shift into byte)
 	ld hl, wDebugRoomBadges + NUM_JOHTO_BADGES - 1
 	xor a
@@ -2443,7 +2705,21 @@ DebugRoom_SaveBadges:
 	ld [sPlayerData + (wKantoBadges - wPlayerData)], a
 	call CloseSRAM
 	call DebugRoom_SaveChecksum
+	ld hl, .SavedText
+	call MenuTextbox
+	call DebugRoom_JoyWaitABSelect
+	call CloseWindow
 	ret
+.cancel
+	call CloseWindow
+	ret
+
+.ConfirmText:
+	text "Save badges?"
+	done
+.SavedText:
+	text "Badges saved!"
+	done
 
 DebugRoomMenu_BadgeEdit_Page1Values:
 	db 8

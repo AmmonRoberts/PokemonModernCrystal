@@ -1286,8 +1286,9 @@ wDebugRoomItemID::       db
 wDebugRoomItemQuantity:: db
 NEXTU
 ; debug room warp values
-wDebugRoomWarpGroup:: db
-wDebugRoomWarpMap::   db
+wDebugRoomWarpGroup::     db
+wDebugRoomWarpMap::       db
+wDebugRoomLastWarpGroup:: db
 NEXTU
 ; debug room new pokemon values
 wDebugRoomMon::    box_struct wDebugRoomMon
