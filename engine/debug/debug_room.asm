@@ -59,6 +59,7 @@ _DebugRoom::
 	push af
 	xor a
 	ldh [hDebugRoomMenuPage], a
+	ldh [hDebugRoomMenuCursor], a
 .loop
 	ld hl, wTilemap
 	ld bc, wTilemapEnd - wTilemap
@@ -110,9 +111,21 @@ _DebugRoom::
 	ld [wWhichIndexSet], a
 	ld hl, .MenuHeader
 	call LoadMenuHeader
+	; Restore the saved cursor position into wMenuCursorPosition so that
+	; InitVerticalMenuCursor (called by SetUpMenu) places the cursor correctly.
+	; On first entry hDebugRoomMenuCursor = 0, which _InitVerticalMenuCursor
+	; treats the same as 1 ("go to top"), so the default behaviour is preserved.
+	ldh a, [hDebugRoomMenuCursor]
+	ld [wMenuCursorPosition], a
 	call SetUpMenu
 .wait
 	call GetScrollingMenuJoypad
+	; GetScrollingMenuJoypad always runs its .done path, which writes the
+	; current wMenuCursorY back into wMenuCursorPosition. Save it here,
+	; before CloseWindow / ExitMenu pops the window stack and restores
+	; wMenuCursorPosition to the push-time default of 1.
+	ld a, [wMenuCursorPosition]
+	ldh [hDebugRoomMenuCursor], a
 	ldh a, [hJoyPressed]
 	bit B_PAD_RIGHT, a
 	jr nz, .turn_right
