@@ -125,6 +125,10 @@ TrainerType2:
 
 	push hl
 	predef TryAddMonToParty
+	; If trainer randomization is enabled, skip hard-coded moves
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TRAINER_RAND_F, a
+	jp nz, .skip_moves
 	ld a, [wOTPartyCount]
 	dec a
 	ld hl, wOTPartyMon1Moves
@@ -182,6 +186,12 @@ TrainerType2:
 .copied_pp
 
 	pop hl
+	jr .loop
+
+.skip_moves
+	pop hl
+	ld bc, NUM_MOVES
+	add hl, bc
 	jr .loop
 
 TrainerType3:
@@ -244,6 +254,10 @@ TrainerType4:
 	ld a, [hli]
 	ld [de], a
 
+	; If trainer randomization is enabled, skip hard-coded moves
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TRAINER_RAND_F, a
+	jp nz, .skip_moves
 	push hl
 	ld a, [wOTPartyCount]
 	dec a
@@ -303,7 +317,12 @@ TrainerType4:
 .copied_pp
 
 	pop hl
-	jr .loop
+	jp .loop
+
+.skip_moves
+	ld bc, NUM_MOVES
+	add hl, bc
+	jp .loop
 
 ComputeTrainerReward:
 	ld hl, hProduct
