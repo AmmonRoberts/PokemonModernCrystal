@@ -2911,6 +2911,9 @@ wPermafaint::
 ; bit 1 = Reset on party wipe (party wipe wipes the save and resets the game)
 ; bit 2 = Game-over reset pending (runtime only — set by WipePermafaintSave, cleared on load)
 ; bit 3 = PC-withdraw notification pending (runtime only — set by TryPermadeathPCWithdraw)
+; bit 4 = Item-to-Bag notification pending (runtime only — set by DoProcessPermafaintReleases)
+; bit 5 = Item-to-PC notification pending (runtime only — set by DoProcessPermafaintReleases)
+; bit 6 = Item-lost notification pending (runtime only — both Bag and PC were full)
 ; Placed last so old saves always read 0 (off) here rather than aliasing wPlayerAge
 	db
 wPartyLimit::

@@ -566,6 +566,24 @@ _PermadeathNoMonsGameOverText::
 	para "GAME OVER"
 	done
 
+_PermadeathItemToBagText::
+	text "A held item was"
+	line "sent to your BAG!"
+	done
+
+_PermadeathItemToPCText::
+	text "A held item was"
+	line "sent to your PC!"
+	done
+
+_PermadeathItemsDroppedText::
+	text "Your BAG and PC"
+	line "were both full!"
+
+	para "A held item was"
+	line "lost forever!"
+	done
+
 _ItemfinderItemNearbyText::
 	text "Yes! ITEMFINDER"
 	line "indicates there's"
