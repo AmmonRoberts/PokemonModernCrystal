@@ -1420,6 +1420,21 @@ HasRockSmash:
 	ld [wScriptVar], a
 	ret
 
+WildEncounterRandomize::
+; If the wild encounter randomizer is enabled, replace wTempWildMonSpecies
+; with a uniformly random valid Pokémon species (1–NUM_POKEMON).
+	ld a, [wRandoFlags]
+	bit RANDFLAG_WILD_ENCOUNTERS_F, a
+	ret z
+.loop
+	call Random
+	and a
+	jr z, .loop
+	cp NUM_POKEMON + 1
+	jr nc, .loop
+	ld [wTempWildMonSpecies], a
+	ret
+
 FishFunction:
 	ld a, e
 	push af
