@@ -146,7 +146,47 @@ DoProcessPermafaintReleases:
 	ld [wCurPartyMon], a
 	jr .scan
 .release:
-	; wCurPartyMon points to a fainted mon - release it permanently
+	; Before releasing, attempt to recover the held item (if any) into the Bag or PC.
+	ld a, [wCurPartyMon]
+	ld hl, wPartyMon1Item
+	ld bc, PARTYMON_STRUCT_LENGTH
+	call AddNTimes
+	ld a, [hl]
+	and a           ; NO_ITEM?
+	jr z, .do_release
+	; Mon has a held item — try to give it to the player.
+	push hl              ; save item slot address for clearing later
+	ld [wCurItem], a
+	ld a, 1
+	ld [wItemQuantityChange], a
+	ld hl, wNumItems     ; try Bag first
+	call ReceiveItem
+	jr nc, .try_pc
+	; Item went into the Bag — set bit 4 notification.
+	ld a, [wPermafaint]
+	set 4, a
+	ld [wPermafaint], a
+	jr .item_received
+.try_pc:
+	ld hl, wNumPCItems   ; Bag full — try PC
+	call ReceiveItem
+	jr nc, .both_full
+	; Item went into the PC — set bit 5 notification.
+	ld a, [wPermafaint]
+	set 5, a
+	ld [wPermafaint], a
+	jr .item_received
+.both_full:
+	; Both Bag and PC are full: set bit 6 notification.
+	ld a, [wPermafaint]
+	set 6, a
+	ld [wPermafaint], a
+.item_received:
+	pop hl               ; restore item slot address
+	xor a
+	ld [hl], a           ; strip held item from the mon
+.do_release:
+	; Release the fainted mon from the party permanently.
 	xor a ; REMOVE_PARTY
 	ld [wPokemonWithdrawDepositParameter], a
 	farcall RemoveMonFromPartyOrBox

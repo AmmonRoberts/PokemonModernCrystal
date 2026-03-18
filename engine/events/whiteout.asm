@@ -42,6 +42,18 @@ Script_Whiteout:
 	text_far _PermadeathWipeGameOverText
 	text_end
 
+.ItemToBagText:
+	text_far _PermadeathItemToBagText
+	text_end
+
+.ItemToPCText:
+	text_far _PermadeathItemToPCText
+	text_end
+
+.ItemsDroppedText:
+	text_far _PermadeathItemsDroppedText
+	text_end
+
 OverworldBGMap:
 	call ClearPalettes
 	call ClearScreen
@@ -52,10 +64,12 @@ OverworldBGMap:
 
 ShowPermadeathWhiteoutMessage:
 ; Called from Script_Whiteout after the "blacked out" text is dismissed.
-; Shows an informational or game-over message based on wPermafaint flags:
+; Shows informational or game-over messages based on wPermafaint flags:
+;   bit 4 set → held item(s) were lost (Bag and PC both full during permadeath release)
 ;   bit 3 set → a Pokémon was retrieved from the PC into slot 0 of the party
 ;   bit 2 set + bit 1 set → game over due to reset-on-wipe
 ;   bit 2 set + bit 1 clear → game over: no Pokémon remain anywhere
+	call ShowPermadeathItemsDroppedMessage
 	ld a, [wPermafaint]
 	bit 3, a
 	jr z, .check_gameover
@@ -86,6 +100,46 @@ ShowPermadeathWhiteoutMessage:
 	call PrintText
 	call WaitPressAorB_BlinkCursor
 	ret
+
+ShowPermadeathItemsDroppedMessage:
+; Shows post-battle notifications for held items recovered or lost during permadeath releases.
+; Checks bits 4/5/6 of wPermafaint and shows the corresponding message for each set bit.
+; Bit 4 = item went to Bag, bit 5 = item went to PC, bit 6 = item lost (both full).
+	ld a, [wPermafaint]
+	bit 4, a
+	jr z, .check_pc
+	res 4, a
+	ld [wPermafaint], a
+	ld hl, Script_Whiteout.ItemToBagText
+	call PrintText
+	call WaitPressAorB_BlinkCursor
+.check_pc:
+	ld a, [wPermafaint]
+	bit 5, a
+	jr z, .check_lost
+	res 5, a
+	ld [wPermafaint], a
+	ld hl, Script_Whiteout.ItemToPCText
+	call PrintText
+	call WaitPressAorB_BlinkCursor
+.check_lost:
+	ld a, [wPermafaint]
+	bit 6, a
+	ret z
+	res 6, a
+	ld [wPermafaint], a
+	ld hl, Script_Whiteout.ItemsDroppedText
+	call PrintText
+	call WaitPressAorB_BlinkCursor
+	ret
+
+Script_PermadeathItemsDropped::
+; Queued as a mem script (via Script_reloadmapafterbattle) after a won battle
+; where a permadeath-released Pokémon's held item could not fit in Bag or PC.
+	opentext
+	callasm ShowPermadeathItemsDroppedMessage
+	closetext
+	endall
 
 CheckPermafaintGameOver:
 ; If bit 2 of wPermafaint is set, the save was just wiped due to a party wipe.

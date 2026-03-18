@@ -872,10 +872,10 @@ _LoadData:
 
 	call CloseSRAM
 	; Sanitize wPermafaint on load: preserve only the two user-setting bits (0=permadeath,
-	; 1=reset-on-wipe). Bit 2 is runtime-only (game-over pending) and is always cleared.
+	; 1=reset-on-wipe). Bits 2-6 are runtime-only and are always cleared on load.
 	; Values from old saves that only used bits 0 are preserved correctly by this mask.
 	ld a, [wPermafaint]
-	and $03 ; preserve bits 0-1 (user settings); runtime bits 2-3 always cleared on load
+	and $03 ; preserve bits 0-1 (user settings); runtime bits 2-6 always cleared on load
 	ld [wPermafaint], a
 	; Sanitize wPartyLimit: old saves will have 0 here; default to PARTY_LENGTH.
 	ld a, [wPartyLimit]

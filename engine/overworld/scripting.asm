@@ -1197,6 +1197,16 @@ Script_reloadmapafterbattle:
 	ld de, Script_SpecialBillCall
 	farcall LoadMemScript
 .done
+	; If any held-item notification flags are pending (bits 4/5/6 of wPermafaint),
+	; queue the notification script.  If another mem script already occupies the
+	; slot the bits stay set and will be shown next time Script_Whiteout runs.
+	ld a, [wPermafaint]
+	and (1 << 4) | (1 << 5) | (1 << 6)
+	jr z, .no_item_notice
+	ld b, BANK(Script_PermadeathItemsDropped)
+	ld de, Script_PermadeathItemsDropped
+	farcall LoadMemScript
+.no_item_notice
 	jp Script_reloadmap
 
 Script_reloadmap:
