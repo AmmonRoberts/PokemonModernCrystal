@@ -47,6 +47,18 @@ RockMonEncounter:
 	call SelectTreeMon
 	jr nc, .no_battle
 
+	; If wild encounter randomizer is on, replace species with a random Pokémon
+	ld a, [wRandoFlags]
+	bit RANDFLAG_WILD_ENCOUNTERS_F, a
+	jr z, .done
+.randomize_rock
+	call Random
+	and a
+	jr z, .randomize_rock
+	cp NUM_POKEMON + 1
+	jr nc, .randomize_rock
+	ld [wTempWildMonSpecies], a
+.done
 	ret
 
 .no_battle
