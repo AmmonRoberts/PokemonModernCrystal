@@ -458,36 +458,27 @@ CheckTMHM:
 
 GetTMHMNumber::
 ; Return the number of a TM/HM by item id c.
+; There are 9 reserved free-TM item slots between TM66 and HM01;
+; subtract 9 from the result when item id >= HM01.
 	ld a, c
-; Skip any dummy items.
-	cp ITEM_C3 ; TM04-05
-	jr c, .done
-	cp ITEM_DC ; TM28-29
-	jr c, .skip
-	dec a
-.skip
-	dec a
-.done
 	sub TM01
 	inc a
+	cp NUM_TMS + 1  ; carry set = TM (1..NUM_TMS), no carry = past TM range
+	ld c, a
+	ret c
+	sub 9           ; skip the 9 reserved slots so HM01 -> NUM_TMS+1 etc.
 	ld c, a
 	ret
 
 GetNumberedTMHM:
 ; Return the item id of a TM/HM by number c.
+; Add 9 when the result would land in the HM range (>= TM_RESERVED_67).
 	ld a, c
-; Skip any gaps.
-	cp ITEM_C3 - (TM01 - 1)
-	jr c, .done
-	cp ITEM_DC - (TM01 - 1) - 1
-	jr c, .skip_one
-; skip two
-	inc a
-.skip_one
-	inc a
-.done
 	add TM01
 	dec a
+	cp TM_RESERVED_67  ; carry set = TM item id, no carry = needs gap adjustment
+	ret c
+	add 9              ; skip the 9 reserved slots so HM number -> correct item id
 	ld c, a
 	ret
 

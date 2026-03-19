@@ -30,7 +30,6 @@
 	const FIRE_STONE   ; 16
 	const THUNDERSTONE ; 17
 	const WATER_STONE  ; 18
-	const ITEM_19      ; 19
 	const HP_UP        ; 1a
 	const PROTEIN      ; 1b
 	const IRON         ; 1c
@@ -50,12 +49,10 @@
 	const SUPER_REPEL  ; 2a
 	const MAX_REPEL    ; 2b
 	const DIRE_HIT     ; 2c
-	const ITEM_2D      ; 2d
 	const FRESH_WATER  ; 2e
 	const SODA_POP     ; 2f
 	const LEMONADE     ; 30
 	const X_ATTACK     ; 31
-	const ITEM_32      ; 32
 	const X_DEFEND     ; 33
 	const X_SPEED      ; 34
 	const X_SPECIAL    ; 35
@@ -95,7 +92,6 @@
 	const BIG_MUSHROOM ; 57
 	const SILVERPOWDER ; 58
 	const BLU_APRICORN ; 59
-	const ITEM_5A      ; 5a
 	const AMULET_COIN  ; 5b
 	const YLW_APRICORN ; 5c
 	const GRN_APRICORN ; 5d
@@ -105,7 +101,6 @@
 	const WHT_APRICORN ; 61
 	const BLACKBELT_I  ; 62
 	const BLK_APRICORN ; 63
-	const ITEM_64      ; 64
 	const PNK_APRICORN ; 65
 	const BLACKGLASSES ; 66
 	const SLOWPOKETAIL ; 67
@@ -125,7 +120,6 @@
 	const MIRACLE_SEED ; 75
 	const THICK_CLUB   ; 76
 	const FOCUS_BAND   ; 77
-	const ITEM_78      ; 78
 	const ENERGYPOWDER ; 79
 	const ENERGY_ROOT  ; 7a
 	const HEAL_POWDER  ; 7b
@@ -140,34 +134,21 @@
 	const STAR_PIECE   ; 84
 	const BASEMENT_KEY ; 85
 	const PASS         ; 86
-	const ITEM_87      ; 87
-	const ITEM_88      ; 88
-	const ITEM_89      ; 89
 	const CHARCOAL     ; 8a
 	const BERRY_JUICE  ; 8b
 	const SCOPE_LENS   ; 8c
-	const ITEM_8D      ; 8d
-	const ITEM_8E      ; 8e
 	const METAL_COAT   ; 8f
 	const DRAGON_FANG  ; 90
-	const ITEM_91      ; 91
 	const LEFTOVERS    ; 92
-	const ITEM_93      ; 93
-	const ITEM_94      ; 94
-	const ITEM_95      ; 95
 	const MYSTERYBERRY ; 96
 	const DRAGON_SCALE ; 97
 	const BERSERK_GENE ; 98
-	const ITEM_99      ; 99
-	const ITEM_9A      ; 9a
-	const ITEM_9B      ; 9b
 	const SACRED_ASH   ; 9c
 	const HEAVY_BALL   ; 9d
 	const FLOWER_MAIL  ; 9e
 	const LEVEL_BALL   ; 9f
 	const LURE_BALL    ; a0
 	const FAST_BALL    ; a1
-	const ITEM_A2      ; a2
 	const LIGHT_BALL   ; a3
 	const FRIEND_BALL  ; a4
 	const MOON_BALL    ; a5
@@ -176,15 +157,12 @@
 	const GORGEOUS_BOX ; a8
 	const SUN_STONE    ; a9
 	const POLKADOT_BOW ; aa
-	const ITEM_AB      ; ab
 	const UP_GRADE     ; ac
 	const BERRY        ; ad
 	const GOLD_BERRY   ; ae
 	const SQUIRTBOTTLE ; af
-	const ITEM_B0      ; b0
 	const PARK_BALL    ; b1
 	const RAINBOW_WING ; b2
-	const ITEM_B3      ; b3
 	const BRICK_PIECE  ; b4
 	const SURF_MAIL    ; b5
 	const LITEBLUEMAIL ; b6
@@ -195,7 +173,11 @@
 	const BLUESKY_MAIL ; bb
 	const MUSIC_MAIL   ; bc
 	const MIRAGE_MAIL  ; bd
-	const ITEM_BE      ; be
+	const ITEM_RESERVED_01
+	const ITEM_RESERVED_02
+	const ITEM_RESERVED_03
+	const ITEM_RESERVED_04
+	const ITEM_RESERVED_05
 DEF NUM_ITEMS EQU const_value - 1
 
 DEF __tmhm_value__ = 1
@@ -221,7 +203,7 @@ DEF TM01 EQU const_value
 	add_tm HEADBUTT     ; c0
 	add_tm CURSE        ; c1
 	add_tm ROLLOUT      ; c2
-	const ITEM_C3       ; c3
+	add_tm BODY_SLAM    ; c3
 	add_tm ROAR         ; c4
 	add_tm TOXIC        ; c5
 	add_tm ZAP_CANNON   ; c6
@@ -246,7 +228,7 @@ DEF TM01 EQU const_value
 	add_tm EARTHQUAKE   ; d9
 	add_tm RETURN       ; da
 	add_tm DIG          ; db
-	const ITEM_DC       ; dc
+	add_tm ROCK_SLIDE   ; dc
 	add_tm PSYCHIC_M    ; dd
 	add_tm SHADOW_BALL  ; de
 	add_tm MUD_SLAP     ; df
@@ -269,12 +251,44 @@ DEF TM01 EQU const_value
 	add_tm FIRE_PUNCH   ; f0
 	add_tm FURY_CUTTER  ; f1
 	add_tm NIGHTMARE    ; f2
+	add_tm THUNDER_WAVE ; f3 - new TMs
+	add_tm REFLECT      ; f4
+	add_tm LIGHT_SCREEN ; f5
+	add_tm PURSUIT      ; f6
+	add_tm FLAME_WHEEL  ; f7
+	add_tm BEAT_UP
+	add_tm MAGNITUDE
+	add_tm PETAL_DANCE
+	add_tm RAZOR_LEAF
+	add_tm PSYBEAM
+	add_tm TAKE_DOWN
+	add_tm DOUBLE_EDGE
+	add_tm AURORA_BEAM
+	add_tm METAL_CLAW
 DEF NUM_TMS EQU __tmhm_value__ - 1
+
+; 9 reserved item slots for future TMs ($ef-$f7)
+; These are not yet assigned to moves, so they do not advance
+; the TM/HM bit-flag counter. GetTMHMNumber and GetNumberedTMHM
+; compensate for this gap.
+	const TM_RESERVED_67
+	const TM_RESERVED_68
+	const TM_RESERVED_69
+	const TM_RESERVED_70
+	const TM_RESERVED_71
+	const TM_RESERVED_72
+	const TM_RESERVED_73
+	const TM_RESERVED_74
+	const TM_RESERVED_75
+DEF NUM_TM_RESERVED EQU 9
+; NUM_TM_SLOTS is the total size of the TM item range (real TMs + reserved future slots).
+; Use this for table assertions; use NUM_TMS for TM/HM bit-flag calculations.
+DEF NUM_TM_SLOTS EQU NUM_TMS + NUM_TM_RESERVED
 
 MACRO add_hm
 ; Defines three constants:
-; - HM_\1: the item id, starting at $f3
-; - \1_TMNUM: the learnable TM/HM flag, starting at 51
+; - HM_\1: the item id, starting at $f8 (shifted up to make room for new TMs)
+; - \1_TMNUM: the learnable TM/HM flag
 ; - HM##_MOVE: alias for the move id, equal to the value of \1
 	const HM_\1
 	DEF HM_VALUE = __tmhm_value__ - NUM_TMS
@@ -283,18 +297,18 @@ MACRO add_hm
 ENDM
 
 DEF HM01 EQU const_value
-	add_hm CUT          ; f3
-	add_hm FLY          ; f4
-	add_hm SURF         ; f5
-	add_hm STRENGTH     ; f6
-	add_hm FLASH        ; f7
-	add_hm WHIRLPOOL    ; f8
-	add_hm WATERFALL    ; f9
+	add_hm CUT          ; f8
+	add_hm FLY          ; f9
+	add_hm SURF         ; fa
+	add_hm STRENGTH     ; fb
+	add_hm FLASH        ; fc
+	add_hm WHIRLPOOL    ; fd
+	add_hm WATERFALL    ; fe
 DEF NUM_HMS EQU __tmhm_value__ - NUM_TMS - 1
 
 MACRO add_mt
 ; Defines two constants:
-; - \1_TMNUM: the learnable TM/HM flag, starting at 58
+; - \1_TMNUM: the learnable TM/HM flag
 ; - MT##_MOVE: alias for the move id, equal to the value of \1
 	DEF MT_VALUE = __tmhm_value__ - NUM_TMS - NUM_HMS
 	DEF MT{02d:MT_VALUE}_MOVE = \1
@@ -309,10 +323,8 @@ DEF NUM_TUTORS = __tmhm_value__ - NUM_TMS - NUM_HMS - 1
 
 DEF NUM_TM_HM_TUTOR EQU NUM_TMS + NUM_HMS + NUM_TUTORS
 
-	const ITEM_FA       ; fa
-
 DEF USE_SCRIPT_VAR EQU $00
-DEF ITEM_FROM_MEM  EQU $ff
+DEF ITEM_FROM_MEM  EQU $ff ; $FF is reserved as a sentinel
 
 ; leftovers from red
 DEF SAFARI_BALL    EQU $08 ; MOON_STONE

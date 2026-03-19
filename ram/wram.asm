@@ -2988,7 +2988,7 @@ endr
 
 wCmdQueue:: ds CMDQUEUE_CAPACITY * CMDQUEUE_ENTRY_SIZE
 
-	ds 40
+	ds 24
 
 wMapObjects::
 wPlayerObject:: map_object wPlayer ; player is map object 0
