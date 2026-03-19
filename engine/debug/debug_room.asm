@@ -1889,6 +1889,8 @@ DebugRoom_SaveItem:
 	ld a, [hl]
 	cp c
 	jr z, .wram_found
+	cp -1
+	jr z, .done ; desync: item not found in WRAM, skip WRAM update
 	inc hl
 	inc hl
 	jr .wram_find
@@ -1973,7 +1975,7 @@ DebugRoom_PrintItemName:
 
 DebugRoomMenu_ItemGet_Page1Values:
 	db 2
-	paged_value wDebugRoomItemID,       1, NUM_ITEMS,   MASTER_BALL, .ItemNameString, DebugRoom_PrintItemName, FALSE
+	paged_value wDebugRoomItemID,       1, HM01 + NUM_HMS - 1, MASTER_BALL, .ItemNameString, DebugRoom_PrintItemName, FALSE
 	paged_value wDebugRoomItemQuantity, 1, 99,          1,           .NumberString,   NULL,                    FALSE
 
 .ItemNameString: db "ITEM NAME@"

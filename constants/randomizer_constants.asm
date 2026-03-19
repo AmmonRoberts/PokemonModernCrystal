@@ -1,5 +1,5 @@
 ; See data\items\randomizable_items.asm for the list of items.
-DEF NUM_RANDOMIZABLE_ITEMS EQU 160
+DEF NUM_RANDOMIZABLE_ITEMS EQU 176
 
 ; Bit index constants for wRandoFlags (see ram/wram.asm)
 ; These are plain bit indices (0-7) for use with the BIT/SET/RES instructions

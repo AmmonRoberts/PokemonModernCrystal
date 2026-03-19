@@ -464,6 +464,7 @@ GetTMHMNumber::
 	sub TM01
 	inc a
 	cp NUM_TMS + 1  ; carry set = TM (1..NUM_TMS), no carry = past TM range
+	ld c, a
 	ret c
 	sub 9           ; skip the 9 reserved slots so HM01 -> NUM_TMS+1 etc.
 	ld c, a
