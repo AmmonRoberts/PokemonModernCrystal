@@ -156,8 +156,16 @@ GetItemName::
 	ld a, [wNamedObjectIndex]
 
 	cp TM01
-	jr nc, .TM
+	jr c, .NotTM         ; regular item
 
+	cp TM_RESERVED_67
+	jr c, .TM            ; real TM (TM01–TM66)
+
+	cp HM01
+	jr nc, .TM           ; HM
+
+	; Reserved TM slot [TM_RESERVED_67, HM01) — look up "?" from the item name table
+.NotTM:
 	ld [wCurSpecies], a
 	ld a, ITEM_NAME
 	ld [wNamedObjectType], a
