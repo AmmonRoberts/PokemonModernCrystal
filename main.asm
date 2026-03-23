@@ -77,7 +77,6 @@ INCLUDE "engine/overworld/tile_events.asm"
 INCLUDE "engine/menus/save.asm"
 INCLUDE "engine/overworld/spawn_points.asm"
 INCLUDE "engine/overworld/map_setup.asm"
-INCLUDE "engine/events/pokecenter_pc.asm"
 INCLUDE "engine/items/mart.asm"
 INCLUDE "engine/events/money.asm"
 INCLUDE "data/items/marts.asm"
@@ -178,6 +177,7 @@ INCLUDE "data/items/randomizable_items.asm"
 INCLUDE "engine/battle/ai/move.asm"
 INCLUDE "engine/pokedex/pokedex_2.asm"
 INCLUDE "engine/pokemon/mail.asm"
+INCLUDE "engine/events/pokecenter_pc.asm"
 
 
 SECTION "Crystal Features 1", ROMX

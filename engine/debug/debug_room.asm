@@ -1858,7 +1858,7 @@ DebugRoom_SaveItem:
 	; Update SRAM PC items
 	ld a, BANK(sPlayerData)
 	call OpenSRAM
-	ld hl, sPlayerData + (wPCItems - wPlayerData)
+	ld hl, sPCItems
 	ld a, [wDebugRoomItemID]
 	ld c, a
 .loop1
@@ -1907,11 +1907,11 @@ DebugRoom_SaveItem:
 	jr .done
 
 .not_found
-	ld a, [sPlayerData + (wNumPCItems - wPlayerData)]
+	ld a, [wNumPCItems]
 	cp MAX_PC_ITEMS
 	jr nc, .full
 	inc a
-	ld [sPlayerData + (wNumPCItems - wPlayerData)], a
+	ld [sNumPCItems], a
 	ld a, [wDebugRoomItemID]
 	ld [hli], a
 	ld a, [wDebugRoomItemQuantity]

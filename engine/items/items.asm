@@ -1,4 +1,7 @@
 _ReceiveItem::
+	call .core
+	ret
+.core
 	call DoesHLEqualNumItems
 	jp nz, PutItemInPocket
 	push hl
@@ -40,6 +43,9 @@ _ReceiveItem::
 	jp ReceiveTMHM
 
 _TossItem::
+	call .core
+	ret
+.core
 	call DoesHLEqualNumItems
 	jr nz, .remove
 	push hl
@@ -83,6 +89,9 @@ _TossItem::
 	jp RemoveItemFromPocket
 
 _CheckItem::
+	call .core
+	ret
+.core
 	call DoesHLEqualNumItems
 	jr nz, .nope
 	push hl

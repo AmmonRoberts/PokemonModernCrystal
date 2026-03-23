@@ -217,7 +217,7 @@ Kurt_GiveUpSelectedQuantityOfSelectedApricorn:
 	xor a
 	ld [wCurItemQuantity], a
 	ld a, -1
-	ld [wApricorns], a
+	ld [wKurtApricornIndices], a
 
 ; Search for [wCurItem] in the bag.
 .loop1
@@ -237,7 +237,7 @@ Kurt_GiveUpSelectedQuantityOfSelectedApricorn:
 ; Increment the result counter and store the bag index of the match.
 	ld d, $0
 	push hl
-	ld hl, wApricorns
+	ld hl, wKurtApricornIndices
 	add hl, de
 	inc e
 	ld a, [wCurItemQuantity]
@@ -255,7 +255,7 @@ Kurt_GiveUpSelectedQuantityOfSelectedApricorn:
 	jr z, .done
 	dec a
 	jr z, .OnlyOne
-	ld hl, wApricorns
+	ld hl, wKurtApricornIndices
 
 .loop2
 	ld a, [hl]
@@ -300,7 +300,7 @@ Kurt_GiveUpSelectedQuantityOfSelectedApricorn:
 	jr nz, .loop2
 
 .OnlyOne:
-	ld hl, wApricorns
+	ld hl, wKurtApricornIndices
 .loop4
 	ld a, [hl]
 	cp -1

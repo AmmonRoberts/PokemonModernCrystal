@@ -913,7 +913,7 @@ BattleTower_GiveReward:
 	ld hl, wNumItems
 	ld a, [hli]
 	cp MAX_ITEMS
-	ret c
+	jr c, .BattleTowerGiveReward_exit_bank
 	ld b, MAX_ITEMS
 	ld a, [wScriptVar]
 	ld c, a
@@ -923,13 +923,14 @@ BattleTower_GiveReward:
 	jr nz, .next
 	ld a, [hl]
 	cp 95
-	ret c
+	jr c, .BattleTowerGiveReward_exit_bank
 .next
 	inc hl
 	dec b
 	jr nz, .loop
 	ld a, POTION
 	ld [wScriptVar], a
+.BattleTowerGiveReward_exit_bank:
 	ret
 
 BattleTowerAction_1C:

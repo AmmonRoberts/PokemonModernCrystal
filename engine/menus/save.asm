@@ -507,6 +507,14 @@ SavePlayerData:
 	ld de, sCurMapData
 	ld bc, wCurMapDataEnd - wCurMapData
 	call CopyBytes
+	ld hl, wNumItems
+	ld de, sNumItems
+	ld bc, MAX_ITEMS * 2 + 2
+	call CopyBytes
+	ld hl, wNumPCItems
+	ld de, sNumPCItems
+	ld bc, MAX_PC_ITEMS * 2 + 2
+	call CopyBytes
 	jp CloseSRAM
 
 SavePokemonData:
@@ -567,6 +575,14 @@ SaveBackupPlayerData:
 	ld hl, wCurMapData
 	ld de, sBackupCurMapData
 	ld bc, wCurMapDataEnd - wCurMapData
+	call CopyBytes
+	ld hl, wNumItems
+	ld de, sBackupNumItems
+	ld bc, MAX_ITEMS * 2 + 2
+	call CopyBytes
+	ld hl, wNumPCItems
+	ld de, sBackupNumPCItems
+	ld bc, MAX_PC_ITEMS * 2 + 2
 	call CopyBytes
 	call CloseSRAM
 	ret
@@ -742,6 +758,14 @@ LoadPlayerData:
 	ld de, wCurMapData
 	ld bc, wCurMapDataEnd - wCurMapData
 	call CopyBytes
+	ld hl, sNumItems
+	ld de, wNumItems
+	ld bc, MAX_ITEMS * 2 + 2
+	call CopyBytes
+	ld hl, sNumPCItems
+	ld de, wNumPCItems
+	ld bc, MAX_PC_ITEMS * 2 + 2
+	call CopyBytes
 	call CloseSRAM
 	ld a, BANK(sBattleTowerChallengeState)
 	call OpenSRAM
@@ -796,6 +820,14 @@ LoadBackupPlayerData:
 	ld hl, sBackupCurMapData
 	ld de, wCurMapData
 	ld bc, wCurMapDataEnd - wCurMapData
+	call CopyBytes
+	ld hl, sBackupNumItems
+	ld de, wNumItems
+	ld bc, MAX_ITEMS * 2 + 2
+	call CopyBytes
+	ld hl, sBackupNumPCItems
+	ld de, wNumPCItems
+	ld bc, MAX_PC_ITEMS * 2 + 2
 	call CopyBytes
 	call CloseSRAM
 	ret
