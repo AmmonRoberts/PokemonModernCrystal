@@ -1855,10 +1855,8 @@ DebugRoomMenu_ItemGet:
 DebugRoom_SaveItem:
 	call YesNoBox
 	ret c
-	; Update SRAM PC items
-	ld a, BANK(sPlayerData)
-	call OpenSRAM
-	ld hl, sPlayerData + (wPCItems - wPlayerData)
+	; Search WRAM PC items for an existing stack
+	ld hl, wPCItems
 	ld a, [wDebugRoomItemID]
 	ld c, a
 .loop1
@@ -1872,6 +1870,7 @@ DebugRoom_SaveItem:
 	jr .loop1
 
 .found
+	; Item already in PC; increase its quantity
 	inc hl
 	ld a, [wDebugRoomItemQuantity]
 	add [hl]
@@ -1880,56 +1879,16 @@ DebugRoom_SaveItem:
 	ld a, MAX_ITEM_STACK
 .max
 	ld [hl], a
-	call CloseSRAM
-	; Also update WRAM PC items
-	ld hl, wPCItems
-	ld a, [wDebugRoomItemID]
-	ld c, a
-.wram_find
-	ld a, [hl]
-	cp c
-	jr z, .wram_found
-	cp -1
-	jr z, .done ; desync: item not found in WRAM, skip WRAM update
-	inc hl
-	inc hl
-	jr .wram_find
-.wram_found
-	inc hl
-	ld a, [wDebugRoomItemQuantity]
-	add [hl]
-	cp MAX_ITEM_STACK + 1
-	jr c, .wram_max
-	ld a, MAX_ITEM_STACK
-.wram_max
-	ld [hl], a
 	ld hl, .ItemNumberAddedText
 	jr .done
 
 .not_found
-	ld a, [sPlayerData + (wNumPCItems - wPlayerData)]
+	; Item not yet in PC; add a new entry
+	ld a, [wNumPCItems]
 	cp MAX_PC_ITEMS
 	jr nc, .full
 	inc a
-	ld [sPlayerData + (wNumPCItems - wPlayerData)], a
-	ld a, [wDebugRoomItemID]
-	ld [hli], a
-	ld a, [wDebugRoomItemQuantity]
-	ld [hli], a
-	ld [hl], -1 ; terminator
-	call CloseSRAM
-	; Also update WRAM PC items
-	ld hl, wNumPCItems
-	inc [hl]
-	inc hl ; hl = wPCItems
-.wram_find_end
-	ld a, [hl]
-	cp -1
-	jr z, .wram_insert
-	inc hl
-	inc hl
-	jr .wram_find_end
-.wram_insert
+	ld [wNumPCItems], a
 	ld a, [wDebugRoomItemID]
 	ld [hli], a
 	ld a, [wDebugRoomItemQuantity]
@@ -1939,13 +1898,11 @@ DebugRoom_SaveItem:
 	jr .done
 
 .full
-	call CloseSRAM
 	ld hl, .StockFullText
 .done
 	call MenuTextbox
 	call DebugRoom_JoyWaitABSelect
 	call CloseWindow
-	call DebugRoom_SaveChecksum
 	ret
 
 .ItemNumberAddedText:

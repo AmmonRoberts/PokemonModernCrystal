@@ -3052,17 +3052,11 @@ wKantoBadges:: flag_array NUM_KANTO_BADGES
 
 wTMsHMs:: ds NUM_TMS + NUM_HMS
 
-wNumItems:: db
-wItems:: ds MAX_ITEMS * 2 + 1
-
 wNumKeyItems:: db
 wKeyItems:: ds MAX_KEY_ITEMS + 1
 
 wNumBalls:: db
 wBalls:: ds MAX_BALLS * 2 + 1
-
-wNumPCItems:: db
-wPCItems:: ds MAX_PC_ITEMS * 2 + 1
 
 wPokegearFlags::
 ; bit 0: map
@@ -3170,7 +3164,7 @@ wMountMoonSquareSceneID::                         db
 wMobileTradeRoomSceneID::                         db
 wMobileBattleRoomSceneID::                        db
 
-	ds 49
+	ds 10
 
 ; fight counts
 wJackFightCount::    db
@@ -3202,7 +3196,7 @@ wKenjiFightCount::   db ; unreferenced
 wParryFightCount::   db
 wErinFightCount::    db
 
-	ds 100
+	ds 58
 
 wEventFlags:: flag_array NUM_EVENTS
 
@@ -3482,6 +3476,18 @@ wPokeAnimBitmaskCurBit:: db
 wPokeAnimBitmaskBuffer:: ds 7
 	ds 2
 wPokeAnimStructEnd::
+
+
+SECTION "Extended Player Data", WRAMX
+
+wNumItems:: db
+wItems:: ds MAX_ITEMS * 2 + 1
+
+wNumPCItems:: db
+wPCItems:: ds MAX_PC_ITEMS * 2 + 1
+
+; Scratch space for Kurt apricorn-sorting
+wKurtApricornIndices:: ds MAX_ITEMS + 2
 
 
 SECTION "Battle Tower RAM", WRAMX

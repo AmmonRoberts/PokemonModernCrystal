@@ -66,8 +66,11 @@ sBackupPlayerData::  ds wPlayerDataEnd - wPlayerData
 sBackupCurMapData::  ds wCurMapDataEnd - wCurMapData
 sBackupPokemonData:: ds wPokemonDataEnd - wPokemonData
 sBackupGameDataEnd::
-
-	ds $18a
+sBackupNumItems::   db
+sBackupItems::      ds MAX_ITEMS * 2 + 1
+sBackupNumPCItems:: db
+sBackupPCItems::    ds MAX_PC_ITEMS * 2 + 1
+	ds $18a - (MAX_ITEMS * 2 + 2) - (MAX_PC_ITEMS * 2 + 2)
 
 sBackupChecksum:: dw
 
@@ -95,8 +98,11 @@ sPlayerData::  ds wPlayerDataEnd - wPlayerData
 sCurMapData::  ds wCurMapDataEnd - wCurMapData
 sPokemonData:: ds wPokemonDataEnd - wPokemonData
 sGameDataEnd::
-
-	ds $18a
+sNumItems::   db
+sItems::      ds MAX_ITEMS * 2 + 1
+sNumPCItems:: db
+sPCItems::    ds MAX_PC_ITEMS * 2 + 1
+	ds $18a - (MAX_ITEMS * 2 + 2) - (MAX_PC_ITEMS * 2 + 2)
 
 sChecksum:: dw
 

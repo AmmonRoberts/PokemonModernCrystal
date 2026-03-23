@@ -36,16 +36,18 @@ CheckRegisteredItem:
 .CheckItem:
 	ld hl, wNumItems
 	call .CheckRegisteredNo
-	jr c, .NoRegisteredItem
+	jr c, .CheckItem_NoReg
 	inc hl
 	ld e, a
 	ld d, 0
 	add hl, de
 	add hl, de
 	call .IsSameItem
-	jr c, .NoRegisteredItem
+	jr c, .CheckItem_NoReg
 	and a
 	ret
+.CheckItem_NoReg:
+	jr .NoRegisteredItem
 
 .CheckKeyItem:
 	ld a, [wRegisteredItem]
