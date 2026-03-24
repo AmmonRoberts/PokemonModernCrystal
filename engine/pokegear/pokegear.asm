@@ -2038,6 +2038,11 @@ _FlyMap:
 	ld hl, vTiles2 tile $30
 	lb bc, BANK(FlyMapLabelBorderGFX), 6
 	call Request1bpp
+; Overwrite tile $35 with a left/right arrow indicator matching the ↕ style of tile $34
+	ld de, FlyMapLRArrowGFX
+	ld hl, vTiles2 tile $35
+	lb bc, BANK(FlyMapLRArrowGFX), 1
+	call Request1bpp
 	call FlyMap
 	call Pokegear_DummyFunction
 	ld b, SCGB_POKEGEAR_PALS
@@ -2052,11 +2057,26 @@ _FlyMap:
 	ld a, [hl]
 	and PAD_A
 	jr nz, .pressedA
+	ld a, [hl]
+	and PAD_RIGHT
+	jr nz, .pressedRight
+	ld a, [hl]
+	and PAD_LEFT
+	jr nz, .pressedLeft
 	call .HandleDPad
+.continueLoop
 	call GetMapCursorCoordinates
 	farcall PlaySpriteAnimations
 	call DelayFrame
 	jr .loop
+
+.pressedRight
+	call .SwitchToKanto
+	jr .continueLoop
+
+.pressedLeft
+	call .SwitchToJohto
+	jr .continueLoop
 
 .pressedB
 	ld a, -1
@@ -2083,6 +2103,62 @@ _FlyMap:
 	ldh [hBGMapAddress + 1], a
 	ld a, [wTownMapPlayerIconLandmark]
 	ld e, a
+	ret
+
+.SwitchToKanto:
+; Switch the fly map to Kanto (requires Indigo Plateau to have been visited)
+	ld a, [wStartFlypoint]
+	cp KANTO_FLYPOINT
+	ret z ; already on Kanto
+	ld c, SPAWN_INDIGO
+	call HasVisitedSpawn
+	and a
+	ret z ; Kanto not yet accessible
+	ld a, KANTO_FLYPOINT
+	ld [wStartFlypoint], a
+	ld a, NUM_FLYPOINTS - 1
+	ld [wEndFlypoint], a
+	ld [wTownMapPlayerIconLandmark], a
+	farcall ClearSpriteAnims
+	call ClearSprites
+	call FillKantoMap
+	call TownMapBubble
+	call TownMapPals
+	hlbgcoord 0, 0, vBGMap1
+	call TownMapBGUpdate
+	xor a ; hWY = 0: show window layer (vBGMap1 = Kanto)
+	ldh [hWY], a
+	call TownMapMon
+	ld a, c
+	ld [wTownMapCursorCoordinates], a
+	ld a, b
+	ld [wTownMapCursorCoordinates + 1], a
+	ret
+
+.SwitchToJohto:
+; Switch the fly map to Johto
+	ld a, [wStartFlypoint]
+	cp JOHTO_FLYPOINT
+	ret z ; already on Johto
+	ld a, JOHTO_FLYPOINT
+	ld [wTownMapPlayerIconLandmark], a
+	ld [wStartFlypoint], a
+	ld a, KANTO_FLYPOINT - 1
+	ld [wEndFlypoint], a
+	farcall ClearSpriteAnims
+	call ClearSprites
+	call FillJohtoMap
+	call TownMapBubble
+	call TownMapPals
+	hlbgcoord 0, 0
+	call TownMapBGUpdate
+	ld a, SCREEN_HEIGHT_PX ; hWY = 144: hide window, show background (vBGMap0 = Johto)
+	ldh [hWY], a
+	call TownMapMon
+	ld a, c
+	ld [wTownMapCursorCoordinates], a
+	ld a, b
+	ld [wTownMapCursorCoordinates + 1], a
 	ret
 
 .HandleDPad:
@@ -2174,6 +2250,13 @@ TownMapBubble:
 ; Up/down arrows
 	hlcoord 18, 1
 	ld [hl], $34
+; If Kanto is accessible, show left/right region switch hint on the bottom row
+	ld c, SPAWN_INDIGO
+	call HasVisitedSpawn
+	and a
+	ret z
+	hlcoord 17, 2
+	ld [hl], $35 ; ↔ arrows
 	ret
 
 .Where:
@@ -2274,11 +2357,25 @@ FlyMap:
 	ld [wStartFlypoint], a
 	ld a, KANTO_FLYPOINT - 1 ; last Johto flypoint
 	ld [wEndFlypoint], a
-; Fill out the map
+; Pre-render Kanto to vBGMap1 if accessible, so the player can switch to it
+	ld c, SPAWN_INDIGO
+	call HasVisitedSpawn
+	and a
+	jr z, .JohtoOnly
+	ld a, NUM_FLYPOINTS - 1
+	ld [wTownMapPlayerIconLandmark], a ; temporarily point at Indigo for .MapHudKanto
+	call FillKantoMap
+	call .MapHudKanto
+	ld a, JOHTO_FLYPOINT ; restore Johto as the active selection
+	ld [wTownMapPlayerIconLandmark], a
+.JohtoOnly:
+; Fill out the Johto map as the primary view
 	call FillJohtoMap
 	call .MapHud
 	pop af
 	call TownMapPlayerIcon
+	ld a, SCREEN_HEIGHT_PX ; show background layer (vBGMap0 = Johto)
+	ldh [hWY], a
 	ret
 
 .KantoFlyMap:
@@ -2295,17 +2392,24 @@ FlyMap:
 	call HasVisitedSpawn
 	and a
 	jr z, .NoKanto
-; Kanto's map is only loaded if we've visited Indigo Plateau
+; Kanto's map is only loaded if we've visited Indigo Plateau.
+; Pre-render Johto to vBGMap0 so the player can switch to it.
+	ld a, JOHTO_FLYPOINT
+	ld [wTownMapPlayerIconLandmark], a ; temporarily point at New Bark for .MapHud
+	call FillJohtoMap
+	call .MapHud
+; Now set up and render Kanto as the primary view
 	ld a, KANTO_FLYPOINT ; first Kanto flypoint
 	ld [wStartFlypoint], a
 	ld a, NUM_FLYPOINTS - 1 ; last Kanto flypoint
 	ld [wEndFlypoint], a
 	ld [wTownMapPlayerIconLandmark], a ; last one is default (Indigo Plateau)
-; Fill out the map
 	call FillKantoMap
-	call .MapHud
+	call .MapHudKanto
 	pop af
 	call TownMapPlayerIcon
+	xor a ; hWY = 0: show window layer (vBGMap1 = Kanto)
+	ldh [hWY], a
 	ret
 
 .NoKanto:
@@ -2321,6 +2425,14 @@ FlyMap:
 	call TownMapBubble
 	call TownMapPals
 	hlbgcoord 0, 0 ; BG Map 0
+	jr .MapHudFinish
+
+.MapHudKanto:
+	call TownMapBubble
+	call TownMapPals
+	hlbgcoord 0, 0, vBGMap1 ; BG Map 1
+
+.MapHudFinish:
 	call TownMapBGUpdate
 	call TownMapMon
 	ld a, c
@@ -2790,6 +2902,11 @@ PokedexNestIconGFX:
 INCBIN "gfx/pokegear/dexmap_nest_icon.2bpp"
 FlyMapLabelBorderGFX:
 INCBIN "gfx/pokegear/flymap_label_border.1bpp"
+FlyMapLRArrowGFX:
+; Left/right arrow indicator tile: exact 90° rotation of the ↕ tile ($34).
+; Left arrow tip at col 0 (center rows), right arrow tip at col 7 (center rows),
+; blank edges at rows 0 and 7 — mirrors the ↕ tip-out/gap-center structure.
+	db $00, $24, $66, $e7, $e7, $66, $24, $00
 
 EntireFlyMap: ; unreferenced
 ; Similar to _FlyMap, but scrolls through the entire
