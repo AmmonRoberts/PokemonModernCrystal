@@ -203,59 +203,57 @@ DEF TM01 EQU const_value
 	add_tm HEADBUTT     ; c0
 	add_tm CURSE        ; c1
 	add_tm ROLLOUT      ; c2
-	add_tm BODY_SLAM    ; c3
-	add_tm ROAR         ; c4
-	add_tm TOXIC        ; c5
-	add_tm ZAP_CANNON   ; c6
-	add_tm ROCK_SMASH   ; c7
-	add_tm PSYCH_UP     ; c8
-	add_tm HIDDEN_POWER ; c9
-	add_tm SUNNY_DAY    ; ca
-	add_tm SWEET_SCENT  ; cb
-	add_tm SNORE        ; cc
-	add_tm BLIZZARD     ; cd
-	add_tm HYPER_BEAM   ; ce
-	add_tm ICY_WIND     ; cf
-	add_tm PROTECT      ; d0
-	add_tm RAIN_DANCE   ; d1
-	add_tm GIGA_DRAIN   ; d2
-	add_tm ENDURE       ; d3
-	add_tm FRUSTRATION  ; d4
-	add_tm SOLARBEAM    ; d5
-	add_tm IRON_TAIL    ; d6
-	add_tm DRAGONBREATH ; d7
-	add_tm THUNDER      ; d8
-	add_tm EARTHQUAKE   ; d9
-	add_tm RETURN       ; da
-	add_tm DIG          ; db
-	add_tm ROCK_SLIDE   ; dc
-	add_tm PSYCHIC_M    ; dd
-	add_tm SHADOW_BALL  ; de
-	add_tm MUD_SLAP     ; df
-	add_tm DOUBLE_TEAM  ; e0
-	add_tm ICE_PUNCH    ; e1
-	add_tm SWAGGER      ; e2
-	add_tm SLEEP_TALK   ; e3
-	add_tm SLUDGE_BOMB  ; e4
-	add_tm SANDSTORM    ; e5
-	add_tm FIRE_BLAST   ; e6
-	add_tm SWIFT        ; e7
-	add_tm DEFENSE_CURL ; e8
-	add_tm THUNDERPUNCH ; e9
-	add_tm DREAM_EATER  ; ea
-	add_tm DETECT       ; eb
-	add_tm REST         ; ec
-	add_tm ATTRACT      ; ed
-	add_tm THIEF        ; ee
-	add_tm STEEL_WING   ; ef
-	add_tm FIRE_PUNCH   ; f0
-	add_tm FURY_CUTTER  ; f1
-	add_tm NIGHTMARE    ; f2
-	add_tm THUNDER_WAVE ; f3 - new TMs
-	add_tm REFLECT      ; f4
-	add_tm LIGHT_SCREEN ; f5
-	add_tm PURSUIT      ; f6
-	add_tm FLAME_WHEEL  ; f7
+	add_tm ROAR         ; c3
+	add_tm TOXIC        ; c4
+	add_tm ZAP_CANNON   ; c5
+	add_tm ROCK_SMASH   ; c6
+	add_tm PSYCH_UP     ; c7
+	add_tm HIDDEN_POWER ; c8
+	add_tm SUNNY_DAY    ; c9
+	add_tm SWEET_SCENT  ; ca
+	add_tm SNORE        ; cb
+	add_tm BLIZZARD     ; cc
+	add_tm HYPER_BEAM   ; cd
+	add_tm ICY_WIND     ; ce
+	add_tm PROTECT      ; cf
+	add_tm RAIN_DANCE   ; d0
+	add_tm GIGA_DRAIN   ; d1
+	add_tm ENDURE       ; d2
+	add_tm FRUSTRATION  ; d3
+	add_tm SOLARBEAM    ; d4
+	add_tm IRON_TAIL    ; d5
+	add_tm DRAGONBREATH ; d6
+	add_tm THUNDER      ; d7
+	add_tm EARTHQUAKE   ; d8
+	add_tm RETURN       ; d9
+	add_tm DIG          ; da
+	add_tm PSYCHIC_M    ; db
+	add_tm SHADOW_BALL  ; dc
+	add_tm MUD_SLAP     ; dd
+	add_tm DOUBLE_TEAM  ; de
+	add_tm ICE_PUNCH    ; df
+	add_tm SWAGGER      ; e0
+	add_tm SLEEP_TALK   ; e1
+	add_tm SLUDGE_BOMB  ; e2
+	add_tm SANDSTORM    ; e3
+	add_tm FIRE_BLAST   ; e4
+	add_tm SWIFT        ; e5
+	add_tm DEFENSE_CURL ; e6
+	add_tm THUNDERPUNCH ; e7
+	add_tm DREAM_EATER  ; e8
+	add_tm DETECT       ; e9
+	add_tm REST         ; ea
+	add_tm ATTRACT      ; eb
+	add_tm THIEF        ; ec
+	add_tm STEEL_WING   ; ed
+	add_tm FIRE_PUNCH   ; ee
+	add_tm FURY_CUTTER  ; ef
+	add_tm NIGHTMARE    ; f0
+	add_tm THUNDER_WAVE ; new TMs
+	add_tm REFLECT
+	add_tm LIGHT_SCREEN
+	add_tm PURSUIT
+	add_tm FLAME_WHEEL
 	add_tm BEAT_UP
 	add_tm MAGNITUDE
 	add_tm PETAL_DANCE
@@ -265,6 +263,8 @@ DEF TM01 EQU const_value
 	add_tm DOUBLE_EDGE
 	add_tm AURORA_BEAM
 	add_tm METAL_CLAW
+	add_tm BODY_SLAM
+	add_tm ROCK_SLIDE
 DEF NUM_TMS EQU __tmhm_value__ - 1
 
 ; 9 reserved item slots for future TMs ($ef-$f7)
