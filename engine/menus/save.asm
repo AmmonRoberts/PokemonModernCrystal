@@ -916,6 +916,9 @@ _LoadData:
 	ld a, PARTY_LENGTH
 	ld [wPartyLimit], a
 .party_limit_ok
+	; Regenerate the type matchup table from the saved seed.
+	; Old saves have seed=0, so the table will be filled with EFFECTIVE (flag-check also skips table use).
+	farcall GenerateTypeMatchupTable
 	ret
 
 GetBoxAddress:

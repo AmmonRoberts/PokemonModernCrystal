@@ -762,6 +762,8 @@ wPokegearMapPlayerIconLandmark:: db
 wPokegearRadioChannelBank:: db
 wPokegearRadioChannelAddr:: dw
 wPokegearRadioMusicPlaying:: db
+wPokegearTypeChartAttackType:: db
+wPokegearTypeChartScrollPos:: db
 
 NEXTU
 ; trade
@@ -2740,8 +2742,6 @@ wMonTriedToEvolve:: db
 
 wTimeOfDay:: db
 
-	ds 1
-
 
 SECTION "Enemy Party", WRAMX
 
@@ -2927,6 +2927,10 @@ wGiftRandMode::
 ; 2 = GIFT_RAND_DISABLED:  do not give gift Pokémon at all
 ; Old saves have 0 here on load (treated as STANDARD).
 	db
+wTypeMatchupSeed:: db
+; One-byte seed used to generate wTypeMatchupTable on new game and save-load.
+; Saved in sCrystalData so the chart stays consistent across a save file.
+; Old saves have 0 here, which produces a deterministic (all-EFFECTIVE) table.
 wCrystalDataEnd::
 
 wCrystalFlags::
@@ -3708,3 +3712,11 @@ wWindowStack:: ds $1000 - 1
 wWindowStackBottom:: ds 1
 
 ENDSECTION
+
+
+; Placed in WRAMX bank 2; regenerated from wTypeMatchupSeed each new game / save load.
+SECTION "Type Matchup Table", WRAMX
+
+; CompactType: physical types 0-9 → index 0-9; special types 20-27 → index 10-17.
+; Table entry = NO_EFFECT(0) / NOT_VERY_EFFECTIVE(5) / EFFECTIVE(10) / SUPER_EFFECTIVE(20).
+wTypeMatchupTable:: ds TYPE_MATCHUP_TABLE_STRIDE * TYPE_MATCHUP_TABLE_STRIDE

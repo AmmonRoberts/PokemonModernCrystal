@@ -340,6 +340,7 @@ WRAMX 1
 	"Extended Player Data"
 WRAMX 2
 	"Pic Animations"
+	"Type Matchup Table"
 WRAMX 3
 	"Battle Tower RAM"
 WRAMX 4
