@@ -486,6 +486,7 @@ GetNumberedTMHM:
 	add TM01
 	dec a
 	cp TM_RESERVED_67  ; carry set = TM item id, no carry = needs gap adjustment
+	ld c, a
 	ret c
 	add 9              ; skip the 9 reserved slots so HM number -> correct item id
 	ld c, a
