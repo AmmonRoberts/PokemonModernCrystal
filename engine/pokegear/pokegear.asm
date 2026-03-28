@@ -1,28 +1,27 @@
 ; Pokégear cards
 	const_def
-	const POKEGEARCARD_CLOCK ; 0
-	const POKEGEARCARD_MAP   ; 1
-	const POKEGEARCARD_PHONE ; 2
-	const POKEGEARCARD_RADIO ; 3
+	const POKEGEARCARD_CLOCK     ; 0
+	const POKEGEARCARD_TYPECHART ; 1
+	const POKEGEARCARD_PHONE     ; 2
+	const POKEGEARCARD_RADIO     ; 3
 DEF NUM_POKEGEAR_CARDS EQU const_value
 
 DEF PHONE_DISPLAY_HEIGHT EQU 4
+DEF TYPECHART_DISPLAY_HEIGHT EQU 9 ; rows visible in both list and matchup views
+DEF TYPECHART_LIST_HEIGHT EQU 9   ; same as display height - types shown in list at once
 
 ; PokegearJumptable.Jumptable indexes
 	const_def
 	const POKEGEARSTATE_CLOCKINIT       ; 0
 	const POKEGEARSTATE_CLOCKJOYPAD     ; 1
-	const POKEGEARSTATE_MAPCHECKREGION  ; 2
-	const POKEGEARSTATE_JOHTOMAPINIT    ; 3
-	const POKEGEARSTATE_JOHTOMAPJOYPAD  ; 4
-	const POKEGEARSTATE_KANTOMAPINIT    ; 5
-	const POKEGEARSTATE_KANTOMAPJOYPAD  ; 6
-	const POKEGEARSTATE_PHONEINIT       ; 7
-	const POKEGEARSTATE_PHONEJOYPAD     ; 8
-	const POKEGEARSTATE_MAKEPHONECALL   ; 9
-	const POKEGEARSTATE_FINISHPHONECALL ; a
-	const POKEGEARSTATE_RADIOINIT       ; b
-	const POKEGEARSTATE_RADIOJOYPAD     ; c
+	const POKEGEARSTATE_TYPECHARTINIT   ; 2
+	const POKEGEARSTATE_TYPECHARTJOYPAD ; 3
+	const POKEGEARSTATE_PHONEINIT       ; 4
+	const POKEGEARSTATE_PHONEJOYPAD     ; 5
+	const POKEGEARSTATE_MAKEPHONECALL   ; 6
+	const POKEGEARSTATE_FINISHPHONECALL ; 7
+	const POKEGEARSTATE_RADIOINIT       ; 8
+	const POKEGEARSTATE_RADIOJOYPAD     ; 9
 
 PokeGear:
 	ld hl, wOptions
@@ -99,6 +98,11 @@ PokeGear:
 	ld [wPokegearRadioChannelBank], a
 	ld [wPokegearRadioChannelAddr], a
 	ld [wPokegearRadioChannelAddr + 1], a
+	ld [wPokegearTypeChartAttackType], a
+	ld [wPokegearTypeChartScrollPos], a
+	ld [wPokegearTypeChartCursorPos], a
+	ld [wPokegearTypeChartViewMode], a
+	ld [wPokegearTypeChartMatchupScroll], a
 	call Pokegear_InitJumptableIndices
 	call InitPokegearTilemap
 	ld b, SCGB_POKEGEAR_PALS
@@ -185,7 +189,7 @@ AnimatePokegearModeIndicatorArrow:
 
 .XCoords:
 	db $00 ; POKEGEARCARD_CLOCK
-	db $10 ; POKEGEARCARD_MAP
+	db $10 ; POKEGEARCARD_TYPECHART
 	db $20 ; POKEGEARCARD_PHONE
 	db $30 ; POKEGEARCARD_RADIO
 
@@ -303,7 +307,7 @@ InitPokegearTilemap:
 .Jumptable:
 ; entries correspond to POKEGEARCARD_* constants
 	dw .Clock
-	dw .Map
+	dw .TypeChart
 	dw .Phone
 	dw .Radio
 
@@ -321,32 +325,6 @@ InitPokegearTilemap:
 
 .switch
 	db " SWITCH▶@"
-
-.Map:
-	ld a, [wPokegearMapPlayerIconLandmark]
-	cp LANDMARK_FAST_SHIP
-	jr z, .johto
-	cp KANTO_LANDMARK
-	jr nc, .kanto
-.johto
-	ld e, 0
-	jr .ok
-
-.kanto
-	ld e, 1
-.ok
-	farcall PokegearMap
-	ld a, $07
-	ld bc, SCREEN_WIDTH - 2
-	hlcoord 1, 2
-	call ByteFill
-	hlcoord 0, 2
-	ld [hl], $06
-	hlcoord 19, 2
-	ld [hl], $17
-	ld a, [wPokegearMapCursorLandmark]
-	call PokegearMap_UpdateLandmarkName
-	ret
 
 .Radio:
 	ld de, RadioTilemapRLE
@@ -382,34 +360,85 @@ InitPokegearTilemap:
 	ld [hl], $3f
 	ret
 
+.TypeChart:
+	; Check view mode: 0=list, 1=matchup
+	ld a, [wPokegearTypeChartViewMode]
+	and a
+	jr nz, .TypeChartMatchupFrame
+
+	; --- LIST VIEW FRAME ---
+	;   Row 2:  textbox top border
+	;   Rows 3-11: content rows (9 type names)
+	;   Row 12: textbox bottom border
+	;   Rows 14-16: help textbox
+	hlcoord 0, 2
+	lb bc, 11, 18
+	call Textbox
+	hlcoord 0, 14
+	lb bc, 2, 18
+	call Textbox
+	hlcoord 1, 15
+	ld de, .TypeChartListHelpStr
+	call PlaceString
+	hlcoord 1, 16
+	ld de, .TypeChartListHelpStr2
+	call PlaceString
+	ret
+
+.TypeChartMatchupFrame:
+	; --- MATCHUP VIEW FRAME ---
+	;   Row 2:  textbox top border
+	;   Row 3:  ATK header
+	;   Row 4:  separator
+	;   Rows 5-13: defender list (9 rows)
+	;   Row 14: textbox bottom border
+	;   Rows 14-16: help textbox
+	hlcoord 0, 2
+	lb bc, 13, 18
+	call Textbox
+	hlcoord 0, 14
+	lb bc, 2, 18
+	call Textbox
+	hlcoord 1, 15
+	ld de, .TypeChartMatchupHelpStr
+	call PlaceString
+	hlcoord 1, 16
+	ld de, .TypeChartMatchupHelpStr2
+	call PlaceString
+	ret
+
+.TypeChartListHelpStr:
+	db "UP/DOWN: SCROLL@"
+.TypeChartListHelpStr2:
+	db "A: VIEW MATCHUPS@"
+.TypeChartMatchupHelpStr:
+	db "B:BACK UP/DN:SCROLL@"
+.TypeChartMatchupHelpStr2:
+	db "@"
+
 Pokegear_FinishTilemap:
 	hlcoord 0, 0
-	ld bc, $8
+	ld bc, 8
 	ld a, $4f
 	call ByteFill
 	hlcoord 0, 1
-	ld bc, $8
+	ld bc, 8
 	ld a, $4f
 	call ByteFill
 	ld de, wPokegearFlags
-	ld a, [de]
-	bit POKEGEAR_MAP_CARD_F, a
-	call nz, .PlaceMapIcon
 	ld a, [de]
 	bit POKEGEAR_PHONE_CARD_F, a
 	call nz, .PlacePhoneIcon
 	ld a, [de]
 	bit POKEGEAR_RADIO_CARD_F, a
 	call nz, .PlaceRadioIcon
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TYPE_RAND_F, a
+	call nz, .PlaceTypeChartIcon
 	hlcoord 0, 0
 	ld a, $46
 	call .PlacePokegearCardIcon
 	ret
-
-.PlaceMapIcon:
-	hlcoord 2, 0
-	ld a, $40
-	jr .PlacePokegearCardIcon
 
 .PlacePhoneIcon:
 	hlcoord 4, 0
@@ -431,6 +460,19 @@ Pokegear_FinishTilemap:
 	ld [hld], a
 	ret
 
+.PlaceTypeChartIcon:
+	hlcoord 2, 0
+	ld a, $60 ; sword top-left  (GFX tile $30, BG tile $60)
+	ld [hli], a
+	ld a, $61 ; sword top-right (GFX tile $31, BG tile $61)
+	ld [hl], a
+	hlcoord 2, 1
+	ld a, $62 ; sword bot-left  (GFX tile $32, BG tile $62)
+	ld [hli], a
+	ld a, $63 ; sword bot-right (GFX tile $33, BG tile $63)
+	ld [hl], a
+	ret
+
 PokegearJumptable:
 	jumptable .Jumptable, wJumptableIndex
 
@@ -438,11 +480,8 @@ PokegearJumptable:
 ; entries correspond to POKEGEARSTATE_* constants
 	dw PokegearClock_Init
 	dw PokegearClock_Joypad
-	dw PokegearMap_CheckRegion
-	dw PokegearMap_Init
-	dw PokegearMap_JohtoMap
-	dw PokegearMap_Init
-	dw PokegearMap_KantoMap
+	dw PokegearTypeChart_Init
+	dw PokegearTypeChart_Joypad
 	dw PokegearPhone_Init
 	dw PokegearPhone_Joypad
 	dw PokegearPhone_MakePhoneCall
@@ -468,14 +507,14 @@ PokegearClock_Joypad:
 	ld a, [hl]
 	and PAD_RIGHT
 	ret z
-	ld a, [wPokegearFlags]
-	bit POKEGEAR_MAP_CARD_F, a
-	jr z, .no_map_card
-	ld c, POKEGEARSTATE_MAPCHECKREGION
-	ld b, POKEGEARCARD_MAP
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TYPE_RAND_F, a
+	jr z, .no_typechart
+	ld c, POKEGEARSTATE_TYPECHARTINIT
+	ld b, POKEGEARCARD_TYPECHART
 	jr .done
 
-.no_map_card
+.no_typechart
 	ld a, [wPokegearFlags]
 	bit POKEGEAR_PHONE_CARD_F, a
 	jr z, .no_phone_card
@@ -529,21 +568,7 @@ Pokegear_UpdateClock:
 	text_end
 
 PokegearMap_CheckRegion:
-	ld a, [wPokegearMapPlayerIconLandmark]
-	cp LANDMARK_FAST_SHIP
-	jr z, .johto
-	cp KANTO_LANDMARK
-	jr nc, .kanto
-.johto
-	ld a, POKEGEARSTATE_JOHTOMAPINIT
-	jr .done
-	ret
-
-.kanto
-	ld a, POKEGEARSTATE_KANTOMAPINIT
-.done
-	ld [wJumptableIndex], a
-	call ExitPokegearRadio_HandleMusic
+	; Map card removed from Pokégear; this function is no longer reachable via jumptable.
 	ret
 
 PokegearMap_Init:
@@ -592,9 +617,17 @@ PokegearMap_ContinueMap:
 .no_phone
 	ld a, [wPokegearFlags]
 	bit POKEGEAR_RADIO_CARD_F, a
-	ret z
+	jr z, .no_radio
 	ld c, POKEGEARSTATE_RADIOINIT
 	ld b, POKEGEARCARD_RADIO
+	jr .done
+
+.no_radio
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TYPE_RAND_F, a
+	ret z
+	ld c, POKEGEARSTATE_TYPECHARTINIT
+	ld b, POKEGEARCARD_TYPECHART
 	jr .done
 
 .left
@@ -758,6 +791,9 @@ PokegearRadio_Joypad:
 	ld a, [hl]
 	and PAD_LEFT
 	jr nz, .left
+	ld a, [hl]
+	and PAD_RIGHT
+	jr nz, .right
 	ld a, [wPokegearRadioChannelAddr]
 	ld l, a
 	ld a, [wPokegearRadioChannelAddr + 1]
@@ -777,14 +813,14 @@ PokegearRadio_Joypad:
 	jr .switch_page
 
 .no_phone
-	ld a, [wPokegearFlags]
-	bit POKEGEAR_MAP_CARD_F, a
-	jr z, .no_map
-	ld c, POKEGEARSTATE_MAPCHECKREGION
-	ld b, POKEGEARCARD_MAP
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TYPE_RAND_F, a
+	jr z, .no_typechart
+	ld c, POKEGEARSTATE_TYPECHARTINIT
+	ld b, POKEGEARCARD_TYPECHART
 	jr .switch_page
 
-.no_map
+.no_typechart
 	ld c, POKEGEARSTATE_CLOCKINIT
 	ld b, POKEGEARCARD_CLOCK
 .switch_page
@@ -794,6 +830,9 @@ PokegearRadio_Joypad:
 .cancel
 	ld hl, wJumptableIndex
 	set JUMPTABLE_EXIT_F, [hl]
+	ret
+
+.right
 	ret
 
 PokegearPhone_Init:
@@ -828,14 +867,14 @@ PokegearPhone_Joypad:
 	ret
 
 .left
-	ld a, [wPokegearFlags]
-	bit POKEGEAR_MAP_CARD_F, a
-	jr z, .no_map
-	ld c, POKEGEARSTATE_MAPCHECKREGION
-	ld b, POKEGEARCARD_MAP
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TYPE_RAND_F, a
+	jr z, .no_typechart
+	ld c, POKEGEARSTATE_TYPECHARTINIT
+	ld b, POKEGEARCARD_TYPECHART
 	jr .switch_page
 
-.no_map
+.no_typechart
 	ld c, POKEGEARSTATE_CLOCKINIT
 	ld b, POKEGEARCARD_CLOCK
 	jr .switch_page
@@ -1282,6 +1321,525 @@ GetAMPMHours: ; unreferenced
 	ld [wTempByteValue], a
 	and a
 	ret
+
+; Pokemon Types Pokegear Card
+; ---------------------------
+; Displays the randomized type matchup chart.
+; Attack type on row 3 (cycle with L/R), defender list below (scroll with U/D).
+
+PokegearTypeChart_Init:
+	call InitPokegearTilemap
+	call ExitPokegearRadio_HandleMusic
+	call PokegearTypeChart_Render
+	ld hl, wJumptableIndex
+	inc [hl]
+	ret
+
+PokegearTypeChart_Joypad:
+	ld a, [wPokegearTypeChartViewMode]
+	and a
+	jp nz, .matchup_mode
+
+	; ===== LIST MODE =====
+	ld hl, hJoyLast
+	ld a, [hl]
+	and PAD_B
+	jr nz, .list_cancel
+	ld a, [hl]
+	and PAD_A
+	jr nz, .list_select
+	ld a, [hl]
+	and PAD_LEFT
+	jr nz, .list_left
+	ld a, [hl]
+	and PAD_RIGHT
+	jp nz, .list_right
+	ld a, [hl]
+	and PAD_UP
+	jr nz, .list_up
+	ld a, [hl]
+	and PAD_DOWN
+	jp nz, .list_down
+	ret
+
+.list_cancel
+	ld hl, wJumptableIndex
+	set JUMPTABLE_EXIT_F, [hl]
+	ret
+
+.list_select
+	; Enter matchup view: selected type = scrollPos + cursorPos
+	ld a, [wPokegearTypeChartScrollPos]
+	ld b, a
+	ld a, [wPokegearTypeChartCursorPos]
+	add b
+	ld [wPokegearTypeChartAttackType], a
+	xor a
+	ld [wPokegearTypeChartMatchupScroll], a
+	; Switch view mode
+	ld a, 1
+	ld [wPokegearTypeChartViewMode], a
+	; Redraw the screen for matchup mode
+	call InitPokegearTilemap
+	call PokegearTypeChart_Render
+	call WaitBGMap
+	ret
+
+.list_left
+	; TypeChart is the leftmost card after Clock; always go back to Clock
+	ld c, POKEGEARSTATE_CLOCKINIT
+	ld b, POKEGEARCARD_CLOCK
+.switch_page
+	; Reset to list view when leaving
+	xor a
+	ld [wPokegearTypeChartViewMode], a
+	call Pokegear_SwitchPage
+	ret
+
+.list_right
+	; Switch to next pokegear card (Phone → Radio)
+	ld a, [wPokegearFlags]
+	bit POKEGEAR_PHONE_CARD_F, a
+	jr z, .list_right_no_phone
+	ld c, POKEGEARSTATE_PHONEINIT
+	ld b, POKEGEARCARD_PHONE
+	jp .switch_page
+.list_right_no_phone
+	ld a, [wPokegearFlags]
+	bit POKEGEAR_RADIO_CARD_F, a
+	ret z
+	ld c, POKEGEARSTATE_RADIOINIT
+	ld b, POKEGEARCARD_RADIO
+	jp .switch_page
+
+.list_up
+	; Move cursor up; scroll if at top of window
+	ld a, [wPokegearTypeChartCursorPos]
+	and a
+	jr z, .list_up_scroll
+	dec a
+	ld [wPokegearTypeChartCursorPos], a
+	call PokegearTypeChart_Render
+	call WaitBGMap
+	ret
+.list_up_scroll
+	ld a, [wPokegearTypeChartScrollPos]
+	and a
+	ret z
+	dec a
+	ld [wPokegearTypeChartScrollPos], a
+	call PokegearTypeChart_Render
+	call WaitBGMap
+	ret
+
+.list_down
+	; Compute absolute index = scrollPos + cursorPos
+	ld a, [wPokegearTypeChartScrollPos]
+	ld b, a
+	ld a, [wPokegearTypeChartCursorPos]
+	add b
+	; Check if already at last type (TYPE_MATCHUP_TABLE_DISPLAY_COUNT - 1)
+	cp TYPE_MATCHUP_TABLE_DISPLAY_COUNT - 1
+	ret nc
+	; Try to move cursor down first
+	ld a, [wPokegearTypeChartCursorPos]
+	cp TYPECHART_LIST_HEIGHT - 1
+	jr z, .list_down_scroll
+	inc a
+	ld [wPokegearTypeChartCursorPos], a
+	call PokegearTypeChart_Render
+	call WaitBGMap
+	ret
+.list_down_scroll
+	ld a, [wPokegearTypeChartScrollPos]
+	inc a
+	ld [wPokegearTypeChartScrollPos], a
+	call PokegearTypeChart_Render
+	call WaitBGMap
+	ret
+
+	; ===== MATCHUP MODE =====
+.matchup_mode
+	ld hl, hJoyLast
+	ld a, [hl]
+	and PAD_B
+	jr nz, .matchup_back
+	ld a, [hl]
+	and PAD_UP
+	jr nz, .matchup_up
+	ld a, [hl]
+	and PAD_DOWN
+	jr nz, .matchup_down
+	ret
+
+.matchup_back
+	; Return to list view
+	xor a
+	ld [wPokegearTypeChartViewMode], a
+	; Redraw the list-view tilemap
+	call InitPokegearTilemap
+	call PokegearTypeChart_Render
+	call WaitBGMap
+	ret
+
+.matchup_up
+	ld a, [wPokegearTypeChartMatchupScroll]
+	and a
+	ret z
+	dec a
+	ld [wPokegearTypeChartMatchupScroll], a
+	call PokegearTypeChart_Render
+	call WaitBGMap
+	ret
+
+.matchup_down
+	ld a, [wPokegearTypeChartMatchupScroll]
+	cp TYPE_MATCHUP_TABLE_DISPLAY_COUNT - TYPECHART_DISPLAY_HEIGHT
+	ret nc
+	inc a
+	ld [wPokegearTypeChartMatchupScroll], a
+	call PokegearTypeChart_Render
+	call WaitBGMap
+	ret
+
+PokegearTypeChart_Render:
+; Dispatches to list or matchup render depending on wPokegearTypeChartViewMode
+	xor a
+	ldh [hBGMapMode], a
+	ld a, [wPokegearTypeChartViewMode]
+	and a
+	jr nz, .do_matchup
+	call .RenderList
+	jr .done
+.do_matchup
+	call .RenderMatchup
+.done
+	ld a, $1
+	ldh [hBGMapMode], a
+	ret
+
+; ----------------------------------------------------------------
+; LIST VIEW: rows 3-11 show 9 type names with ▶ cursor
+; ----------------------------------------------------------------
+.RenderList:
+	; Clear content area rows 3-11 (9 rows × 18 cols starting col 1)
+	ld b, TYPECHART_LIST_HEIGHT
+	hlcoord 1, 3
+.list_clear_row
+	push hl
+	push bc
+	ld bc, 18
+	ld a, CHARVAL(" ")
+	call ByteFill
+	pop bc
+	pop hl
+	ld de, SCREEN_WIDTH
+	add hl, de
+	dec b
+	jr nz, .list_clear_row
+
+	; Render each visible type
+	ld a, [wPokegearTypeChartScrollPos]
+	ld e, a   ; E = compact index of top visible entry
+	ld d, 0   ; D = display row (0-8)
+.list_loop
+	ld a, d
+	cp TYPECHART_LIST_HEIGHT
+	jr z, .list_done
+	; Bounds check: only 17 types
+	ld a, e
+	cp TYPE_MATCHUP_TABLE_DISPLAY_COUNT
+	jr nc, .list_done
+
+	push de
+
+	; Get type name
+	ld a, e
+	ld c, a
+	ld b, 0
+	ld hl, TypeChartCompactTypeTable
+	add hl, bc
+	ld a, [hl]
+	ld [wNamedObjectIndex], a
+	farcall GetTypeName
+
+	pop de
+	push de
+
+	; Compute screen position: hlcoord 2, (3 + display_row)
+	ld a, d
+	ld c, a
+	hlcoord 2, 3
+.list_rowoffset
+	ld a, c
+	and a
+	jr z, .list_rowoffset_done
+	push de
+	ld de, SCREEN_WIDTH
+	add hl, de
+	pop de
+	dec c
+	jr .list_rowoffset
+.list_rowoffset_done
+	push hl
+	ld de, wStringBuffer1
+	call PlaceString
+	pop hl
+
+	; Draw cursor ▶ if this row is the cursor row
+	pop de
+	ld a, [wPokegearTypeChartCursorPos]
+	cp d
+	jr nz, .list_no_cursor
+	; cursor at col 1 (one left of type name)
+	dec hl
+	ld [hl], CHARVAL("▶")
+	jr .list_row_done
+.list_no_cursor
+.list_row_done
+	inc d
+	inc e
+	jr .list_loop
+.list_done
+	ret
+
+; ----------------------------------------------------------------
+; MATCHUP VIEW: ATK header row 3, separator row 4, defenders rows 5-13
+; ----------------------------------------------------------------
+.RenderMatchup:
+	; --- Clear rows 3-13 content (cols 1-18) ---
+	hlcoord 1, 3
+	ld bc, 18
+	ld a, CHARVAL(" ")
+	call ByteFill
+	hlcoord 1, 4
+	call ByteFill
+	ld b, TYPECHART_DISPLAY_HEIGHT
+	hlcoord 1, 5
+.matchup_clear
+	push hl
+	push bc
+	ld bc, 18
+	ld a, CHARVAL(" ")
+	call ByteFill
+	pop bc
+	pop hl
+	ld de, SCREEN_WIDTH
+	add hl, de
+	dec b
+	jr nz, .matchup_clear
+
+	; --- ATK header row 3 ---
+	hlcoord 1, 3
+	ld de, .ATKLabel
+	call PlaceString
+
+	ld a, [wPokegearTypeChartAttackType]
+	ld c, a
+	ld b, 0
+	ld hl, TypeChartCompactTypeTable
+	add hl, bc
+	ld a, [hl]
+	ld [wNamedObjectIndex], a
+	farcall GetTypeName
+
+	hlcoord 6, 3
+	ld de, wStringBuffer1
+	call PlaceString
+
+	; ◀ before  ▶ after type name
+	hlcoord 5, 3
+	ld [hl], CHARVAL("◀")
+	hlcoord 6, 3
+	ld c, 12
+.find_end
+	ld a, [hl]
+	cp CHARVAL("@")
+	jr z, .found_end
+	cp CHARVAL(" ")
+	jr z, .found_end
+	inc hl
+	dec c
+	jr nz, .find_end
+.found_end
+	ld [hl], CHARVAL("▶")
+
+	; --- Separator row 4 ---
+	hlcoord 1, 4
+	ld bc, 18
+	ld a, CHARVAL("─")
+	call ByteFill
+
+	; --- Compute attacker's row base in matchup table ---
+	; offset = attack_compact_index * TYPE_MATCHUP_TABLE_STRIDE
+	ld a, [wPokegearTypeChartAttackType]
+	ld h, 0
+	ld l, a
+	add hl, hl   ; ×2
+	ld d, h
+	ld e, l      ; DE = ×2
+	add hl, hl   ; ×4
+	add hl, hl   ; ×8
+	add hl, hl   ; ×16
+	add hl, de   ; ×18
+	ld de, wTypeMatchupTable
+	add hl, de
+	ld a, l
+	ld [wPokegearMapCursorObjectPointer], a
+	ld a, h
+	ld [wPokegearMapCursorObjectPointer + 1], a
+
+	; --- Render visible defender rows ---
+	ld a, [wPokegearTypeChartMatchupScroll]
+	ld e, a  ; E = compact index of first visible defender
+	ld d, 0  ; D = display row
+.matchup_loop
+	ld a, d
+	cp TYPECHART_DISPLAY_HEIGHT
+	jp z, .matchup_done
+	ld a, e
+	cp TYPE_MATCHUP_TABLE_DISPLAY_COUNT
+	jp nc, .matchup_done
+
+	push de
+
+	; Get defender type name
+	ld a, e
+	ld c, a
+	ld b, 0
+	ld hl, TypeChartCompactTypeTable
+	add hl, bc
+	ld a, [hl]
+	ld [wNamedObjectIndex], a
+	farcall GetTypeName
+
+	pop de
+	push de
+
+	; Screen position: hlcoord 2, (5 + display_row)
+	ld a, d
+	ld c, a
+	hlcoord 2, 5
+.matchup_rowoffset
+	ld a, c
+	and a
+	jr z, .matchup_rowoffset_done
+	push de
+	ld de, SCREEN_WIDTH
+	add hl, de
+	pop de
+	dec c
+	jr .matchup_rowoffset
+.matchup_rowoffset_done
+	push hl
+	ld de, wStringBuffer1
+	call PlaceString
+	pop hl
+
+	; --- Read effectiveness value ---
+	pop de
+	push de
+	push hl
+
+	ld a, [wPokegearMapCursorObjectPointer]
+	ld l, a
+	ld a, [wPokegearMapCursorObjectPointer + 1]
+	ld h, a
+	ld a, e   ; defender compact index = column in row
+	ld c, a
+	ld b, 0
+	add hl, bc
+
+	ldh a, [rWBK]
+	push af
+	ld a, BANK(wTypeMatchupTable)
+	ldh [rWBK], a
+	ld b, [hl]   ; B = effectiveness byte
+	pop af
+	ldh [rWBK], a
+
+	; Place at col 13 (offset 11 from col 2)
+	pop hl
+	push de
+	ld de, 11
+	add hl, de
+	pop de
+
+	ld a, b
+	and a
+	jr z, .eff_zero
+	cp NOT_VERY_EFFECTIVE
+	jr z, .eff_half
+	cp EFFECTIVE
+	jr z, .eff_normal
+	push de
+	ld de, .EffDoubleStr
+	call PlaceString
+	pop de
+	jr .matchup_next
+
+.eff_zero
+	push de
+	ld de, .EffZeroStr
+	call PlaceString
+	pop de
+	jr .matchup_next
+
+.eff_half
+	push de
+	ld de, .EffHalfStr
+	call PlaceString
+	pop de
+	jr .matchup_next
+
+.eff_normal
+	push de
+	ld de, .EffNormalStr
+	call PlaceString
+	pop de
+
+.matchup_next
+	pop de
+	inc d
+	inc e
+	jp .matchup_loop
+.matchup_done
+	ret
+
+.ATKLabel:
+	db "ATK:@"
+
+.EffZeroStr:
+	db " ×0@"
+
+.EffHalfStr:
+	db "×.5@"
+
+.EffNormalStr:
+	db " ×1@"
+
+.EffDoubleStr:
+	db " ×2@"
+
+; Table mapping compact index (0-16) to actual type constants (BIRD excluded)
+TypeChartCompactTypeTable:
+	db NORMAL       ; 0
+	db FIGHTING     ; 1
+	db FLYING       ; 2
+	db POISON       ; 3
+	db GROUND       ; 4
+	db ROCK         ; 5
+	db BUG          ; 6
+	db GHOST        ; 7
+	db STEEL        ; 8
+	db FIRE         ; 9
+	db WATER        ; 10
+	db GRASS        ; 11
+	db ELECTRIC     ; 12
+	db PSYCHIC_TYPE ; 13
+	db ICE          ; 14
+	db DRAGON       ; 15
+	db DARK         ; 16
 
 Pokegear_SwitchPage:
 	ld de, SFX_READ_TEXT_2
@@ -2771,8 +3329,8 @@ TownMapPals:
 ; Current tile
 	ld a, [hli]
 	push hl
-; The palette map covers tiles $00 to $5f; $60 and above use palette 0
-	cp $60
+; The palette map covers tiles $00 to $63; $64 and above use palette 0
+	cp $64
 	jr nc, .pal0
 
 ; The palette data is condensed to nybbles, least-significant first.

@@ -67,11 +67,10 @@ CherrygroveCityGuideGent:
 	opentext
 	writetext GuideGentGiftText
 	promptbutton
-	getstring STRING_BUFFER_4, .mapcardname
+	getitemname STRING_BUFFER_4, TOWN_MAP
 	scall .JumpstdReceiveItem
-	setflag ENGINE_MAP_CARD
-	writetext GotMapCardText
-	promptbutton
+	giveitem TOWN_MAP, 1
+	itemnotify
 	writetext GuideGentPokegearText
 	waitbutton
 	closetext
@@ -88,9 +87,6 @@ CherrygroveCityGuideGent:
 .JumpstdReceiveItem:
 	jumpstd ReceiveItemScript
 	end
-
-.mapcardname
-	db "MAP CARD@"
 
 .No:
 	writetext GuideGentNoText
@@ -177,14 +173,14 @@ CherrygroveRivalSceneNorth:
 CherrygroveTeacherScript:
 	faceplayer
 	opentext
-	checkflag ENGINE_MAP_CARD
-	iftrue .HaveMapCard
+	checkitem TOWN_MAP
+	iftrue .HaveTownMap
 	writetext CherrygroveTeacherText_NoMapCard
 	waitbutton
 	closetext
 	end
 
-.HaveMapCard:
+.HaveTownMap:
 	writetext CherrygroveTeacherText_HaveMapCard
 	waitbutton
 	closetext
@@ -414,9 +410,8 @@ GotMapCardText:
 	done
 
 GuideGentPokegearText:
-	text "#GEAR becomes"
-	line "more useful as you"
-	cont "add CARDS."
+	text "Use TOWN MAP from"
+	line "your KEY ITEMS."
 
 	para "I wish you luck on"
 	line "your journey!"
@@ -488,9 +483,8 @@ CherrygroveTeacherText_NoMapCard:
 	line "the old man by the"
 	cont "#MON CENTER?"
 
-	para "He'll put a MAP of"
-	line "JOHTO on your"
-	cont "#GEAR."
+	para "He'll give you a"
+	line "TOWN MAP!"
 	done
 
 CherrygroveTeacherText_HaveMapCard:

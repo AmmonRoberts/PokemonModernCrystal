@@ -27,3 +27,5 @@ ENDM
 	townmappals CITY,     CITY,     CITY,     CITY,     CITY,     CITY,     CITY,     BORDER
 	townmappals CITY,     CITY,     CITY,     CITY,     CITY,     CITY,     CITY,     CITY
 	townmappals BORDER,   BORDER,   BORDER,   BORDER,   BORDER,   BORDER,   BORDER,   BORDER
+; gfx/pokegear/pokegear.png new row - sword icon tiles $60-$63
+	townmappals CITY,     CITY,     CITY,     CITY

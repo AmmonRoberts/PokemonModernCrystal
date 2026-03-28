@@ -13,7 +13,9 @@ DEF RANDFLAG_ITEM_RAND_F       EQU 7 ; set = randomized item balls
 
 ; Number of rows/columns in wTypeMatchupTable.
 ; Physical types 0-9 map to indices 0-9; special types 20-27 map to indices 10-17.
+; BIRD (index 6) is unused and excluded from the Pokégear type chart display.
 DEF TYPE_MATCHUP_TABLE_STRIDE EQU 18
+DEF TYPE_MATCHUP_TABLE_DISPLAY_COUNT EQU 17 ; all types except BIRD
 
 ; Gift Pokémon randomizer mode (stored in wGiftRandMode, see ram/wram.asm)
 DEF GIFT_RAND_STANDARD   EQU 0 ; standard species, normal gift behaviour

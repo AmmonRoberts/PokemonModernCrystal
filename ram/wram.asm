@@ -762,8 +762,11 @@ wPokegearMapPlayerIconLandmark:: db
 wPokegearRadioChannelBank:: db
 wPokegearRadioChannelAddr:: dw
 wPokegearRadioMusicPlaying:: db
-wPokegearTypeChartAttackType:: db
-wPokegearTypeChartScrollPos:: db
+wPokegearTypeChartAttackType:: db  ; compact index of selected attacker
+wPokegearTypeChartScrollPos:: db  ; list scroll offset (# of types scrolled past top)
+wPokegearTypeChartCursorPos:: db  ; cursor row within the visible list (0..TYPECHART_LIST_HEIGHT-1)
+wPokegearTypeChartViewMode:: db   ; 0 = list view, 1 = matchup view
+wPokegearTypeChartMatchupScroll:: db ; scroll offset within matchup view
 
 NEXTU
 ; trade
