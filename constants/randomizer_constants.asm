@@ -7,7 +7,8 @@ DEF NUM_RANDOMIZABLE_ITEMS EQU 176
 DEF RANDFLAG_WILD_ENCOUNTERS_F EQU 0 ; set = randomized wild encounters
 DEF RANDFLAG_STARTER_RAND_F    EQU 1 ; set = randomized starters
 DEF RANDFLAG_TRAINER_RAND_F    EQU 3 ; set = randomized trainer parties
-DEF RANDFLAG_TYPE_RAND_F       EQU 4 ; set = randomized type matchups
+DEF RANDFLAG_TYPE_RAND_F       EQU 4 ; set = type matchups are randomized (any non-standard mode)
+DEF RANDFLAG_TYPE_BALANCED_F   EQU 5 ; set = balanced mode: at most 2 immunities per attacker (requires TYPE_RAND_F)
 DEF RANDFLAG_BERRY_RAND_F      EQU 6 ; set = randomized berry trees
 DEF RANDFLAG_ITEM_RAND_F       EQU 7 ; set = randomized item balls
 

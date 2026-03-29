@@ -343,31 +343,65 @@ NewGameOptions_ItemRandomization:
 .Randomized_str: db "RANDOMIZED@"
 
 NewGameOptions_TypeMatchupRandomization:
+; Cycles: STANDARD -> RANDOMIZED -> BALANCED -> STANDARD (right / left in reverse)
+; STANDARD:   bits 4+5 clear   (no randomization)
+; RANDOMIZED: bit 4 set only   (fully random matchups)
+; BALANCED:   bits 4+5 set     (random, then cap each attacker to at most 2 immunities)
 	ldh a, [hJoyPressed]
-	bit B_PAD_LEFT, a
-	jr nz, .Toggle
 	bit B_PAD_RIGHT, a
-	jr z, .NonePressed
-.Toggle:
-	ld hl, wRandoFlags
-	ld a, [hl]
-	xor 1 << RANDFLAG_TYPE_RAND_F
-	ld [hl], a
-.NonePressed:
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
 	ld a, [wRandoFlags]
 	bit RANDFLAG_TYPE_RAND_F, a
-	jr nz, .Randomized
-	ld de, .Standard
+	jr z, .set_randomized		; STANDARD -> RANDOMIZED
+	bit RANDFLAG_TYPE_BALANCED_F, a
+	jr z, .set_balanced		; RANDOMIZED -> BALANCED
+	jr .set_standard		; BALANCED -> STANDARD
+.Left:
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TYPE_RAND_F, a
+	jr z, .set_balanced		; STANDARD -> BALANCED
+	bit RANDFLAG_TYPE_BALANCED_F, a
+	jr nz, .set_randomized		; BALANCED -> RANDOMIZED
+	jr .set_standard		; RANDOMIZED -> STANDARD
+.set_standard:
+	ld hl, wRandoFlags
+	res RANDFLAG_TYPE_BALANCED_F, [hl]
+	res RANDFLAG_TYPE_RAND_F, [hl]
 	jr .Display
-.Randomized:
-	ld de, .Randomized_str
+.set_randomized:
+	ld hl, wRandoFlags
+	res RANDFLAG_TYPE_BALANCED_F, [hl]
+	set RANDFLAG_TYPE_RAND_F, [hl]
+	jr .Display
+.set_balanced:
+	ld hl, wRandoFlags
+	set RANDFLAG_TYPE_RAND_F, [hl]
+	set RANDFLAG_TYPE_BALANCED_F, [hl]
 .Display:
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TYPE_RAND_F, a
+	jr z, .show_standard
+	bit RANDFLAG_TYPE_BALANCED_F, a
+	jr nz, .show_balanced
+	ld de, .Randomized_str
+	jr .draw
+.show_standard:
+	ld de, .Standard
+	jr .draw
+.show_balanced:
+	ld de, .Balanced_str
+.draw:
 	hlcoord 8, 4
 	call PlaceString
 	and a
 	ret
 .Standard:       db "STANDARD  @"
 .Randomized_str: db "RANDOMIZED@"
+.Balanced_str:   db "BALANCED  @"
 
 NewGameOptions_GiftRandomization:
 ; Cycles: GIFT_RAND_STANDARD (0) → GIFT_RAND_RANDOMIZED (1) → GIFT_RAND_DISABLED (2) → wrap
