@@ -1253,7 +1253,8 @@ DebugRoomMenu_ChangeSex:
 	inc a
 	and 1
 	ld [sCrystalData + (wPlayerGender - wCrystalData)], a
-	call CloseSRAM
+	call CloseSRAM		; preserves a
+	ld [wPlayerGender], a	; sync live WRAM so the change takes effect immediately
 	ret
 
 DebugRoom_PrintGender:

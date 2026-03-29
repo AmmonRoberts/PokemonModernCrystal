@@ -3570,25 +3570,24 @@ TownMapItem_ShowMap:
 .kanto_limits
 	call TownMap_GetKantoLandmarkLimits
 	; --- Input loop (mirrors Pokégear loop order) ---
-	; d = max landmark, e = min landmark — must survive across frames.
-	; UpdateTime (GetClock sets de = rRTCREG) and .DPad subroutines
-	; (PokegearMap_UpdateLandmarkName sets de = wStringBuffer1) both
-	; clobber de, so bracket each call with push/pop de.
+	; de = (d=max landmark, e=min landmark) — must survive across frames.
+	; UpdateTime (GetClock sets de=rRTCREG) and .DPad (PokegearMap_UpdateLandmarkName
+	; sets de=wStringBuffer1) both clobber de.  Bracket each with push/pop so the
+	; correct limits are in de at the top of every iteration and before .DPad.
 .joypad_loop
 	push de
 	call UpdateTime
 	call JoyTextDelay
-	push de
+	pop de				; restore limits clobbered by UpdateTime
 	ldh a, [hJoyLast]
 	and PAD_B
-	jr nz, .exit_loop
-	call .DPad
-	pop de
+	jr nz, .exit
+	push de
+	call .DPad			; uses d/e at entry; clobbers de internally
+	pop de				; restore limits clobbered by .DPad
 	farcall PlaySpriteAnimations
 	call DelayFrame
 	jr .joypad_loop
-.exit_loop
-	pop de
 .exit
 	; Teardown: clear display state.
 	; The caller (ExitAllMenus → ReloadTilesetAndPalettes) will DisableLCD,
