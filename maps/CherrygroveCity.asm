@@ -404,16 +404,8 @@ GuideGentGiftText:
 	line "small gift."
 	done
 
-GotMapCardText:
-	text "<PLAYER>'s #GEAR"
-	line "now has a MAP!"
-	done
-
 GuideGentPokegearText:
-	text "Use TOWN MAP from"
-	line "your KEY ITEMS."
-
-	para "I wish you luck on"
+	text "I wish you luck on"
 	line "your journey!"
 	done
 

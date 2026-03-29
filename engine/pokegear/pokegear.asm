@@ -391,10 +391,11 @@ InitPokegearTilemap:
 	;   Row 3:  ATK header
 	;   Row 4:  separator
 	;   Rows 5-13: defender list (9 rows)
-	;   Row 14: textbox bottom border
-	;   Rows 14-16: help textbox
+	;   Row 14: textbox bottom border / help box top border
+	;   Rows 15-16: help text
+	;   Row 17: help box bottom border
 	hlcoord 0, 2
-	lb bc, 13, 18
+	lb bc, 11, 18
 	call Textbox
 	hlcoord 0, 14
 	lb bc, 2, 18
@@ -3441,6 +3442,177 @@ TownMapPlayerIcon:
 	ld hl, SPRITEANIMSTRUCT_YCOORD
 	add hl, bc
 	ld [hl], d
+	ret
+
+TownMapItem_ShowMap:
+; Standalone TOWN MAP viewer invoked when the TOWN MAP key item is used.
+; Uses DisableLCD + Pokegear_LoadGFX for correct sprite/tile setup.
+; The caller (Pack → ExitAllMenus → ReloadTilesetAndPalettes) fully
+; reloads overworld VRAM on exit, so we don't need to restore it.
+	call ClearBGPalettes
+	call ClearTilemap
+	call ClearSprites
+	call DisableLCD
+	xor a
+	ldh [hSCY], a
+	ldh [hSCX], a
+	ld a, $7
+	ldh [hWX], a
+	call Pokegear_LoadGFX
+	farcall ClearSpriteAnims
+	ld a, LCDC_DEFAULT
+	ldh [rLCDC], a
+	call TownMap_InitCursorAndPlayerIconPositions
+	; --- Determine region, fill tilemap, draw header, push to VRAM ---
+	; Matches original Pokégear .Map card init: FillMap → blank header →
+	; separator bar → UpdateLandmarkName → TownMapPals → TownMapBGUpdate.
+	ld a, [wPokegearMapPlayerIconLandmark]
+	cp LANDMARK_FAST_SHIP
+	jr z, .johto
+	cp KANTO_LANDMARK
+	jr nc, .kanto
+.johto
+	call FillJohtoMap
+	jr .build_header
+.kanto
+	call FillKantoMap
+.build_header
+	; Blank header rows 0-1 cols 0-7 (matches Pokegear_FinishTilemap, no icons)
+	hlcoord 0, 0
+	ld bc, 8
+	ld a, $4f
+	call ByteFill
+	hlcoord 0, 1
+	ld bc, 8
+	ld a, $4f
+	call ByteFill
+	; Draw separator bar at row 2 (same as original Pokégear .Map init)
+	ld a, $07
+	ld bc, SCREEN_WIDTH - 2
+	hlcoord 1, 2
+	call ByteFill
+	hlcoord 0, 2
+	ld [hl], $06
+	hlcoord 19, 2
+	ld [hl], $17
+	; Write initial landmark name into tilemap before TownMapPals so that
+	; CGB palette attributes are computed from the final tilemap state
+	ld a, [wPokegearMapCursorLandmark]
+	call PokegearMap_UpdateLandmarkName
+	; Assign CGB palette attrs from complete tilemap state
+	call TownMapPals
+	ld a, [wPokegearMapPlayerIconLandmark]
+	cp KANTO_LANDMARK
+	jr nc, .push_kanto
+	hlbgcoord 0, 0
+	call TownMapBGUpdate
+	; TownMapBGUpdate resets hBGMapMode=0; re-enable so VBlank auto-copies every frame
+	; (matches InitPokegearTilemap behaviour — no WaitBGMap needed in the D-pad handler)
+	ld a, 1
+	ldh [hBGMapMode], a
+	ld a, SCREEN_HEIGHT_PX  ; window off-screen → show background (vBGMap0 = Johto)
+	ldh [hWY], a
+	jr .sprites
+.push_kanto
+	hlbgcoord 0, 0, vBGMap1
+	call TownMapBGUpdate
+	ld a, 1
+	ldh [hBGMapMode], a
+	xor a                   ; hWY = 0 → window covers screen (vBGMap1 = Kanto)
+	ldh [hWY], a
+.sprites
+	; Initialise player icon and cursor sprites
+	ld a, [wPokegearMapPlayerIconLandmark]
+	call PokegearMap_InitPlayerIcon
+	ld a, [wPokegearMapCursorLandmark]
+	call PokegearMap_InitCursor
+	ld a, c
+	ld [wPokegearMapCursorObjectPointer], a
+	ld a, b
+	ld [wPokegearMapCursorObjectPointer + 1], a
+	; Set SGB/CGB palettes
+	ld b, SCGB_POKEGEAR_PALS
+	call GetSGBLayout
+	call SetDefaultBGPAndOBP
+	; Set landmark limits for D-pad navigation
+	ld a, [wPokegearMapPlayerIconLandmark]
+	cp KANTO_LANDMARK
+	jr nc, .kanto_limits
+	ld d, JOHTO_LANDMARK_LAST
+	ld e, JOHTO_LANDMARK
+	jr .joypad_loop
+.kanto_limits
+	call TownMap_GetKantoLandmarkLimits
+	; --- Input loop (mirrors Pokégear loop order) ---
+.joypad_loop
+	call UpdateTime
+	call JoyTextDelay
+	push de
+	ldh a, [hJoyLast]
+	and PAD_B
+	jr nz, .exit_loop
+	call .DPad
+	pop de
+	farcall PlaySpriteAnimations
+	call DelayFrame
+	jr .joypad_loop
+.exit_loop
+	pop de
+.exit
+	; Teardown: clear display state.
+	; The caller (ExitAllMenus → ReloadTilesetAndPalettes) will DisableLCD,
+	; fully reload overworld GFX, and re-enable LCD.
+	xor a
+	ldh [hBGMapMode], a
+	call ClearBGPalettes
+	call ClearSprites
+	ld a, SCREEN_HEIGHT_PX
+	ldh [hWY], a
+	xor a ; LOW(vBGMap0)
+	ldh [hBGMapAddress], a
+	ld a, HIGH(vBGMap0)
+	ldh [hBGMapAddress + 1], a
+	ret
+
+.DPad:
+	ldh a, [hJoyLast]
+	and PAD_UP
+	jr nz, .up
+	ldh a, [hJoyLast]
+	and PAD_DOWN
+	jr nz, .down
+	ret
+.up
+	ld hl, wPokegearMapCursorLandmark
+	ld a, [hl]
+	cp d
+	jr c, .wrap_up
+	ld a, e
+	dec a
+	ld [hl], a
+.wrap_up
+	inc [hl]
+	jr .done_dpad
+.down
+	ld hl, wPokegearMapCursorLandmark
+	ld a, [hl]
+	cp e
+	jr nz, .wrap_down
+	ld a, d
+	inc a
+	ld [hl], a
+.wrap_down
+	dec [hl]
+.done_dpad
+	ld a, [wPokegearMapCursorLandmark]
+	; Write updated name into wTileMap; VBlank (hBGMapMode=1) copies it next frame
+	call PokegearMap_UpdateLandmarkName
+	ld a, [wPokegearMapCursorObjectPointer]
+	ld c, a
+	ld a, [wPokegearMapCursorObjectPointer + 1]
+	ld b, a
+	ld a, [wPokegearMapCursorLandmark]
+	call PokegearMap_UpdateCursorPosition
 	ret
 
 LoadTownMapGFX:
