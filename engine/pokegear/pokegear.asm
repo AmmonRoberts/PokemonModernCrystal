@@ -1672,8 +1672,20 @@ PokegearTypeChart_Render:
 	call ByteFill
 
 	; --- Compute attacker's row base in matchup table ---
-	; offset = attack_compact_index * TYPE_MATCHUP_TABLE_STRIDE
+	; wPokegearTypeChartAttackType is a TypeChartCompactTypeTable index (0-16, BIRD skipped).
+	; The table uses battle-compact indices: physical types keep their raw value,
+	; special types subtract 10. Look up the actual type, then translate.
 	ld a, [wPokegearTypeChartAttackType]
+	ld c, a
+	ld b, 0
+	ld hl, TypeChartCompactTypeTable
+	add hl, bc
+	ld a, [hl]   ; actual type constant
+	cp SPECIAL
+	jr c, .atk_row_compact_ok
+	sub 10
+.atk_row_compact_ok:
+	; a = battle compact index; compute row offset = a * TYPE_MATCHUP_TABLE_STRIDE (18)
 	ld h, 0
 	ld l, a
 	add hl, hl   ; ×2
@@ -1746,9 +1758,21 @@ PokegearTypeChart_Render:
 	ld l, a
 	ld a, [wPokegearMapCursorObjectPointer + 1]
 	ld h, a
-	ld a, e   ; defender compact index = column in row
+	; Translate defender's TypeChartCompactTypeTable index (e) to battle compact index
+	push hl
+	ld a, e
 	ld c, a
 	ld b, 0
+	ld hl, TypeChartCompactTypeTable
+	add hl, bc
+	ld a, [hl]   ; actual type constant
+	cp SPECIAL
+	jr c, .def_col_compact_ok
+	sub 10
+.def_col_compact_ok:
+	ld c, a
+	ld b, 0
+	pop hl
 	add hl, bc
 
 	ldh a, [rWBK]
