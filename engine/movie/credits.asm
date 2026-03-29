@@ -94,6 +94,8 @@ Credits::
 	call Credits_HandleBButton
 	call Credits_HandleAButton
 	jr nz, .exit_credits
+	call Credits_HandleStartButton
+	jr nz, .exit_credits
 
 	call Credits_Jumptable
 	call DelayFrame
@@ -116,6 +118,11 @@ Credits_HandleAButton:
 	ret z
 	ld a, [wJumptableIndex]
 	bit JUMPTABLE_EXIT_F, a
+	ret
+
+Credits_HandleStartButton:
+	ldh a, [hJoypadDown]
+	and PAD_START
 	ret
 
 Credits_HandleBButton:
