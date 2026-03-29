@@ -71,6 +71,11 @@ NewGame:
 	jr z, .no_random_starters
 	farcall GenerateRandomStarters
 .no_random_starters
+	; Generate type matchup seed (always — the table generator checks the flag)
+	call Random
+	ldh a, [hRandomAdd]
+	ld [wTypeMatchupSeed], a
+	farcall GenerateTypeMatchupTable
 	call OakSpeech
 	call InitializeWorld
 

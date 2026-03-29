@@ -1291,13 +1291,17 @@ BattleCommand_Stab:
 	ld a, BATTLE_VARS_MOVE_TYPE
 	call GetBattleVar
 	ld b, a
+	; Check if type randomization is active
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TYPE_RAND_F, a
+	jp nz, .RandoTypeLoop
 	ld hl, TypeMatchups
 
 .TypesLoop:
 	ld a, [hli]
 
 	cp -1
-	jr z, .end
+	jp z, .end
 
 	; foresight
 	cp -2
@@ -1305,7 +1309,7 @@ BattleCommand_Stab:
 	ld a, BATTLE_VARS_SUBSTATUS1_OPP
 	call GetBattleVar
 	bit SUBSTATUS_IDENTIFIED, a
-	jr nz, .end
+	jp nz, .end
 
 	jr .TypesLoop
 
@@ -1385,6 +1389,115 @@ BattleCommand_Stab:
 	inc hl
 	jr .TypesLoop
 
+.RandoTypeLoop:
+; b = attacker type; d = defender type 1; e = defender type 2
+; Apply table lookup for each defender type
+	call .RandoApply		; attacker b vs defender type 1 (d)
+	ld a, d
+	cp e
+	jp z, .end		; both types same, skip second lookup
+	push de
+	ld d, e
+	call .RandoApply		; attacker b vs defender type 2 (now in d)
+	pop de
+	jr .end
+
+.RandoApply:
+; b = attacker type, d = defender type
+; Looks up effectiveness from wTypeMatchupTable, updates wTypeModifier,
+; and multiplies wCurDamage by effectiveness/10 (same as the standard TypeMatchups loop).
+	push bc
+	push de
+	ld a, b
+	cp SPECIAL
+	jr c, .atk_ok
+	sub 10
+.atk_ok:
+; a = compact attacker; compute a*18
+	ld c, a
+	add a		; *2
+	ld e, a
+	add a		; *4
+	add a		; *8
+	add a		; *16
+	add e		; *18
+; add compact defender
+	ld e, a
+	ld a, d
+	cp SPECIAL
+	jr c, .def_ok
+	sub 10
+.def_ok:
+	add e			; a = table index
+	ld c, a
+	ld b, 0
+; Switch to WRAMX bank 2 for wTypeMatchupTable, save old bank on stack
+	ldh a, [rWBK]
+	push af
+	ld a, BANK(wTypeMatchupTable)
+	ldh [rWBK], a
+	ld hl, wTypeMatchupTable
+	add hl, bc
+	ld a, [hl]		; effectiveness value
+; Restore WRAMX bank
+	ld b, a
+	pop af
+	ldh [rWBK], a
+	ld a, b
+	and a
+	jr nz, .not_immune
+; NO_EFFECT: flag as miss
+	inc a
+	ld [wAttackMissed], a
+	xor a
+.not_immune:
+; Update wTypeModifier (STAB bit | effectiveness)
+	ld b, a			; b = effectiveness (0 for NO_EFFECT)
+	ld a, [wTypeModifier]
+	and STAB_DAMAGE
+	or b
+	ld [wTypeModifier], a
+	ld a, b
+	and a
+	jr z, .skip_mul		; NO_EFFECT: wAttackMissed set, skip damage multiply
+; Multiply wCurDamage by effectiveness / 10 (same as the standard TypeMatchups loop)
+	ldh [hMultiplier], a
+	xor a
+	ldh [hMultiplicand + 0], a
+	ld hl, wCurDamage
+	ld a, [hli]
+	ldh [hMultiplicand + 1], a
+	ld a, [hld]
+	ldh [hMultiplicand + 2], a
+	call Multiply
+	ldh a, [hProduct + 1]
+	ld b, a
+	ldh a, [hProduct + 2]
+	or b
+	ldh a, [hProduct + 3]
+	or b
+	jr z, .mul_ok		; product is zero, skip divide
+	ld a, 10
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+	ldh a, [hQuotient + 2]
+	ld b, a
+	ldh a, [hQuotient + 3]
+	or b
+	jr nz, .mul_ok		; quotient non-zero, use it
+	ld a, 1
+	ldh [hMultiplicand + 2], a	; minimum 1 damage
+.mul_ok:
+	ldh a, [hMultiplicand + 1]
+	ld [hli], a			; wCurDamage high byte
+	ldh a, [hMultiplicand + 2]
+	ld [hl], a			; wCurDamage low byte
+.skip_mul:
+	pop de
+	pop bc
+	ret
+
 .end
 	call BattleCheckTypeMatchup
 	ld a, [wTypeMatchup]
@@ -1415,6 +1528,10 @@ CheckTypeMatchup:
 	ld c, [hl]
 	ld a, EFFECTIVE
 	ld [wTypeMatchup], a
+	; Check if type randomization is active
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TYPE_RAND_F, a
+	jp nz, .RandoCheckType
 	ld hl, TypeMatchups
 .TypesLoop:
 	ld a, [hli]
@@ -1468,6 +1585,92 @@ CheckTypeMatchup:
 	pop bc
 	pop de
 	pop hl
+	ret
+
+.RandoCheckType:
+; d = attacker type; b = defender type 1; c = defender type 2
+; Look up effectiveness vs each defender type and fold into wTypeMatchup
+	call .RandoCheckApply	; attacker d vs defender type 1 (b)
+	ld a, b
+	cp c
+	jr z, .RandoCheckDone	; both types same, skip second lookup
+	push bc
+	ld b, c
+	call .RandoCheckApply	; attacker d vs defender type 2 (c, now in b)
+	pop bc
+.RandoCheckDone:
+	pop bc
+	pop de
+	pop hl
+	ret
+
+.RandoCheckApply:
+; d = attacker type, b = defender type; multiply wTypeMatchup by table entry
+	push bc
+	push de
+; compact attacker (d): if >= SPECIAL subtract 10
+	ld a, d
+	cp SPECIAL
+	jr c, .atk_ok
+	sub 10
+.atk_ok:
+; compute row offset = compact_attacker * 18
+	ld c, a
+	add a		; *2
+	ld e, a
+	add a		; *4
+	add a		; *8
+	add a		; *16
+	add e		; *18
+; add compact defender (b)
+	ld e, a
+	ld a, b
+	cp SPECIAL
+	jr c, .def_ok
+	sub 10
+.def_ok:
+	add e			; a = table index
+	ld c, a
+	ld b, 0
+; Switch to WRAMX bank 2 for wTypeMatchupTable, save old bank on stack
+	ldh a, [rWBK]
+	push af
+	ld a, BANK(wTypeMatchupTable)
+	ldh [rWBK], a
+	ld hl, wTypeMatchupTable
+	add hl, bc
+	ld a, [hl]		; effectiveness value
+; Restore WRAMX bank
+	ld b, a
+	pop af
+	ldh [rWBK], a
+	ld a, b
+	and a
+	jr nz, .not_immune_check
+; NO_EFFECT: collapse wTypeMatchup to 0
+	ld [wTypeMatchup], a
+	pop de
+	pop bc
+	ret
+.not_immune_check:
+; Multiply wTypeMatchup by this value, divide by 10
+	ldh [hMultiplicand + 2], a
+	xor a
+	ldh [hMultiplicand + 0], a
+	ldh [hMultiplicand + 1], a
+	ld a, [wTypeMatchup]
+	ldh [hMultiplier], a
+	call Multiply
+	ld a, 10
+	ldh [hDivisor], a
+	push bc
+	ld b, 4
+	call Divide
+	pop bc
+	ldh a, [hQuotient + 3]
+	ld [wTypeMatchup], a
+	pop de
+	pop bc
 	ret
 
 BattleCommand_ResetTypeMatchup:

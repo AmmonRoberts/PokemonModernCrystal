@@ -1147,8 +1147,16 @@ ReturnToBattle_UseBall:
 	ret
 
 TownMapEffect:
-	farcall PokegearMap
+	farcall TownMapItem_ShowMap
+	; Pack exits via QUITRUNSCRIPT → ExitAllMenus → HMENURETURN_SCRIPT,
+	; which runs whatever script is in wQueuedScriptBank.  Queue a no-op
+	; so the overworld doesn't jump to stale/garbage script data.
+	ld hl, .DoneScript
+	call QueueScript
 	ret
+
+.DoneScript:
+	end
 
 BicycleEffect:
 	farcall BikeFunction

@@ -299,7 +299,8 @@ PokeBallDesc:
 	next "ing #MON.@"
 
 TeruSama1Desc:
-	db   "?@"
+	db   "A map of JOHTO"
+	next "and KANTO.@"
 
 BicycleDesc:
 	db   "A collapsible bike"
