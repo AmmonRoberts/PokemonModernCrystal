@@ -3460,6 +3460,8 @@ TownMapItem_ShowMap:
 	ldh [hWX], a
 	call Pokegear_LoadGFX
 	farcall ClearSpriteAnims
+	ld a, $1
+	ldh [hInMenu], a
 	ld a, LCDC_DEFAULT
 	ldh [rLCDC], a
 	call TownMap_InitCursorAndPlayerIconPositions
@@ -3544,7 +3546,12 @@ TownMapItem_ShowMap:
 .kanto_limits
 	call TownMap_GetKantoLandmarkLimits
 	; --- Input loop (mirrors Pokégear loop order) ---
+	; d = max landmark, e = min landmark — must survive across frames.
+	; UpdateTime (GetClock sets de = rRTCREG) and .DPad subroutines
+	; (PokegearMap_UpdateLandmarkName sets de = wStringBuffer1) both
+	; clobber de, so bracket each call with push/pop de.
 .joypad_loop
+	push de
 	call UpdateTime
 	call JoyTextDelay
 	push de
