@@ -310,9 +310,45 @@ TMHM_ScrollPocket:
 	ld hl, wTMHMPocketScrollPosition
 	ld a, [hl]
 	and a
-	jp z, TMHM_JoypadLoop
+	jr z, .wrap_up              ; at top → wrap to CANCEL at bottom
 	dec [hl]
 	call TMHM_DisplayPocketItems
+	jp TMHM_ShowTMMoveDescription
+
+.wrap_up
+	; Count owned TMs/HMs and jump to CANCEL row
+	call CountTMsHMs            ; wTempTMHM = total owned count, a = count
+	and a
+	jp z, TMHM_JoypadLoop       ; no TMs (edge case)
+	ld b, a                     ; b = count
+	cp 5
+	jr c, .wrap_up_few          ; count < 5: all fits on screen
+	; count >= 5: scroll so last 4 TMs + CANCEL are visible
+	sub 4
+	ld [wTMHMPocketScrollPosition], a
+	ld a, 5
+	ld [wMenuCursorY], a
+	jr .wrap_update_and_show
+.wrap_up_few
+	; count < 5: stay at scroll 0, place cursor on CANCEL row
+	xor a
+	ld [wTMHMPocketScrollPosition], a
+	ld a, b
+	inc a                       ; cursor = count + 1 = CANCEL row
+	ld [wMenuCursorY], a
+	; fall through
+
+.wrap_update_and_show
+	call TMHM_DisplayPocketItems
+	; Recompute w2DMenuNumRows for the new scroll position (same formula as PocketLoop)
+	ld a, 5
+	sub d
+	inc a
+	cp 6
+	jr nz, .rows_ok
+	dec a
+.rows_ok
+	ld [w2DMenuNumRows], a
 	jp TMHM_ShowTMMoveDescription
 
 .down
@@ -322,7 +358,7 @@ TMHM_ScrollPocket:
 	inc c
 	ld a, c
 	cp NUM_TMS + NUM_HMS + 1
-	jp nc, TMHM_JoypadLoop
+	jr nc, .wrap_down           ; at bottom/CANCEL → wrap to top
 	ld a, [hli]
 	and a
 	jr z, .loop
@@ -331,6 +367,24 @@ TMHM_ScrollPocket:
 	ld hl, wTMHMPocketScrollPosition
 	inc [hl]
 	call TMHM_DisplayPocketItems
+	jp TMHM_ShowTMMoveDescription
+
+.wrap_down
+	; Wrap from bottom/CANCEL back to first TM
+	xor a
+	ld [wTMHMPocketScrollPosition], a
+	ld a, 1
+	ld [wMenuCursorY], a
+	call TMHM_DisplayPocketItems
+	; Recompute w2DMenuNumRows
+	ld a, 5
+	sub d
+	inc a
+	cp 6
+	jr nz, .rows_ok2
+	dec a
+.rows_ok2
+	ld [w2DMenuNumRows], a
 	jp TMHM_ShowTMMoveDescription
 
 TMHM_DisplayPocketItems:

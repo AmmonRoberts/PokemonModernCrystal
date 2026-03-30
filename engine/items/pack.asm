@@ -452,8 +452,29 @@ UseItem:
 	ld a, [wPartyCount]
 	and a
 	jr z, .NoPokemon
+	ld a, 1
+	ld [wItemQuantity], a           ; sentinel until UseDisposableItem updates it
+	ld a, 2
+	ld [wPartyMenuCancelled], a     ; 2 = first call: skip palette clears, do GFX init
+.loop
 	call DoItemEffect
+	ld a, [wPartyMenuCancelled]
+	cp 1
+	jr z, .done                     ; player cancelled (B pressed)
+	; Not cancelled. Flag value 3 = next call skips palette clears AND GFX reinit.
+	ld a, 3
+	ld [wPartyMenuCancelled], a
+	ld a, [wItemEffectSucceeded]
+	and a
+	jr z, .loop                     ; no effect → show party menu again
+	; Item was used: check remaining quantity
+	ld a, [wItemQuantity]
+	and a
+	jr nz, .loop                    ; more remain → use again
+	; Item ran out → exit
+.done
 	xor a
+	ld [wPartyMenuCancelled], a
 	ldh [hBGMapMode], a
 	call Pack_InitGFX
 	call WaitBGMap_DrawPackGFX

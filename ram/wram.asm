@@ -2394,7 +2394,8 @@ wCurPartyLevel:: db
 
 wScrollingMenuListSize:: db
 
-	ds 1
+wPartyMenuCancelled:: db
+; Values: 0 = idle, 1 = cancelled by player, 2 = looping (skip fades/GFX reinit)
 
 ; used when following a map warp
 wNextWarp:: db
