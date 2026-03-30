@@ -1166,7 +1166,13 @@ EvoStoneEffect:
 	ld b, PARTYMENUACTION_EVO_STONE
 	call UseItem_SelectMon
 
-	jp c, .DecidedNotToUse
+	jr c, .CancelledByPlayer
+	jr .Selected
+.CancelledByPlayer:
+	ld a, TRUE
+	ld [wPartyMenuCancelled], a
+	jr .DecidedNotToUse
+.Selected:
 
 	ld a, MON_ITEM
 	call GetPartyParamLocation
@@ -1239,7 +1245,12 @@ VitaminEffect:
 NoEffectMessage:
 	ld hl, ItemWontHaveEffectText
 	call PrintText
+	ld a, [wPartyMenuCancelled]
+	cp 2
+	jr nc, .skip_clear      ; value >= 2, from pack
 	jp ClearPalettes
+.skip_clear
+	ret
 
 UpdateStatsAfterItem:
 	ld a, MON_MAXHP
@@ -1252,9 +1263,18 @@ UpdateStatsAfterItem:
 	predef_jump CalcMonStats
 
 RareCandy_StatBooster_ExitMenu:
+	ld a, [wPartyMenuCancelled]
+	cp 2                ; save looping state before we overwrite it
+	push af
+	ld a, TRUE
+	ld [wPartyMenuCancelled], a
 	xor a
 	ld [wItemEffectSucceeded], a
+	pop af
+	jr nc, .skip_clear  ; was from pack (value >= 2), skip ClearPalettes
 	jp ClearPalettes
+.skip_clear
+	ret
 
 ItemStatRoseText:
 	text_far _ItemStatRoseText
@@ -1749,7 +1769,11 @@ UseItem_SelectMon:
 	push hl
 	push de
 	push bc
+	ld a, [wPartyMenuCancelled]
+	cp 2
+	jr nc, .skip_clear_pal     ; value >= 2 = from pack, skip ClearBGPalettes
 	call ClearBGPalettes
+.skip_clear_pal
 	call ChooseMonToUseItemOn
 	pop bc
 	pop de
@@ -1757,9 +1781,13 @@ UseItem_SelectMon:
 	ret
 
 ChooseMonToUseItemOn:
+	ld a, [wPartyMenuCancelled]
+	cp 3
+	jr nc, .skip_heavy_gfx     ; value >= 3 = looping, skip heavy GFX reload
 	farcall LoadPartyMenuGFX
-	farcall InitPartyMenuWithCancel
 	farcall InitPartyMenuGFX
+.skip_heavy_gfx
+	farcall InitPartyMenuWithCancel  ; always: reset 2D menu/cursor state
 	farcall WritePartyMenuTilemap
 	farcall PlacePartyMenuText
 	call WaitBGMap
@@ -1811,10 +1839,25 @@ StatusHealer_NoEffect:
 	jr StatusHealer_ClearPalettes
 
 StatusHealer_ExitMenu:
+	ld a, [wPartyMenuCancelled]
+	cp 2
+	push af                 ; save nc: was value >= 2 (from pack)?
+	ld a, TRUE
+	ld [wPartyMenuCancelled], a
 	xor a
 	ld [wItemEffectSucceeded], a
-StatusHealer_ClearPalettes:
+	pop af
+	jr nc, .skip_clear      ; was from pack, skip ClearPalettes
 	call ClearPalettes
+.skip_clear
+	ret
+
+StatusHealer_ClearPalettes:
+	ld a, [wPartyMenuCancelled]
+	cp 2
+	jr nc, .skip_clear      ; value >= 2, from pack
+	call ClearPalettes
+.skip_clear
 	ret
 
 IsItemUsedOnBattleMon:
@@ -2401,7 +2444,11 @@ RestorePPEffect:
 	call PrintText
 
 FinishPPRestore:
+	ld a, [wPartyMenuCancelled]
+	cp 2
+	jr nc, .skip_clear      ; value >= 2, from pack
 	call ClearPalettes
+.skip_clear
 	jp UseDisposableItem
 
 BattleRestorePP:
@@ -2499,7 +2546,15 @@ PPRestoreItem_NoEffect:
 	call WontHaveAnyEffectMessage
 
 PPRestoreItem_Cancel:
+	ld a, [wPartyMenuCancelled]
+	cp 2                ; check state before overwriting
+	push af
+	ld a, TRUE
+	ld [wPartyMenuCancelled], a
+	pop af
+	jr nc, .skip_clear  ; was from pack (value >= 2), skip ClearPalettes
 	call ClearPalettes
+.skip_clear
 	xor a
 	ld [wItemEffectSucceeded], a
 	ret

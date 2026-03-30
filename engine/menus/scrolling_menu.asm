@@ -167,7 +167,26 @@ ScrollingMenuJoyAction:
 	jp xor_a
 
 .xor_dec_up
-	jp xor_a_dec_a
+	; Wrap to last item (CANCEL row at bottom of list)
+	ld a, [wScrollingMenuListSize]
+	inc a               ; total = listSize + 1 (real items + CANCEL)
+	ld b, a             ; b = total
+	ld a, [wMenuData_ScrollingMenuHeight]
+	ld c, a             ; c = displayHeight
+	cp b                ; if displayHeight >= total: all items visible
+	jr nc, .wrap_up_fits
+	; displayHeight < total: scroll to (total - displayHeight), cursor at bottom
+	ld a, b
+	sub c               ; a = total - displayHeight = new scroll position
+	ld [wMenuScrollPosition], a
+	ld a, c             ; cursor = displayHeight (last visible row)
+	ld [wMenuCursorY], a
+	jp xor_a
+.wrap_up_fits
+	; All items fit on screen, scroll = 0 (already 0), cursor = total
+	ld a, b             ; cursor = listSize + 1 = CANCEL row
+	ld [wMenuCursorY], a
+	jp xor_a
 
 .d_down
 	ld hl, w2DMenuFlags2
@@ -184,7 +203,12 @@ ScrollingMenuJoyAction:
 	jp xor_a
 
 .xor_dec_down
-	jp xor_a_dec_a
+	; Wrap to first item (top of list)
+	xor a
+	ld [wMenuScrollPosition], a
+	ld a, 1
+	ld [wMenuCursorY], a
+	jp xor_a
 
 ScrollingMenu_GetCursorPosition:
 	ld a, [wMenuScrollPosition]
