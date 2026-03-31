@@ -1784,6 +1784,7 @@ ChooseMonToUseItemOn:
 	ld a, [wPartyMenuCancelled]
 	cp 3
 	jr nc, .skip_heavy_gfx     ; value >= 3 = looping, skip heavy GFX reload
+	call ClearBGPalettes
 	farcall LoadPartyMenuGFX
 	farcall InitPartyMenuGFX
 .skip_heavy_gfx
