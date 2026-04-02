@@ -11,9 +11,6 @@ NuzlockeWildBattleStart::
 	ld a, [wNuzlockeFirstEncounter]
 	and a
 	jr z, .print_text
-	; Draw "!" indicator at top-right of enemy info area
-	hlcoord 18, 2
-	ld [hl], '!'
 .print_text
 	ld h, d              ; HL = text pointer
 	ld l, e
@@ -254,3 +251,16 @@ NuzlockePostBattle::
 
 ; NuzlockeCannotCatchText pointer lives in engine/items/item_effects.asm
 ; (same bank as NuzlockeBlockCatch) so PrintText resolves it correctly.
+
+
+NuzlockeDrawIndicator::
+; Called via farcall from DrawEnemyHUD (Battle Core) at the end of every
+; enemy HUD draw. Draws "!" at col 0 row 0 if wNuzlockeFirstEncounter is set.
+; Col 0 is outside DrawEnemyHUD's ClearBox range (cols 1-11) so the tile
+; persists for the full battle and is cleared naturally by ClearTilemap.
+	ld a, [wNuzlockeFirstEncounter]
+	and a
+	ret z
+	hlcoord 0, 0
+	ld [hl], '!'
+	ret

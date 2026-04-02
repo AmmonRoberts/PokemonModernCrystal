@@ -1382,9 +1382,11 @@ _BallDontBeAThiefText::
 	prompt
 
 _NuzlockeCannotCatchText::
-	text "You've already had"
-	line "your first encounter"
-	cont "in this area!"
+	text "You have already"
+	line "had your first"
+	
+	para "encounter in"
+	line "this area!"
 	prompt
 
 _NuzlockeAlreadyCaughtLineText::

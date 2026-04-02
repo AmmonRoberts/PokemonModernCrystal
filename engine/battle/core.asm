@@ -4865,9 +4865,11 @@ DrawEnemyHUD:
 ; Place shiny icon if enemy mon is shiny
 	ld bc, wTempMonDVs
 	farcall CheckShininess
-	ret nc
+	jr nc, .nuzlocke_indicator
 	hlcoord 10, 1
 	ld [hl], $5e
+.nuzlocke_indicator
+	farcall NuzlockeDrawIndicator
 	ret
 
 UpdateEnemyHPPal:
