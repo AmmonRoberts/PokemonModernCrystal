@@ -1190,6 +1190,8 @@ Script_reloadmapafterbattle:
 	jr .done
 
 .was_wild
+	; Nuzlocke: update area state based on battle outcome
+	farcall NuzlockePostBattle
 	ld a, [wBattleResult]
 	bit BATTLERESULT_BOX_FULL, a
 	jr z, .done

@@ -807,6 +807,9 @@ TryEnemyFlee:
 	ret
 
 .Flee:
+	; Mark that the wild mon fled (for Nuzlocke post-battle resolution)
+	ld a, 1
+	ld [wNuzlockeWildFled], a
 	scf
 	ret
 
@@ -4862,9 +4865,11 @@ DrawEnemyHUD:
 ; Place shiny icon if enemy mon is shiny
 	ld bc, wTempMonDVs
 	farcall CheckShininess
-	ret nc
+	jr nc, .nuzlocke_indicator
 	hlcoord 10, 1
 	ld [hl], $5e
+.nuzlocke_indicator
+	farcall NuzlockeDrawIndicator
 	ret
 
 UpdateEnemyHPPal:
@@ -9360,10 +9365,9 @@ BattleStartMessage:
 	ld hl, WildPokemonAppearedText
 
 .PrintBattleStartText:
-	push hl
-	farcall BattleStart_TrainerHuds
-	pop hl
-	call StdBattleTextbox
+	ld d, h              ; save text ptr in DE: farcall preserves DE; StdBattleTextbox called inside
+	ld e, l
+	farcall NuzlockeWildBattleStart
 
 	call IsMobileBattle2
 	ret nz

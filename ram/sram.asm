@@ -70,7 +70,9 @@ sBackupNumItems::   db
 sBackupItems::      ds MAX_ITEMS * 2 + 1
 sBackupNumPCItems:: db
 sBackupPCItems::    ds MAX_PC_ITEMS * 2 + 1
-	ds $18a - (MAX_ITEMS * 2 + 2) - (MAX_PC_ITEMS * 2 + 2)
+sBackupNuzlockeAreas:: ds NUM_LANDMARKS
+sBackupNuzlockeLinesCaught:: flag_array NUM_POKEMON
+	ds $18a - (MAX_ITEMS * 2 + 2) - (MAX_PC_ITEMS * 2 + 2) - NUM_LANDMARKS - (NUM_POKEMON + 7) / 8
 
 sBackupChecksum:: dw
 
@@ -102,7 +104,9 @@ sNumItems::   db
 sItems::      ds MAX_ITEMS * 2 + 1
 sNumPCItems:: db
 sPCItems::    ds MAX_PC_ITEMS * 2 + 1
-	ds $18a - (MAX_ITEMS * 2 + 2) - (MAX_PC_ITEMS * 2 + 2)
+sNuzlockeAreas:: ds NUM_LANDMARKS
+sNuzlockeLinesCaught:: flag_array NUM_POKEMON
+	ds $18a - (MAX_ITEMS * 2 + 2) - (MAX_PC_ITEMS * 2 + 2) - NUM_LANDMARKS - (NUM_POKEMON + 7) / 8
 
 sChecksum:: dw
 

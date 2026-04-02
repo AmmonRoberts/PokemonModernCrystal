@@ -114,6 +114,7 @@ LearnMove:
 	ld hl, DidNotLearnMoveText
 	call PrintText
 	call ClearNewMoveInfoBox
+	call RestoreBattleScreenAfterLearnMove
 	ld b, 0
 	ret
 
@@ -122,6 +123,7 @@ LearnMove:
 	ld hl, LearnedMoveText
 	call PrintText
 	call ClearNewMoveInfoBox
+	call RestoreBattleScreenAfterLearnMove
 	ld b, 1
 	ret
 
@@ -562,6 +564,18 @@ ClearNewMoveInfoBox:
 	lb bc, 10, SCREEN_WIDTH
 	call ClearBox
 	call WaitBGMap
+	ret
+
+RestoreBattleScreenAfterLearnMove:
+; If we're in a battle, restore the battle screen after the move-learn UI
+; wiped it. Reloads the saved tilemap snapshot and redraws both mon sprites.
+; No-op outside of battle.
+	ld a, [wBattleMode]
+	and a
+	ret z
+	call SafeLoadTempTilemapToTilemap
+	farcall GetBattleMonBackpic
+	farcall GetEnemyMonFrontpic
 	ret
 
 MoveAskForgetText:

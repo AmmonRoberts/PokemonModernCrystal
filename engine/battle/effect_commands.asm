@@ -5201,6 +5201,8 @@ BattleCommand_ForceSwitch:
 	ld [wBattleAfterAnim], a
 	inc a ; TRUE
 	ld [wForcedSwitch], a
+	; Mark that the wild mon was forced out (Nuzlocke: counts as wild fleeing)
+	ld [wNuzlockeWildFled], a
 	call SetBattleDraw
 	ld a, [wPlayerMoveStructAnimation]
 	jp .succeed

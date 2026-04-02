@@ -183,6 +183,44 @@ PokeBallEffect:
 	dec a
 	jp nz, UseBallInTrainerBattle
 
+; Nuzlocke first-encounter gate
+	ld a, [wNuzlockeMode]
+	and a
+	jr z, .nuzlocke_ok ; DISABLED: skip check
+	; Shinies are always catchable — check DVs
+	ld bc, wEnemyMonDVs
+	farcall CheckShininess
+	jr c, .nuzlocke_ok ; shiny: allow catch
+	; Check first-encounter flag
+	ld a, [wNuzlockeFirstEncounter]
+	and a
+	jp z, NuzlockeBlockCatch ; not first encounter: block
+	; In STRICT mode: also block if evo line already caught (duplicate clause)
+	ld a, [wNuzlockeMode]
+	cp NUZLOCKE_STRICT
+	jr nz, .nuzlocke_ok
+	ld a, [wEnemyMonSpecies]
+	ld [wCurPartySpecies], a
+	farcall GetBaseEvolution
+	ld a, [wCurPartySpecies]
+	dec a ; 0-indexed
+	ld hl, wNuzlockeLinesCaught
+	ld b, CHECK_FLAG
+	ld c, a
+	ld d, 0
+	; wNuzlockeLinesCaught is in WRAMX 2; bank-switch around the flag check
+	ldh a, [rWBK]
+	push af
+	ld a, BANK(wNuzlockeLinesCaught)
+	ldh [rWBK], a
+	predef SmallFarFlagAction
+	pop af
+	ldh [rWBK], a
+	ld a, c
+	and a
+	jp nz, NuzlockeBlockCatchDuplicate ; STRICT duplicate: block with different message
+.nuzlocke_ok
+
 	ld a, [wPartyLimit]
 	ld b, a
 	ld a, [wPartyCount]
@@ -490,6 +528,8 @@ PokeBallEffect:
 	dec a
 	call SetSeenAndCaughtMon
 	pop af
+	; Nuzlocke: record catch (safe to call unconditionally — checks mode internally)
+	farcall NuzlockeMarkCaught
 	and a
 	jr nz, .skip_pokedex
 
@@ -2684,6 +2724,28 @@ UseDisposableItem:
 	ld [wItemQuantityChange], a
 	jp TossItem
 
+NuzlockeBlockCatch:
+; Block a Poké Ball throw due to Nuzlocke first-encounter rules.
+; Prints a message and returns WITHOUT consuming the ball.
+	ld hl, wOptions
+	res NO_TEXT_SCROLL, [hl]
+	ld hl, NuzlockeCannotCatchText
+	call PrintText
+	ld a, $2
+	ld [wItemEffectSucceeded], a
+	ret
+
+NuzlockeBlockCatchDuplicate::
+; Block a Poké Ball throw in STRICT mode because the evo line is already caught.
+; Shows a different message from the standard first-encounter block.
+	ld hl, wOptions
+	res NO_TEXT_SCROLL, [hl]
+	ld hl, NuzlockeAlreadyCaughtLineText
+	call PrintText
+	ld a, $2
+	ld [wItemEffectSucceeded], a
+	ret
+
 UseBallInTrainerBattle:
 	call ReturnToBattle_UseBall
 	ld de, ANIM_THROW_POKE_BALL
@@ -2796,6 +2858,14 @@ BallBoxFullText:
 
 ItemUsedText:
 	text_far _ItemUsedText
+	text_end
+
+NuzlockeCannotCatchText::
+	text_far _NuzlockeCannotCatchText
+	text_end
+
+NuzlockeAlreadyCaughtLineText::
+	text_far _NuzlockeAlreadyCaughtLineText
 	text_end
 
 ItemGotOnText: ; unreferenced
