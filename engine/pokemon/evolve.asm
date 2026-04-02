@@ -648,3 +648,12 @@ GetPreEvolution:
 	ld [wCurPartySpecies], a
 	scf
 	ret
+
+GetBaseEvolution:
+; Walk the pre-evolution chain for wCurPartySpecies to the root base form.
+; Chains GetPreEvolution until no further pre-evolution exists.
+; Output: wCurPartySpecies = base species of the original species.
+.loop
+	call GetPreEvolution
+	jr c, .loop ; pre-evolution found, keep walking back
+	ret

@@ -515,6 +515,17 @@ SavePlayerData:
 	ld de, sNumPCItems
 	ld bc, MAX_PC_ITEMS * 2 + 2
 	call CopyBytes
+	; Save nuzlocke arrays from WRAMX 2 to SRAM
+	ldh a, [rWBK]
+	push af
+	ld a, BANK(wNuzlockeAreas)
+	ldh [rWBK], a
+	ld hl, wNuzlockeAreas
+	ld de, sNuzlockeAreas
+	ld bc, NUM_LANDMARKS + (NUM_POKEMON + 7) / 8
+	call CopyBytes
+	pop af
+	ldh [rWBK], a
 	jp CloseSRAM
 
 SavePokemonData:
@@ -584,6 +595,17 @@ SaveBackupPlayerData:
 	ld de, sBackupNumPCItems
 	ld bc, MAX_PC_ITEMS * 2 + 2
 	call CopyBytes
+	; Save nuzlocke arrays from WRAMX 2 to backup SRAM
+	ldh a, [rWBK]
+	push af
+	ld a, BANK(wNuzlockeAreas)
+	ldh [rWBK], a
+	ld hl, wNuzlockeAreas
+	ld de, sBackupNuzlockeAreas
+	ld bc, NUM_LANDMARKS + (NUM_POKEMON + 7) / 8
+	call CopyBytes
+	pop af
+	ldh [rWBK], a
 	call CloseSRAM
 	ret
 
@@ -766,6 +788,17 @@ LoadPlayerData:
 	ld de, wNumPCItems
 	ld bc, MAX_PC_ITEMS * 2 + 2
 	call CopyBytes
+	; Load nuzlocke arrays from SRAM into WRAMX 2
+	ldh a, [rWBK]
+	push af
+	ld a, BANK(wNuzlockeAreas)
+	ldh [rWBK], a
+	ld hl, sNuzlockeAreas
+	ld de, wNuzlockeAreas
+	ld bc, NUM_LANDMARKS + (NUM_POKEMON + 7) / 8
+	call CopyBytes
+	pop af
+	ldh [rWBK], a
 	call CloseSRAM
 	ld a, BANK(sBattleTowerChallengeState)
 	call OpenSRAM
@@ -829,6 +862,17 @@ LoadBackupPlayerData:
 	ld de, wNumPCItems
 	ld bc, MAX_PC_ITEMS * 2 + 2
 	call CopyBytes
+	; Load nuzlocke arrays from backup SRAM into WRAMX 2
+	ldh a, [rWBK]
+	push af
+	ld a, BANK(wNuzlockeAreas)
+	ldh [rWBK], a
+	ld hl, sBackupNuzlockeAreas
+	ld de, wNuzlockeAreas
+	ld bc, NUM_LANDMARKS + (NUM_POKEMON + 7) / 8
+	call CopyBytes
+	pop af
+	ldh [rWBK], a
 	call CloseSRAM
 	ret
 
@@ -916,6 +960,13 @@ _LoadData:
 	ld a, PARTY_LENGTH
 	ld [wPartyLimit], a
 .party_limit_ok
+	; Sanitize wNuzlockeMode: old saves have 0 (DISABLED). Clamp to valid range.
+	ld a, [wNuzlockeMode]
+	cp NUM_NUZLOCKE_MODES
+	jr c, .nuzlocke_mode_ok
+	xor a ; reset to DISABLED if out of range
+	ld [wNuzlockeMode], a
+.nuzlocke_mode_ok
 	; Regenerate the type matchup table from the saved seed.
 	; Old saves have seed=0, so the table will be filled with EFFECTIVE (flag-check also skips table use).
 	farcall GenerateTypeMatchupTable

@@ -1821,7 +1821,9 @@ wGBPrinterBrightness::
 wOptions2::
 ; bit 1: menu account off/on
 	db
-	ds 2
+wNuzlockeMode:: db
+; Nuzlocke first encounter mode. 0 = DISABLED, 1 = FORGIVING, 2 = STRICT.
+	ds 1
 wOptionsEnd::
 
 ; Time buffer, for counting the amount of time since
@@ -1830,6 +1832,14 @@ wSecondsSince:: db
 wMinutesSince:: db
 wHoursSince:: db
 wDaysSince:: db
+wNuzlockeCurLandmark:: db
+; Landmark index for the current wild battle (set by NuzlockeCheckFirstEncounter).
+wNuzlockeFirstEncounter:: db
+; Set to 1 at wild battle start if this is the first encounter in wNuzlockeCurLandmark.
+; Cleared post-battle. Used by HUD indicator, ball-throw gate, and post-battle hook.
+wNuzlockeWildFled:: db
+; Set to 1 when the wild mon flees (random flee or force-switch moves).
+; NOT set when the player runs. Cleared post-battle.
 
 
 SECTION "WRAM 1", WRAMX
@@ -3724,3 +3734,13 @@ SECTION "Type Matchup Table", WRAMX
 ; CompactType: physical types 0-9 → index 0-9; special types 20-27 → index 10-17.
 ; Table entry = NO_EFFECT(0) / NOT_VERY_EFFECTIVE(5) / EFFECTIVE(10) / SUPER_EFFECTIVE(20).
 wTypeMatchupTable:: ds TYPE_MATCHUP_TABLE_STRIDE * TYPE_MATCHUP_TABLE_STRIDE
+
+
+SECTION "Nuzlocke Data", WRAMX
+
+wNuzlockeAreas:: ds NUM_LANDMARKS
+; Per-landmark first encounter state. Indexed by landmark ID (0-95).
+; $00 = NUZLOCKE_AREA_OPEN, $01-$FB = species encountered first,
+; $FC = NUZLOCKE_AREA_CAUGHT, $FD = NUZLOCKE_AREA_FAILED.
+wNuzlockeLinesCaught:: flag_array NUM_POKEMON
+; One bit per species (0-indexed). Set for the base form of each evo line caught.

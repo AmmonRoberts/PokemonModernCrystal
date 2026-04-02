@@ -19,6 +19,31 @@ InitCrystalData:
 	xor a
 	ld [wGiftRandMode], a  ; default = GIFT_RAND_STANDARD
 	ld [wTypeMatchupSeed], a
+	ld [wNuzlockeMode], a  ; default = NUZLOCKE_DISABLED
+	; Zero wNuzlockeAreas and wNuzlockeLinesCaught (both in WRAMX 2)
+	ldh a, [rWBK]
+	push af
+	ld a, BANK(wNuzlockeAreas)
+	ldh [rWBK], a
+	ld hl, wNuzlockeAreas
+	ld bc, NUM_LANDMARKS
+.clear_areas
+	ld [hl], NUZLOCKE_AREA_OPEN
+	inc hl
+	dec bc
+	ld a, b
+	or c
+	jr nz, .clear_areas
+	; Zero wNuzlockeLinesCaught (flag_array NUM_POKEMON = 32 bytes)
+	xor a
+	ld hl, wNuzlockeLinesCaught
+	ld b, NUM_POKEMON / 8 + 1 ; 32 bytes
+.clear_lines
+	ld [hli], a
+	dec b
+	jr nz, .clear_lines
+	pop af
+	ldh [rWBK], a
 	xor a
 	ld [wPlayerPostalCode], a
 	ld [wPlayerPostalCode+1], a

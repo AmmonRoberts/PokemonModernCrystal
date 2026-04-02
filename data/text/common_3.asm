@@ -1381,6 +1381,20 @@ _BallDontBeAThiefText::
 	text "Don't be a thief!"
 	prompt
 
+_NuzlockeCannotCatchText::
+	text "You've already had"
+	line "your first encounter"
+	cont "in this area!"
+	prompt
+
+_NuzlockeAlreadyCaughtLineText::
+	text "You already caught"
+	line "a #MON from"
+	
+	para "that evolution"
+	line "line!"
+	prompt
+
 _NoCyclingText::
 	text "Cycling isn't"
 	line "allowed here."

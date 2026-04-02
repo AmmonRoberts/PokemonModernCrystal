@@ -31,8 +31,9 @@ DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 5
 	const NEWGAMEOPT_PERMADEATH       ; 0
 	const NEWGAMEOPT_RESET_ON_WIPE    ; 1
 	const NEWGAMEOPT_PARTY_LIMIT      ; 2
-	const NEWGAMEOPT_PAGE4_CONTINUE   ; 3
-DEF NUM_NEWGAMEOPTIONS_PAGE4 EQU const_value ; 4
+	const NEWGAMEOPT_FIRST_ENCOUNTER  ; 3
+	const NEWGAMEOPT_PAGE4_CONTINUE   ; 4
+DEF NUM_NEWGAMEOPTIONS_PAGE4 EQU const_value ; 5
 
 DEF NUM_NEWGAMEOPTIONS EQU NUM_NEWGAMEOPTIONS_PAGE1 ; For compatibility
 
@@ -240,6 +241,8 @@ StringNewGameOptionsPage4:
 	db "     :<LF>"
 	db "PARTY LIMIT<LF>"
 	db "     :<LF>"
+	db "1ST ENCOUNTER<LF>"
+	db "     :<LF>"
 	db "CONTINUE@"
 
 GetNewGameOptionPointer:
@@ -287,6 +290,7 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_Permadeath
 	dw NewGameOptions_ResetOnWipe
 	dw NewGameOptions_PartyLimit
+	dw NewGameOptions_FirstEncounter
 	dw NewGameOptions_Continue
 NewGameOptions_BerryRandomization:
 	ldh a, [hJoyPressed]
@@ -830,6 +834,54 @@ NewGameOptions_PartyLimit:
 .str4: db "4       @"
 .str5: db "5       @"
 .str6: db "6       @"
+
+NewGameOptions_FirstEncounter:
+; Cycles DISABLED -> FORGIVING -> STRICT -> DISABLED (right / left in reverse)
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
+	ld a, [wNuzlockeMode]
+	inc a
+	cp NUM_NUZLOCKE_MODES
+	jr c, .set_mode
+	xor a ; wrap to DISABLED
+.set_mode:
+	ld [wNuzlockeMode], a
+	jr .Display
+.Left:
+	ld a, [wNuzlockeMode]
+	and a
+	jr z, .set_strict ; wrap to STRICT
+	dec a
+	jr .set_mode
+.set_strict:
+	ld a, NUZLOCKE_STRICT
+	jr .set_mode
+.Display:
+	ld a, [wNuzlockeMode]
+	cp NUZLOCKE_FORGIVING
+	jr z, .show_forgiving
+	cp NUZLOCKE_STRICT
+	jr z, .show_strict
+	ld de, .str_disabled
+	jr .draw
+.show_forgiving:
+	ld de, .str_forgiving
+	jr .draw
+.show_strict:
+	ld de, .str_strict
+.draw:
+	hlcoord 8, 10
+	call PlaceString
+	and a
+	ret
+.str_disabled:  db "DISABLED  @"
+.str_forgiving: db "FORGIVING @"
+.str_strict:    db "STRICT    @"
 
 NewGameOptions_Continue:
 	ldh a, [hJoyPressed]

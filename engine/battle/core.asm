@@ -807,6 +807,9 @@ TryEnemyFlee:
 	ret
 
 .Flee:
+	; Mark that the wild mon fled (for Nuzlocke post-battle resolution)
+	ld a, 1
+	ld [wNuzlockeWildFled], a
 	scf
 	ret
 
@@ -9360,10 +9363,9 @@ BattleStartMessage:
 	ld hl, WildPokemonAppearedText
 
 .PrintBattleStartText:
-	push hl
-	farcall BattleStart_TrainerHuds
-	pop hl
-	call StdBattleTextbox
+	ld d, h              ; save text ptr in DE: farcall preserves DE; StdBattleTextbox called inside
+	ld e, l
+	farcall NuzlockeWildBattleStart
 
 	call IsMobileBattle2
 	ret nz
