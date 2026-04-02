@@ -413,9 +413,9 @@ InitPokegearTilemap:
 .TypeChartListHelpStr2:
 	db "A: VIEW MATCHUPS@"
 .TypeChartMatchupHelpStr:
-	db "B:BACK UP/DN:SCROLL@"
+	db "UP/DOWN: SCROLL@"
 .TypeChartMatchupHelpStr2:
-	db "@"
+	db "B: BACK@"
 
 Pokegear_FinishTilemap:
 	hlcoord 0, 0
