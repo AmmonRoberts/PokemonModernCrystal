@@ -845,8 +845,8 @@ NewGameOptions_Permadeath:
 	call PlaceString
 	and a
 	ret
-.Off:    db "OFF     @"
-.On_str: db "ON      @"
+.Off:    db "DISABLED@"
+.On_str: db "ENABLED @"
 
 NewGameOptions_ResetOnWipe:
 	ld a, [wPermafaint]
@@ -872,8 +872,8 @@ NewGameOptions_ResetOnWipe:
 	call PlaceString
 	and a
 	ret
-.Off:    db "OFF     @"
-.On_str: db "ON      @"
+.Off:    db "DISABLED@"
+.On_str: db "ENABLED @"
 
 NewGameOptions_PartyLimit:
 ; Cycles through 1-6 (PARTY_LENGTH); default is PARTY_LENGTH
