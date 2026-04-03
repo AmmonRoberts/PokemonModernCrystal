@@ -953,6 +953,22 @@ _LoadData:
 	ld a, [wPermafaint]
 	and $03 ; preserve bits 0-1 (user settings); runtime bits 2-6 always cleared on load
 	ld [wPermafaint], a
+	; Sanitize wExpMultiplier: old saves may have 0 (50%) which is valid, but
+	; saves predating the feature will have garbage. Clamp to default (100% = 2).
+	ld a, [wExpMultiplier]
+	cp 5
+	jr c, .exp_mult_ok
+	ld a, 2
+	ld [wExpMultiplier], a
+.exp_mult_ok
+	; Sanitize wMoneyMultiplier: new variable — old saves have garbage here.
+	; Clamp to valid range 0-4; out-of-range defaults to 100% (2).
+	ld a, [wMoneyMultiplier]
+	cp 5
+	jr c, .money_mult_ok
+	ld a, 2
+	ld [wMoneyMultiplier], a
+.money_mult_ok
 	; Sanitize wPartyLimit: old saves will have 0 here; default to PARTY_LENGTH.
 	ld a, [wPartyLimit]
 	and a

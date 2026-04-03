@@ -2881,7 +2881,7 @@ wReceiveCallDelay_StartTime:: ds 3
 wBugContestMinsRemaining:: db
 wBugContestSecsRemaining:: db
 
-	ds 2
+	ds 1
 
 wMapStatusEnd::
 
@@ -2911,6 +2911,13 @@ wExpMultiplier::
 ; 2 = 100% EXP (default)
 ; 3 = 125% EXP
 ; 4 = 150% EXP
+	db
+wMoneyMultiplier::
+; 0 = 50% MONEY
+; 1 = 75% MONEY
+; 2 = 100% MONEY (default)
+; 3 = 125% MONEY
+; 4 = 150% MONEY
 	db
 ; The three randomized starter species (if randomization is enabled)
 wRandomStarter1:: db

@@ -24,8 +24,9 @@ DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 4
 	const NEWGAMEOPT_EXP_MULTIPLIER   ; 1
 	const NEWGAMEOPT_RARE_CANDY_MART  ; 2
 	const NEWGAMEOPT_POISON_SURVIVAL  ; 3
-	const NEWGAMEOPT_PAGE3_CONTINUE   ; 4
-DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 5
+	const NEWGAMEOPT_MONEY_MULTIPLIER ; 4
+	const NEWGAMEOPT_PAGE3_CONTINUE   ; 5
+DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 6
 
 ; Page 4: Nuzlocke/Challenge options
 	const_def
@@ -234,6 +235,8 @@ StringNewGameOptionsPage3:
 	db "     :<LF>"
 	db "POISON FADES<LF>"
 	db "     :<LF>"
+	db "MONEY MULT<LF>"
+	db "     :<LF>"
 	db "CONTINUE@"
 
 StringNewGameOptionsPage4:
@@ -287,6 +290,7 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_ExpMultiplier
 	dw NewGameOptions_RareCandyMart
 	dw NewGameOptions_PoisonSurvival
+	dw NewGameOptions_MoneyMultiplier
 	dw NewGameOptions_Continue
 
 .PointersPage4:
@@ -744,6 +748,62 @@ NewGameOptions_ExpMultiplier:
 	ld d, [hl]
 	ld e, a
 	hlcoord 8, 6
+	call PlaceString
+	and a
+	ret
+
+.Strings:
+	dw .str_050
+	dw .str_075
+	dw .str_100
+	dw .str_125
+	dw .str_150
+
+.str_050: db "x0.50@"
+.str_075: db "x0.75@"
+.str_100: db "x1.00@"
+.str_125: db "x1.25@"
+.str_150: db "x1.50@"
+
+NewGameOptions_MoneyMultiplier:
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
+	ld a, [wMoneyMultiplier]
+	cp 4
+	jr z, .WrapToMin
+	inc a
+	ld [wMoneyMultiplier], a
+	jr .Display
+.WrapToMin:
+	xor a
+	ld [wMoneyMultiplier], a
+	jr .Display
+.Left:
+	ld a, [wMoneyMultiplier]
+	and a
+	jr z, .WrapToMax
+	dec a
+	ld [wMoneyMultiplier], a
+	jr .Display
+.WrapToMax:
+	ld a, 4
+	ld [wMoneyMultiplier], a
+.Display:
+	ld a, [wMoneyMultiplier]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 8, 12
 	call PlaceString
 	and a
 	ret

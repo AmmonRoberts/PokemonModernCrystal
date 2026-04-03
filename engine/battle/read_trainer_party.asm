@@ -340,6 +340,7 @@ ComputeTrainerReward:
 	ld [hli], a
 	ldh a, [hProduct + 3]
 	ld [hl], a
+	call ApplyMoneyMultiplier
 	ret
 
 Battle_GetTrainerName::
@@ -516,6 +517,121 @@ RandomizeTrainerSpeciesIfEnabled:
 
 	; Valid random species obtained
 	ld [wCurPartySpecies], a
+	ret
+
+ApplyMoneyMultiplier::
+; Apply the money multiplier option to the reward in wBattleReward.
+; wMoneyMultiplier: 0=50%, 1=75%, 2=100%, 3=125%, 4=150%
+; wBattleReward layout: [+0]=high byte, [+1]=mid byte, [+2]=low byte
+	ld a, [wMoneyMultiplier]
+	cp 2
+	ret z         ; 100% - no change
+	jr c, .small  ; 0 or 1: go to half/three-quarter
+	cp 4
+	jr z, .one_and_half  ; 4 = 150%
+	; fall through: 3 = 125%
+
+.five_quarter:
+	; value = value + value / 4
+	ld a, [wBattleReward + 2]
+	ld c, a
+	ld a, [wBattleReward + 1]
+	ld b, a
+	ld a, [wBattleReward]
+	ld d, a
+	srl d
+	rr b
+	rr c
+	srl d
+	rr b
+	rr c
+	ld a, [wBattleReward + 2]
+	add c
+	ld [wBattleReward + 2], a
+	ld a, [wBattleReward + 1]
+	adc b
+	ld [wBattleReward + 1], a
+	ld a, [wBattleReward]
+	adc d
+	ld [wBattleReward], a
+	ret
+
+.one_and_half:
+	; value = value + value / 2
+	ld a, [wBattleReward + 2]
+	ld c, a
+	ld a, [wBattleReward + 1]
+	ld b, a
+	ld a, [wBattleReward]
+	ld d, a
+	srl d
+	rr b
+	rr c
+	ld a, [wBattleReward + 2]
+	add c
+	ld [wBattleReward + 2], a
+	ld a, [wBattleReward + 1]
+	adc b
+	ld [wBattleReward + 1], a
+	ld a, [wBattleReward]
+	adc d
+	ld [wBattleReward], a
+	ret
+
+.small:
+	; a = 0 or 1
+	and a
+	jr z, .half  ; 0 = 50%
+	; fall through: 1 = 75%
+
+.three_quarter:
+	; value = value - value / 4
+	ld a, [wBattleReward + 2]
+	ld c, a
+	ld a, [wBattleReward + 1]
+	ld b, a
+	ld a, [wBattleReward]
+	ld d, a
+	srl d
+	rr b
+	rr c
+	srl d
+	rr b
+	rr c
+	ld a, [wBattleReward + 2]
+	sub c
+	ld [wBattleReward + 2], a
+	ld a, [wBattleReward + 1]
+	sbc b
+	ld [wBattleReward + 1], a
+	ld a, [wBattleReward]
+	sbc d
+	ld [wBattleReward], a
+	ret
+
+.half:
+	; value = value / 2
+	ld a, [wBattleReward]
+	srl a
+	ld [wBattleReward], a
+	ld a, [wBattleReward + 1]
+	rra
+	ld [wBattleReward + 1], a
+	ld a, [wBattleReward + 2]
+	rra
+	ld [wBattleReward + 2], a
+	; Ensure at least 1
+	or a
+	jr nz, .half_done
+	ld a, [wBattleReward + 1]
+	or a
+	jr nz, .half_done
+	ld a, [wBattleReward]
+	or a
+	jr nz, .half_done
+	ld a, 1
+	ld [wBattleReward + 2], a
+.half_done:
 	ret
 
 INCLUDE "data/trainers/parties.asm"
