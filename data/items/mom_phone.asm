@@ -10,6 +10,12 @@ MomItems_1:
 	momitem      0,   180, MOM_ITEM, POKE_BALL
 	momitem      0,   450, MOM_ITEM, ESCAPE_ROPE
 	momitem      0,   500, MOM_ITEM, GREAT_BALL
+	momitem      0,   2100, MOM_ITEM, LEAF_STONE
+	momitem      0,   2100, MOM_ITEM, FIRE_STONE
+	momitem      0,   2100, MOM_ITEM, THUNDER_STONE
+	momitem      0,   2100, MOM_ITEM, WATER_STONE
+	momitem      0,   2100, MOM_ITEM, SUN_STONE
+	momitem      0,   2100, MOM_ITEM, MOON_STONE
 .End
 
 MomItems_2:
