@@ -970,6 +970,22 @@ _LoadData:
 	; Regenerate the type matchup table from the saved seed.
 	; Old saves have seed=0, so the table will be filled with EFFECTIVE (flag-check also skips table use).
 	farcall GenerateTypeMatchupTable
+	; TODO: REMOVE BEFORE FULL RELEASE!
+	; One-time migration: initialize BOSS_RAND_F from TRAINER_RAND_F on older saves.
+	; MODFLAG_BOSS_RAND_INITIALIZED_F was always 0 before it was introduced, so old
+	; saves unconditionally enter this block and then set the sentinel so it never
+	; runs again. New-game saves have the sentinel set by InitCrystalData.
+	ld a, [wModFlags]
+	bit MODFLAG_BOSS_RAND_INITIALIZED_F, a
+	jr nz, .boss_rand_ok
+	set MODFLAG_BOSS_RAND_INITIALIZED_F, a
+	ld [wModFlags], a
+	ld a, [wRandoFlags]
+	bit RANDFLAG_TRAINER_RAND_F, a
+	jr z, .boss_rand_ok
+	set RANDFLAG_BOSS_RAND_F, a
+	ld [wRandoFlags], a
+.boss_rand_ok
 	ret
 
 GetBoxAddress:

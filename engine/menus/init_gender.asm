@@ -5,7 +5,10 @@ InitCrystalData:
 	ld [wPlayerAge], a
 	ld [wPlayerGender], a
 	ld [wRandoFlags], a
-	ld [wModFlags], a
+	; TODO: REMOVE BEFORE FULL RELEASE!
+	ld a, 1 << MODFLAG_BOSS_RAND_INITIALIZED_F
+	ld [wModFlags], a  ; sentinel: mark BOSS_RAND as explicitly initialized (new game)
+	xor a
 	ld [wRareCandyMart], a
 	ld a, 2 ; default EXP multiplier = 100%
 	ld [wExpMultiplier], a
