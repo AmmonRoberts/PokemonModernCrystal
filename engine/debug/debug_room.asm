@@ -48,6 +48,7 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_PARTY_LIMIT  ; 23
 	const DEBUGROOMMENUITEM_GIFT_RANDO   ; 24
 	const DEBUGROOMMENUITEM_BOSS_RANDO   ; 25
+	const DEBUGROOMMENUITEM_MONEY_MULT   ; 26
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -86,6 +87,7 @@ _DebugRoom::
 	jr nz, .status_done
 .page6_status
 	call DebugRoom_PrintBossRando
+	call DebugRoom_PrintGiftRando
 	jr .status_done
 .page5_status
 	call DebugRoom_PrintWildRando
@@ -98,11 +100,11 @@ _DebugRoom::
 	jp .status_done
 .page4_status
 	call DebugRoom_PrintExpMult
+	call DebugRoom_PrintMoneyMult
 	call DebugRoom_PrintPermafaint
 	call DebugRoom_PrintResetOnWipe
 	call DebugRoom_PrintRareCandyMart
 	call DebugRoom_PrintPartyLimit
-	call DebugRoom_PrintGiftRando
 	jr .status_done
 .page3_status
 	call DebugRoom_PrintTelDebug
@@ -226,6 +228,7 @@ _DebugRoom::
 	db "PARTY LIMIT@"
 	db "GIFT RANDOM@"
 	db "BOSS RANDO@"
+	db "MONEY MULT@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -267,6 +270,7 @@ _DebugRoom::
 	dw DebugRoomMenu_PartyLimit
 	dw DebugRoomMenu_GiftRando
 	dw DebugRoomMenu_BossRando
+	dw DebugRoomMenu_MoneyMult
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -310,12 +314,12 @@ _DebugRoom::
 	; DEBUGROOMMENU_PAGE_4
 	db 8
 	db DEBUGROOMMENUITEM_EXP_MULT
+	db DEBUGROOMMENUITEM_MONEY_MULT
 	db DEBUGROOMMENUITEM_PERMAFAINT
 	db DEBUGROOMMENUITEM_RESET_ON_WIPE
 	db DEBUGROOMMENUITEM_BADGE_EDIT
 	db DEBUGROOMMENUITEM_RARE_CANDY_MART
 	db DEBUGROOMMENUITEM_PARTY_LIMIT
-	db DEBUGROOMMENUITEM_GIFT_RANDO
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -332,8 +336,9 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_6
-	db 2
+	db 3
 	db DEBUGROOMMENUITEM_BOSS_RANDO
+	db DEBUGROOMMENUITEM_GIFT_RANDO
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -746,6 +751,16 @@ DebugRoom_PrintAutoNick:
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
+DebugRoomMenu_MoneyMult:
+	ld a, [wMoneyMultiplier]
+	inc a
+	cp 5
+	jr c, .ok
+	xor a
+.ok
+	ld [wMoneyMultiplier], a
+	ret
+
 DebugRoomMenu_ExpMult:
 	ld a, [wExpMultiplier]
 	inc a
@@ -789,7 +804,7 @@ DebugRoomMenu_PartyLimit:
 	ret
 
 DebugRoom_PrintPartyLimit:
-	hlcoord 16, 9
+	hlcoord 16, 10
 	ld de, .Label
 	call PlaceString
 	ld a, [wPartyLimit]
@@ -802,7 +817,7 @@ DebugRoom_PrintPartyLimit:
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	hlcoord 16, 10
+	hlcoord 16, 11
 	call PlaceString
 	ret
 
@@ -883,11 +898,11 @@ DebugRoom_PrintBossRando:
 .OnString:  db "  ON@"
 
 DebugRoom_PrintPermafaint:
-	hlcoord 16, 3
+	hlcoord 16, 4
 	ld de, .Label
 	call PlaceString
 	ld a, [wPermafaint]
-	hlcoord 16, 4
+	hlcoord 16, 5
 	ld de, .OffString
 	bit 0, a
 	jr z, .ok
@@ -901,11 +916,11 @@ DebugRoom_PrintPermafaint:
 .OnString:  db "  ON@"
 
 DebugRoom_PrintResetOnWipe:
-	hlcoord 16, 5
+	hlcoord 16, 6
 	ld de, .Label
 	call PlaceString
 	ld a, [wPermafaint]
-	hlcoord 16, 6
+	hlcoord 16, 7
 	ld de, .OffString
 	bit 1, a
 	jr z, .ok
@@ -919,7 +934,7 @@ DebugRoom_PrintResetOnWipe:
 .OnString:  db "  ON@"
 
 DebugRoom_PrintRareCandyMart:
-	hlcoord 16, 7
+	hlcoord 16, 8
 	ld de, .Label
 	call PlaceString
 	ld a, [wRareCandyMart]
@@ -931,7 +946,7 @@ DebugRoom_PrintRareCandyMart:
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	hlcoord 16, 8
+	hlcoord 16, 9
 	call PlaceString
 	ret
 
@@ -945,6 +960,37 @@ DebugRoom_PrintRareCandyMart:
 .Cheap:    db "CHEP@"
 .Pricey:   db "PRCY@"
 .Free:     db "FREE@"
+
+DebugRoom_PrintMoneyMult:
+	hlcoord 16, 2
+	ld de, .MoneyLabel
+	call PlaceString
+	ld a, [wMoneyMultiplier]
+	ld e, a
+	ld d, 0
+	ld hl, .MoneyStrings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 16, 3
+	call PlaceString
+	ret
+
+.MoneyLabel:
+	db "MNY:@"
+.MoneyStrings:
+	dw .str_050
+	dw .str_075
+	dw .str_100
+	dw .str_125
+	dw .str_150
+.str_050: db "0.50@"
+.str_075: db "0.75@"
+.str_100: db "1.00@"
+.str_125: db "1.25@"
+.str_150: db "1.50@"
 
 DebugRoom_PrintExpMult:
 	hlcoord 16, 0

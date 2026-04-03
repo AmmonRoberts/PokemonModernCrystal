@@ -22,10 +22,11 @@ DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 4
 	const_def
 	const NEWGAMEOPT_TM_MODE          ; 0
 	const NEWGAMEOPT_EXP_MULTIPLIER   ; 1
-	const NEWGAMEOPT_RARE_CANDY_MART  ; 2
-	const NEWGAMEOPT_POISON_SURVIVAL  ; 3
-	const NEWGAMEOPT_PAGE3_CONTINUE   ; 4
-DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 5
+	const NEWGAMEOPT_MONEY_MULTIPLIER ; 2
+	const NEWGAMEOPT_RARE_CANDY_MART  ; 3
+	const NEWGAMEOPT_POISON_SURVIVAL  ; 4
+	const NEWGAMEOPT_PAGE3_CONTINUE   ; 5
+DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 6
 
 ; Page 4: Nuzlocke/Challenge options
 	const_def
@@ -230,6 +231,8 @@ StringNewGameOptionsPage3:
 	db "     :<LF>"
 	db "EXP MULTIPLIER<LF>"
 	db "     :<LF>"
+	db "MONEY MULT<LF>"
+	db "     :<LF>"
 	db "BUY RARE CANDY<LF>"
 	db "     :<LF>"
 	db "POISON FADES<LF>"
@@ -285,6 +288,7 @@ GetNewGameOptionPointer:
 ; entries correspond to NEWGAMEOPT_* constants (Page 3 - Modernization)
 	dw NewGameOptions_TMMode
 	dw NewGameOptions_ExpMultiplier
+	dw NewGameOptions_MoneyMultiplier
 	dw NewGameOptions_RareCandyMart
 	dw NewGameOptions_PoisonSurvival
 	dw NewGameOptions_Continue
@@ -493,7 +497,7 @@ NewGameOptions_RareCandyMart:
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	hlcoord 8, 8
+	hlcoord 8, 10
 	call PlaceString
 	and a
 	ret
@@ -669,7 +673,7 @@ NewGameOptions_PoisonSurvival:
 .Safe:
 	ld de, .Safe_str
 .Display:
-	hlcoord 8, 10
+	hlcoord 8, 12
 	call PlaceString
 	and a
 	ret
@@ -761,6 +765,62 @@ NewGameOptions_ExpMultiplier:
 .str_125: db "x1.25@"
 .str_150: db "x1.50@"
 
+NewGameOptions_MoneyMultiplier:
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
+	ld a, [wMoneyMultiplier]
+	cp 4
+	jr z, .WrapToMin
+	inc a
+	ld [wMoneyMultiplier], a
+	jr .Display
+.WrapToMin:
+	xor a
+	ld [wMoneyMultiplier], a
+	jr .Display
+.Left:
+	ld a, [wMoneyMultiplier]
+	and a
+	jr z, .WrapToMax
+	dec a
+	ld [wMoneyMultiplier], a
+	jr .Display
+.WrapToMax:
+	ld a, 4
+	ld [wMoneyMultiplier], a
+.Display:
+	ld a, [wMoneyMultiplier]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 8, 8
+	call PlaceString
+	and a
+	ret
+
+.Strings:
+	dw .str_050
+	dw .str_075
+	dw .str_100
+	dw .str_125
+	dw .str_150
+
+.str_050: db "x0.50@"
+.str_075: db "x0.75@"
+.str_100: db "x1.00@"
+.str_125: db "x1.25@"
+.str_150: db "x1.50@"
+
 NewGameOptions_Permadeath:
 	ld a, [wPermafaint]
 	ldh a, [hJoyPressed]
@@ -785,8 +845,8 @@ NewGameOptions_Permadeath:
 	call PlaceString
 	and a
 	ret
-.Off:    db "OFF     @"
-.On_str: db "ON      @"
+.Off:    db "DISABLED@"
+.On_str: db "ENABLED @"
 
 NewGameOptions_ResetOnWipe:
 	ld a, [wPermafaint]
@@ -812,8 +872,8 @@ NewGameOptions_ResetOnWipe:
 	call PlaceString
 	and a
 	ret
-.Off:    db "OFF     @"
-.On_str: db "ON      @"
+.Off:    db "DISABLED@"
+.On_str: db "ENABLED @"
 
 NewGameOptions_PartyLimit:
 ; Cycles through 1-6 (PARTY_LENGTH); default is PARTY_LENGTH

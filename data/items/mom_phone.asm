@@ -12,7 +12,7 @@ MomItems_1:
 	momitem      0,   500, MOM_ITEM, GREAT_BALL
 	momitem      0,   2100, MOM_ITEM, LEAF_STONE
 	momitem      0,   2100, MOM_ITEM, FIRE_STONE
-	momitem      0,   2100, MOM_ITEM, THUNDER_STONE
+	momitem      0,   2100, MOM_ITEM, THUNDERSTONE
 	momitem      0,   2100, MOM_ITEM, WATER_STONE
 	momitem      0,   2100, MOM_ITEM, SUN_STONE
 	momitem      0,   2100, MOM_ITEM, MOON_STONE
