@@ -22,9 +22,9 @@ DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 4
 	const_def
 	const NEWGAMEOPT_TM_MODE          ; 0
 	const NEWGAMEOPT_EXP_MULTIPLIER   ; 1
-	const NEWGAMEOPT_RARE_CANDY_MART  ; 2
-	const NEWGAMEOPT_POISON_SURVIVAL  ; 3
-	const NEWGAMEOPT_MONEY_MULTIPLIER ; 4
+	const NEWGAMEOPT_MONEY_MULTIPLIER ; 2
+	const NEWGAMEOPT_RARE_CANDY_MART  ; 3
+	const NEWGAMEOPT_POISON_SURVIVAL  ; 4
 	const NEWGAMEOPT_PAGE3_CONTINUE   ; 5
 DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 6
 
@@ -231,11 +231,11 @@ StringNewGameOptionsPage3:
 	db "     :<LF>"
 	db "EXP MULTIPLIER<LF>"
 	db "     :<LF>"
+	db "MONEY MULT<LF>"
+	db "     :<LF>"
 	db "BUY RARE CANDY<LF>"
 	db "     :<LF>"
 	db "POISON FADES<LF>"
-	db "     :<LF>"
-	db "MONEY MULT<LF>"
 	db "     :<LF>"
 	db "CONTINUE@"
 
@@ -288,9 +288,9 @@ GetNewGameOptionPointer:
 ; entries correspond to NEWGAMEOPT_* constants (Page 3 - Modernization)
 	dw NewGameOptions_TMMode
 	dw NewGameOptions_ExpMultiplier
+	dw NewGameOptions_MoneyMultiplier
 	dw NewGameOptions_RareCandyMart
 	dw NewGameOptions_PoisonSurvival
-	dw NewGameOptions_MoneyMultiplier
 	dw NewGameOptions_Continue
 
 .PointersPage4:
@@ -497,7 +497,7 @@ NewGameOptions_RareCandyMart:
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	hlcoord 8, 8
+	hlcoord 8, 10
 	call PlaceString
 	and a
 	ret
@@ -673,7 +673,7 @@ NewGameOptions_PoisonSurvival:
 .Safe:
 	ld de, .Safe_str
 .Display:
-	hlcoord 8, 10
+	hlcoord 8, 12
 	call PlaceString
 	and a
 	ret
@@ -803,7 +803,7 @@ NewGameOptions_MoneyMultiplier:
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	hlcoord 8, 12
+	hlcoord 8, 8
 	call PlaceString
 	and a
 	ret
