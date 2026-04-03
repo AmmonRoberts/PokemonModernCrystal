@@ -6,7 +6,8 @@ DEF NUM_RANDOMIZABLE_ITEMS EQU 176
 ; and with `xor 1 << RANDFLAG_*_F` for toggling.
 DEF RANDFLAG_WILD_ENCOUNTERS_F EQU 0 ; set = randomized wild encounters
 DEF RANDFLAG_STARTER_RAND_F    EQU 1 ; set = randomized starters
-DEF RANDFLAG_TRAINER_RAND_F    EQU 3 ; set = randomized trainer parties
+DEF RANDFLAG_BOSS_RAND_F       EQU 2 ; set = randomized boss trainer parties (gym leaders, E4, rival, Red)
+DEF RANDFLAG_TRAINER_RAND_F    EQU 3 ; set = randomized regular trainer parties
 DEF RANDFLAG_TYPE_RAND_F       EQU 4 ; set = type matchups are randomized (any non-standard mode)
 DEF RANDFLAG_TYPE_BALANCED_F   EQU 5 ; set = balanced mode: at most 2 immunities per attacker (requires TYPE_RAND_F)
 DEF RANDFLAG_BERRY_RAND_F      EQU 6 ; set = randomized berry trees
@@ -32,6 +33,10 @@ DEF GIFT_RESULT_FULL     EQU 3 ; party and box both full — nothing given
 
 ; Bit index constants for wModFlags (see ram/wram.asm)
 ; Modernization / quality-of-life options — not randomization.
-DEF MODFLAG_TM_UNLIMITED_F    EQU 0 ; set = TMs are unlimited use
-DEF MODFLAG_POISON_SURVIVAL_F EQU 1 ; set = poison stops at 1 HP
-DEF MODFLAG_AUTO_NICKNAME_F   EQU 2 ; set = random nicknames on catch/hatch
+DEF MODFLAG_TM_UNLIMITED_F           EQU 0 ; set = TMs are unlimited use
+DEF MODFLAG_POISON_SURVIVAL_F        EQU 1 ; set = poison stops at 1 HP
+DEF MODFLAG_AUTO_NICKNAME_F          EQU 2 ; set = random nicknames on catch/hatch
+
+; TODO: REMOVE BEFORE FULL RELEASE!
+DEF MODFLAG_BOSS_RAND_INITIALIZED_F  EQU 3 ; internal: set once BOSS_RAND_F has been explicitly initialized
+                                           ; (0 on old saves — triggers one-time migration from TRAINER_RAND_F)

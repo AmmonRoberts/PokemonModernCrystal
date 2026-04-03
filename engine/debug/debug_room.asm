@@ -5,6 +5,7 @@
 	const DEBUGROOMMENU_PAGE_3 ; 2
 	const DEBUGROOMMENU_PAGE_4 ; 3
 	const DEBUGROOMMENU_PAGE_5 ; 4
+	const DEBUGROOMMENU_PAGE_6 ; 5
 DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 
 	; _DebugRoom.Strings and _DebugRoom.Jumptable indexes
@@ -46,6 +47,7 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_AUTO_NICK    ; 22
 	const DEBUGROOMMENUITEM_PARTY_LIMIT  ; 23
 	const DEBUGROOMMENUITEM_GIFT_RANDO   ; 24
+	const DEBUGROOMMENUITEM_BOSS_RANDO   ; 25
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -79,7 +81,12 @@ _DebugRoom::
 	cp DEBUGROOMMENU_PAGE_4
 	jr z, .page4_status
 	cp DEBUGROOMMENU_PAGE_5
+	jr z, .page5_status
+	cp DEBUGROOMMENU_PAGE_6
 	jr nz, .status_done
+.page6_status
+	call DebugRoom_PrintBossRando
+	jr .status_done
 .page5_status
 	call DebugRoom_PrintWildRando
 	call DebugRoom_PrintStrtRando
@@ -218,6 +225,7 @@ _DebugRoom::
 	db "AUTO NICKNAME@"
 	db "PARTY LIMIT@"
 	db "GIFT RANDOM@"
+	db "BOSS RANDO@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -258,6 +266,7 @@ _DebugRoom::
 	dw DebugRoomMenu_AutoNick
 	dw DebugRoomMenu_PartyLimit
 	dw DebugRoomMenu_GiftRando
+	dw DebugRoomMenu_BossRando
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -319,6 +328,12 @@ _DebugRoom::
 	db DEBUGROOMMENUITEM_TM_FREE
 	db DEBUGROOMMENUITEM_POIS_SVL
 	db DEBUGROOMMENUITEM_AUTO_NICK
+	db DEBUGROOMMENUITEM_NEXT
+	db -1
+
+	; DEBUGROOMMENU_PAGE_6
+	db 2
+	db DEBUGROOMMENUITEM_BOSS_RANDO
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -841,6 +856,31 @@ DebugRoom_PrintGiftRando:
 .Standard:   db " STD@"
 .Randomized: db "RAND@"
 .Disabled:   db " DIS@"
+
+DebugRoomMenu_BossRando:
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_BOSS_RAND_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintBossRando:
+	hlcoord 16, 0
+	ld de, .Label
+	call PlaceString
+	ld a, [wRandoFlags]
+	bit RANDFLAG_BOSS_RAND_F, a
+	hlcoord 16, 1
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "BSS:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
 
 DebugRoom_PrintPermafaint:
 	hlcoord 16, 3

@@ -4,18 +4,19 @@
 	const NEWGAMEOPT_WILD_ENCOUNTERS  ; 0
 	const NEWGAMEOPT_STARTER_RAND     ; 1
 	const NEWGAMEOPT_TRAINER_RAND     ; 2
-	const NEWGAMEOPT_BERRY_RAND       ; 3
-	const NEWGAMEOPT_ITEM_RAND        ; 4
-	const NEWGAMEOPT_GIFT_RAND        ; 5
+	const NEWGAMEOPT_BOSS_RAND        ; 3
+	const NEWGAMEOPT_BERRY_RAND       ; 4
+	const NEWGAMEOPT_ITEM_RAND        ; 5
 	const NEWGAMEOPT_PAGE1_CONTINUE   ; 6
 DEF NUM_NEWGAMEOPTIONS_PAGE1 EQU const_value ; 7
 
 ; Page 2: More Randomizer options (overflow / future randomizers)
 	const_def
-	const NEWGAMEOPT_TYPE_RAND        ; 0
-	const NEWGAMEOPT_AUTO_NICKNAME    ; 1
-	const NEWGAMEOPT_PAGE2_CONTINUE   ; 2
-DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 3
+	const NEWGAMEOPT_GIFT_RAND        ; 0
+	const NEWGAMEOPT_TYPE_RAND        ; 1
+	const NEWGAMEOPT_AUTO_NICKNAME    ; 2
+	const NEWGAMEOPT_PAGE2_CONTINUE   ; 3
+DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 4
 
 ; Page 3: Modernization options
 	const_def
@@ -205,20 +206,22 @@ StringNewGameOptionsPage1:
 	db "     :<LF>"
 	db "TRAINERS<LF>"
 	db "     :<LF>"
+	db "BOSSES<LF>"
+	db "     :<LF>"
 	db "BERRY TREES<LF>"
 	db "     :<LF>"
 	db "ITEMS<LF>"
-	db "     :<LF>"
-	db "GIFT #MON<LF>"
 	db "     :<LF>"
 	db "CONTINUE@"
 
 StringNewGameOptionsPage2:
 	db "RANDOMIZERS   2/4<LF>"
+	db "GIFT #MON<LF>"
+	db "     :<LF>"
 	db "TYPES<LF>"
 	db "     :<LF>"
 	db "NICKNAMES<LF>"
-	db "     :<LF>"	
+	db "     :<LF>"
 	db "CONTINUE@"
 
 StringNewGameOptionsPage3:
@@ -266,13 +269,14 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_WildEncounters
 	dw NewGameOptions_StarterRandomization
 	dw NewGameOptions_TrainerRandomization
+	dw NewGameOptions_BossRandomization
 	dw NewGameOptions_BerryRandomization
 	dw NewGameOptions_ItemRandomization
-	dw NewGameOptions_GiftRandomization
 	dw NewGameOptions_Continue
 
 .PointersPage2:
 ; entries correspond to NEWGAMEOPT_* constants (Page 2 - More Randomizers)
+	dw NewGameOptions_GiftRandomization
 	dw NewGameOptions_TypeMatchupRandomization
 	dw NewGameOptions_AutoNickname
 	dw NewGameOptions_Continue
@@ -312,7 +316,7 @@ NewGameOptions_BerryRandomization:
 .Randomized:
 	ld de, .Randomized_str
 .Display:
-	hlcoord 8, 10
+	hlcoord 8, 12
 	call PlaceString
 	and a
 	ret
@@ -339,7 +343,7 @@ NewGameOptions_ItemRandomization:
 .Randomized:
 	ld de, .Randomized_str
 .Display:
-	hlcoord 8, 12
+	hlcoord 8, 14
 	call PlaceString
 	and a
 	ret
@@ -399,7 +403,7 @@ NewGameOptions_TypeMatchupRandomization:
 .show_balanced:
 	ld de, .Balanced_str
 .draw:
-	hlcoord 8, 4
+	hlcoord 8, 6
 	call PlaceString
 	and a
 	ret
@@ -442,7 +446,7 @@ NewGameOptions_GiftRandomization:
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	hlcoord 8, 14
+	hlcoord 8, 4
 	call PlaceString
 	and a
 	ret
@@ -589,6 +593,34 @@ NewGameOptions_TrainerRandomization:
 .Standard:     db "STANDARD  @"
 .Randomized_str: db "RANDOMIZED@"
 
+NewGameOptions_BossRandomization:
+	ldh a, [hJoyPressed]
+	bit B_PAD_LEFT, a
+	jr nz, .Toggle
+	bit B_PAD_RIGHT, a
+	jr z, .NonePressed
+.Toggle:
+	ld hl, wRandoFlags
+	ld a, [hl]
+	xor 1 << RANDFLAG_BOSS_RAND_F
+	ld [hl], a
+.NonePressed:
+	ld a, [wRandoFlags]
+	bit RANDFLAG_BOSS_RAND_F, a
+	jr nz, .Randomized
+	ld de, .Standard
+	jr .Display
+.Randomized:
+	ld de, .Randomized_str
+.Display:
+	hlcoord 8, 10
+	call PlaceString
+	and a
+	ret
+
+.Standard:     db "STANDARD  @"
+.Randomized_str: db "RANDOMIZED@"
+
 NewGameOptions_TMMode:
 	ldh a, [hJoyPressed]
 	bit B_PAD_LEFT, a
@@ -665,7 +697,7 @@ NewGameOptions_AutoNickname:
 .On:
 	ld de, .On_str
 .Display:
-	hlcoord 8, 6
+	hlcoord 8, 8
 	call PlaceString
 	and a
 	ret

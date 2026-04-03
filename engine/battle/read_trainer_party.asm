@@ -126,8 +126,7 @@ TrainerType2:
 	push hl
 	predef TryAddMonToParty
 	; If trainer randomization is enabled, skip hard-coded moves
-	ld a, [wRandoFlags]
-	bit RANDFLAG_TRAINER_RAND_F, a
+	call IsTrainerRandomized
 	jp nz, .skip_moves
 	ld a, [wOTPartyCount]
 	dec a
@@ -255,8 +254,7 @@ TrainerType4:
 	ld [de], a
 
 	; If trainer randomization is enabled, skip hard-coded moves
-	ld a, [wRandoFlags]
-	bit RANDFLAG_TRAINER_RAND_F, a
+	call IsTrainerRandomized
 	jp nz, .skip_moves
 	push hl
 	ld a, [wOTPartyCount]
@@ -411,13 +409,103 @@ IncompleteCopyNameFunction: ; unreferenced
 	pop de
 	ret
 
-RandomizeTrainerSpeciesIfEnabled:
-; Check if trainer randomization is enabled
-; If so, replace wCurPartySpecies with a random species (1-251)
-	ld a, [wRandoFlags]
+IsBossTrainerClass:
+; Check whether wOtherTrainerClass is a boss trainer class (gym leaders, Elite 4,
+; rival, Champion, Red).
+; Returns: Z flag clear (nz) = boss, Z flag set (z) = not a boss.
+; Clobbers: a, hl, b, c
+	ld a, [wOtherTrainerClass]
+	ld c, a
+	and $07          ; bit index within byte (class % 8)
+	ld b, a          ; b = bit index
+	ld a, c
+	srl a
+	srl a
+	srl a            ; a = byte index (class >> 3)
+	ld hl, BossTrainerClassBitmask
+	ld c, 0
+	add hl, bc       ; hl = &BossTrainerClassBitmask[byte_index]
+	ld a, [hl]       ; a = bitmask byte for this group of 8 classes
+	ld c, a          ; c = bitmask byte
+	ld a, b          ; test if bit_index == 0; ld does not affect flags
+	and a            ; sets Z if b == 0
+	ld a, 1          ; starting mask (ld does not affect flags)
+	jr z, .done_shift
+.shift_loop
+	rlca
+	dec b
+	jr nz, .shift_loop
+.done_shift
+	and c            ; test the bit
+	ret              ; Z set = not boss (bit clear), Z clear = boss (bit set)
+
+BossTrainerClassBitmask:
+; One bit per trainer class, indexed by class ID.
+; Bit N of byte B is set when class (B*8 + N) is a boss trainer.
+; Class IDs in hex; boss classes:
+;   $01-$08 (Johto gym leaders: Falkner-Clair)
+;   $09     (Rival1 / Silver early)
+;   $0b     (Will - E4)
+;   $0d-$0f (Bruno, Karen, Koga - E4)
+;   $10     (Champion = Lance)
+;   $11-$13 (Brock, Misty, Lt. Surge - Kanto gym leaders)
+;   $15     (Erika - Kanto gym leader)
+;   $1a     (Janine - Kanto gym leader)
+;   $23     (Sabrina - Kanto gym leader)
+;   $2a     (Rival2 / Silver late)
+;   $2e     (Blaine - Kanto gym leader)
+;   $3f     (Red)
+;   $40     (Blue - Kanto gym leader / former Champion)
+;
+; Byte 0 ($00-$07): TRAINER_NONE=0,FALKNER=1..CHUCK=7  => bits 1-7 set
+	db %11111110 ; $FE
+; Byte 1 ($08-$0F): CLAIR,RIVAL1,POKEMON_PROF,WILL,CAL,BRUNO,KAREN,KOGA
+;                   boss: CLAIR(0),RIVAL1(1),WILL(3),BRUNO(5),KAREN(6),KOGA(7)
+	db %11101011 ; $EB
+; Byte 2 ($10-$17): CHAMPION,BROCK,MISTY,LT_SURGE,SCIENTIST,ERIKA,YOUNGSTER,SCHOOLBOY
+;                   boss: CHAMPION(0),BROCK(1),MISTY(2),LT_SURGE(3),ERIKA(5)
+	db %00101111 ; $2F
+; Byte 3 ($18-$1F): BIRD_KEEPER,LASS,JANINE,COOLTRAINERM,COOLTRAINERF,BEAUTY,POKEMANIAC,GRUNTM
+;                   boss: JANINE(2)
+	db %00000100 ; $04
+; Byte 4 ($20-$27): GENTLEMAN,SKIER,TEACHER,SABRINA,BUG_CATCHER,FISHER,SWIMMERM,SWIMMERF
+;                   boss: SABRINA(3)
+	db %00001000 ; $08
+; Byte 5 ($28-$2F): SAILOR,SUPER_NERD,RIVAL2,GUITARIST,HIKER,BIKER,BLAINE,BURGLAR
+;                   boss: RIVAL2(2),BLAINE(6)
+	db %01000100 ; $44
+; Byte 6 ($30-$37): FIREBREATHER..EXECUTIVEF — none are bosses
+	db %00000000 ; $00
+; Byte 7 ($38-$3F): SAGE..POKEFANF,RED
+;                   boss: RED(7)
+	db %10000000 ; $80
+; Byte 8 ($40-$47): BLUE,OFFICER,GRUNTF,MYSTICALMAN — boss: BLUE(0)
+	db %00000001 ; $01
+
+IsTrainerRandomized:
+; Check whether the current trainer's party should be / was randomized.
+; Uses BOSS_RAND_F for boss trainers and TRAINER_RAND_F for everyone else.
+; Returns: Z set = not randomized, Z clear = randomized.
+; Clobbers: a, hl, b, c
+	call IsBossTrainerClass
+	ld a, [wRandoFlags]  ; reload after IsBossTrainerClass clobbers b
+	jr nz, .is_boss
+	; Not a boss — check TRAINER_RAND_F
 	bit RANDFLAG_TRAINER_RAND_F, a
-	ret z ; return if randomization disabled
-	
+	ret
+.is_boss
+	; Boss — check BOSS_RAND_F
+	bit RANDFLAG_BOSS_RAND_F, a
+	ret
+
+RandomizeTrainerSpeciesIfEnabled:
+; Check if this trainer's randomization is enabled, then randomize wCurPartySpecies.
+; Preserves hl (callers use it as their data-stream pointer).
+	push hl
+	call IsTrainerRandomized
+	pop hl
+	ret z ; return if randomization not enabled for this trainer
+
 	; Randomization enabled - get random species
 .get_random_species
 	call Random
@@ -425,7 +513,7 @@ RandomizeTrainerSpeciesIfEnabled:
 	jr z, .get_random_species ; avoid species 0
 	cp NUM_POKEMON + 1
 	jr nc, .get_random_species ; ensure species <= 251
-	
+
 	; Valid random species obtained
 	ld [wCurPartySpecies], a
 	ret
