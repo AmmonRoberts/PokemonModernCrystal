@@ -166,6 +166,42 @@ BattleText_EnemyMonFainted:
 	line "fainted!"
 	prompt
 
+BattleText_WildItemDropBag::
+	text "Enemy @"
+	text_ram wEnemyMonNickname
+	text_start
+	line "dropped"
+	para "@"
+	text_ram wStringBuffer1
+	text_start
+	db "!"
+	prompt
+
+BattleText_WildItemDropPC::
+	text "Enemy @"
+	text_ram wEnemyMonNickname
+	text_start
+	line "dropped"
+	para "@"
+	text_ram wStringBuffer1
+	text_start
+	db "!"
+	para "Sent to the PC!"
+	prompt
+
+BattleText_WildItemDropFull::
+	text "Enemy @"
+	text_ram wEnemyMonNickname
+	text_start
+	line "dropped"
+	para "@"
+	text_ram wStringBuffer1
+	text_start
+	db "."
+	para "Your PACK and PC"
+	line "were both full!"
+	prompt
+
 GotMoneyForWinningText:
 	text "<PLAYER> got ¥@"
 	text_decimal wBattleReward, 3, 6

@@ -36,6 +36,7 @@ DEF GIFT_RESULT_FULL     EQU 3 ; party and box both full — nothing given
 DEF MODFLAG_TM_UNLIMITED_F           EQU 0 ; set = TMs are unlimited use
 DEF MODFLAG_POISON_SURVIVAL_F        EQU 1 ; set = poison stops at 1 HP
 DEF MODFLAG_AUTO_NICKNAME_F          EQU 2 ; set = random nicknames on catch/hatch
+DEF MODFLAG_WILD_ITEM_DROP_F         EQU 4 ; set = wild #MON drop held items on KO
 
 ; TODO: REMOVE BEFORE FULL RELEASE!
 DEF MODFLAG_BOSS_RAND_INITIALIZED_F  EQU 3 ; internal: set once BOSS_RAND_F has been explicitly initialized

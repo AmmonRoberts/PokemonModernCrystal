@@ -25,8 +25,9 @@ DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 4
 	const NEWGAMEOPT_MONEY_MULTIPLIER ; 2
 	const NEWGAMEOPT_RARE_CANDY_MART  ; 3
 	const NEWGAMEOPT_POISON_SURVIVAL  ; 4
-	const NEWGAMEOPT_PAGE3_CONTINUE   ; 5
-DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 6
+	const NEWGAMEOPT_WILD_ITEM_DROP   ; 5
+	const NEWGAMEOPT_PAGE3_CONTINUE   ; 6
+DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 7
 
 ; Page 4: Nuzlocke/Challenge options
 	const_def
@@ -237,6 +238,8 @@ StringNewGameOptionsPage3:
 	db "     :<LF>"
 	db "POISON FADES<LF>"
 	db "     :<LF>"
+	db "WILD ITEM DROP<LF>"
+	db "     :<LF>"
 	db "CONTINUE@"
 
 StringNewGameOptionsPage4:
@@ -291,6 +294,7 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_MoneyMultiplier
 	dw NewGameOptions_RareCandyMart
 	dw NewGameOptions_PoisonSurvival
+	dw NewGameOptions_WildItemDrop
 	dw NewGameOptions_Continue
 
 .PointersPage4:
@@ -680,6 +684,33 @@ NewGameOptions_PoisonSurvival:
 
 .Standard: db "STANDARD@"
 .Safe_str: db "SAFE    @"
+
+NewGameOptions_WildItemDrop:
+	ldh a, [hJoyPressed]
+	bit B_PAD_LEFT, a
+	jr nz, .Toggle
+	bit B_PAD_RIGHT, a
+	jr z, .NonePressed
+.Toggle:
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_WILD_ITEM_DROP_F
+	ld [hl], a
+.NonePressed:
+	ld a, [wModFlags]
+	bit MODFLAG_WILD_ITEM_DROP_F, a
+	jr nz, .Enabled
+	ld de, .Disabled
+	jr .Display
+.Enabled:
+	ld de, .Enabled_str
+.Display:
+	hlcoord 8, 14
+	call PlaceString
+	and a
+	ret
+.Disabled:    db "DISABLED@"
+.Enabled_str: db "ENABLED @"
 
 NewGameOptions_AutoNickname:
 	ldh a, [hJoyPressed]
