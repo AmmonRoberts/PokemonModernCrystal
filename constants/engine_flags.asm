@@ -187,4 +187,6 @@
 ; wSwarmFlags
 	const ENGINE_DUNSPARCE_SWARM
 	const ENGINE_YANMA_SWARM
+; wTMVendorEnabled
+	const ENGINE_TM_VENDOR_ENABLED
 DEF NUM_ENGINE_FLAGS EQU const_value

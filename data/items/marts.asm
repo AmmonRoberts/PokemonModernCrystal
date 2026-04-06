@@ -35,6 +35,13 @@ Marts:
 	dw MartMtMoon
 	dw MartIndigoPlateau
 	dw MartUnderground
+	dw MartTMVendor1
+	dw MartTMVendor2
+	dw MartTMVendor3
+	dw MartTMVendor4
+	dw MartTMVendor5
+	dw MartTMVendor6
+	dw MartTMVendor7
 	assert_table_length NUM_MARTS
 
 MartCherrygrove:
@@ -404,4 +411,102 @@ DefaultMart:
 	db 2 ; # items
 	db POKE_BALL
 	db POTION
+	db -1 ; end
+
+; TM vendor mart lists (Blackthorn Mart, if TM vendor option is enabled)
+; 66 TMs split into 7 groups of 10 (last group has 6).
+; Item prices are read from the standard item-attributes data.
+
+MartTMVendor1:
+	db 10 ; # items (TM01-10)
+	db TM_DYNAMICPUNCH
+	db TM_HEADBUTT
+	db TM_CURSE
+	db TM_ROLLOUT
+	db TM_ROAR
+	db TM_TOXIC
+	db TM_ZAP_CANNON
+	db TM_ROCK_SMASH
+	db TM_PSYCH_UP
+	db TM_HIDDEN_POWER
+	db -1 ; end
+
+MartTMVendor2:
+	db 10 ; # items (TM11-20)
+	db TM_SUNNY_DAY
+	db TM_SWEET_SCENT
+	db TM_SNORE
+	db TM_BLIZZARD
+	db TM_HYPER_BEAM
+	db TM_ICY_WIND
+	db TM_PROTECT
+	db TM_RAIN_DANCE
+	db TM_GIGA_DRAIN
+	db TM_ENDURE
+	db -1 ; end
+
+MartTMVendor3:
+	db 10 ; # items (TM21-30)
+	db TM_FRUSTRATION
+	db TM_SOLARBEAM
+	db TM_IRON_TAIL
+	db TM_DRAGONBREATH
+	db TM_THUNDER
+	db TM_EARTHQUAKE
+	db TM_RETURN
+	db TM_DIG
+	db TM_PSYCHIC_M
+	db TM_SHADOW_BALL
+	db -1 ; end
+
+MartTMVendor4:
+	db 10 ; # items (TM31-40)
+	db TM_MUD_SLAP
+	db TM_DOUBLE_TEAM
+	db TM_ICE_PUNCH
+	db TM_SWAGGER
+	db TM_SLEEP_TALK
+	db TM_SLUDGE_BOMB
+	db TM_SANDSTORM
+	db TM_FIRE_BLAST
+	db TM_SWIFT
+	db TM_DEFENSE_CURL
+	db -1 ; end
+
+MartTMVendor5:
+	db 10 ; # items (TM41-50)
+	db TM_THUNDERPUNCH
+	db TM_DREAM_EATER
+	db TM_DETECT
+	db TM_REST
+	db TM_ATTRACT
+	db TM_THIEF
+	db TM_STEEL_WING
+	db TM_FIRE_PUNCH
+	db TM_FURY_CUTTER
+	db TM_NIGHTMARE
+	db -1 ; end
+
+MartTMVendor6:
+	db 10 ; # items (TM51-60)
+	db TM_THUNDER_WAVE
+	db TM_REFLECT
+	db TM_LIGHT_SCREEN
+	db TM_PURSUIT
+	db TM_FLAME_WHEEL
+	db TM_BEAT_UP
+	db TM_MAGNITUDE
+	db TM_PETAL_DANCE
+	db TM_RAZOR_LEAF
+	db TM_PSYBEAM
+	db -1 ; end
+
+MartTMVendor7:
+	db 6 ; # items (TM61-66)
+	db TM_TAKE_DOWN
+	db TM_DOUBLE_EDGE
+	db TM_AURORA_BEAM
+	db TM_METAL_CLAW
+	db TM_BODY_SLAM
+	db TM_ROCK_SLIDE
 	db -1 ; end

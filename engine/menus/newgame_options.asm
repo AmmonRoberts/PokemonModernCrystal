@@ -35,8 +35,9 @@ DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 7
 	const NEWGAMEOPT_RESET_ON_WIPE    ; 1
 	const NEWGAMEOPT_PARTY_LIMIT      ; 2
 	const NEWGAMEOPT_FIRST_ENCOUNTER  ; 3
-	const NEWGAMEOPT_PAGE4_CONTINUE   ; 4
-DEF NUM_NEWGAMEOPTIONS_PAGE4 EQU const_value ; 5
+	const NEWGAMEOPT_TM_VENDOR        ; 4
+	const NEWGAMEOPT_PAGE4_CONTINUE   ; 5
+DEF NUM_NEWGAMEOPTIONS_PAGE4 EQU const_value ; 6
 
 DEF NUM_NEWGAMEOPTIONS EQU NUM_NEWGAMEOPTIONS_PAGE1 ; For compatibility
 
@@ -252,6 +253,8 @@ StringNewGameOptionsPage4:
 	db "     :<LF>"
 	db "1ST ENCOUNTER<LF>"
 	db "     :<LF>"
+	db "TM VENDOR<LF>"
+	db "     :<LF>"
 	db "CONTINUE@"
 
 GetNewGameOptionPointer:
@@ -303,6 +306,7 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_ResetOnWipe
 	dw NewGameOptions_PartyLimit
 	dw NewGameOptions_FirstEncounter
+	dw NewGameOptions_TMVendor
 	dw NewGameOptions_Continue
 NewGameOptions_BerryRandomization:
 	ldh a, [hJoyPressed]
@@ -1005,6 +1009,34 @@ NewGameOptions_FirstEncounter:
 .str_disabled:  db "DISABLED  @"
 .str_forgiving: db "FORGIVING @"
 .str_strict:    db "STRICT    @"
+
+NewGameOptions_TMVendor:
+; Toggles whether the TM vendor NPC appears in Blackthorn Mart (DISABLED / ENABLED).
+	ldh a, [hJoyPressed]
+	bit B_PAD_LEFT, a
+	jr nz, .Toggle
+	bit B_PAD_RIGHT, a
+	jr z, .NonePressed
+.Toggle:
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_TM_VENDOR_F
+	ld [hl], a
+.NonePressed:
+	ld a, [wModFlags]
+	bit MODFLAG_TM_VENDOR_F, a
+	jr nz, .Enabled
+	ld de, .Disabled
+	jr .Display
+.Enabled:
+	ld de, .Enabled_str
+.Display:
+	hlcoord 8, 12
+	call PlaceString
+	and a
+	ret
+.Disabled:    db "DISABLED@"
+.Enabled_str: db "ENABLED @"
 
 NewGameOptions_Continue:
 	ldh a, [hJoyPressed]

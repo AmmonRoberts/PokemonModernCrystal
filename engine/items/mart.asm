@@ -897,3 +897,92 @@ MartTextbox:
 	call JoyWaitAorB
 	call ExitMenu
 	ret
+
+; ---------------------------------------------------------------------------
+; TMVendorGroupSelect
+; ---------------------------------------------------------------------------
+; Opens a scrolling menu letting the player choose a TM group (TM01-10 through
+; TM61-66). Used by the TM vendor NPC in Blackthorn Mart.
+;
+; Output: wScriptVar = 1..7 (group chosen) or 0 (B pressed / CANCEL selected)
+TMVendorGroupSelect::
+	call LoadStandardMenuHeader  ; push full-screen backup so CloseWindow restores entire screen
+	ld hl, .MenuHeader
+	call CopyMenuHeader          ; copy group menu coords (no push)
+	xor a
+	ld [wMenuScrollPosition], a
+	ldh [hBGMapMode], a        ; hBGMapMode = 0 before InitScrollingMenu
+	ld a, 1
+	ld [wMenuCursorPosition], a
+	call InitScrollingMenu
+	call UpdateSprites
+	call ScrollingMenu
+	call CloseWindow
+	ld a, [wMenuJoypad]
+	cp PAD_B
+	jr z, .cancel
+	ld a, [wMenuSelection]
+	cp -1
+	jr z, .cancel
+	ld [wScriptVar], a
+	ret
+.cancel
+	xor a
+	ld [wScriptVar], a
+	ret
+
+.MenuHeader:
+	db MENU_BACKUP_TILES ; flags
+	menu_coords 1, 1, 11, 11     ; moved up one row
+	dw .MenuData
+	db 1 ; default option
+
+.MenuData:
+	db SCROLLINGMENU_DISPLAY_ARROWS ; flags
+	db 5, 0 ; 5 visible rows, width=0 (single column, no function2 call)
+	db SCROLLINGMENU_ITEMS_NORMAL  ; item format
+	dba .Items
+	dba .PrintGroupName
+	dba NULL
+
+.Items:
+	db 7       ; 7 real groups (CANCEL is implicit at -1)
+	db 1, 2, 3, 4, 5, 6, 7
+	db -1      ; CANCEL
+
+.PrintGroupName:
+; de = destination tile, [wMenuSelection] = group number (1-7)
+	ld a, [wMenuSelection]
+	dec a          ; 0-based index
+	ld l, a
+	ld h, 0
+	add hl, hl     ; × 2 (each pointer is 2 bytes)
+	ld bc, .GroupNames
+	add hl, bc
+	ld a, [hli]
+	ld b, [hl]
+	ld c, a        ; bc = string address
+	; need hl=dest tile (currently in de), de=string (currently in bc)
+	ld h, d
+	ld l, e        ; hl = dest tile
+	ld d, b
+	ld e, c        ; de = string address
+	call PlaceString
+	ret
+
+.GroupNames:
+	dw .str1
+	dw .str2
+	dw .str3
+	dw .str4
+	dw .str5
+	dw .str6
+	dw .str7
+
+.str1: db "TM01-10@"
+.str2: db "TM11-20@"
+.str3: db "TM21-30@"
+.str4: db "TM31-40@"
+.str5: db "TM41-50@"
+.str6: db "TM51-60@"
+.str7: db "TM61-66@"
