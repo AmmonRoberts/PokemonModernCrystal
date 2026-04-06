@@ -49,6 +49,7 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_GIFT_RANDO   ; 24
 	const DEBUGROOMMENUITEM_BOSS_RANDO   ; 25
 	const DEBUGROOMMENUITEM_MONEY_MULT   ; 26
+	const DEBUGROOMMENUITEM_WILD_ITEM_DROP ; 27
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -88,6 +89,7 @@ _DebugRoom::
 .page6_status
 	call DebugRoom_PrintBossRando
 	call DebugRoom_PrintGiftRando
+	call DebugRoom_PrintWildItemDrop
 	jr .status_done
 .page5_status
 	call DebugRoom_PrintWildRando
@@ -229,6 +231,7 @@ _DebugRoom::
 	db "GIFT RANDOM@"
 	db "BOSS RANDO@"
 	db "MONEY MULT@"
+	db "ITEM DROP@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -271,6 +274,7 @@ _DebugRoom::
 	dw DebugRoomMenu_GiftRando
 	dw DebugRoomMenu_BossRando
 	dw DebugRoomMenu_MoneyMult
+	dw DebugRoomMenu_WildItemDrop
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -336,9 +340,10 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_6
-	db 3
+	db 4
 	db DEBUGROOMMENUITEM_BOSS_RANDO
 	db DEBUGROOMMENUITEM_GIFT_RANDO
+	db DEBUGROOMMENUITEM_WILD_ITEM_DROP
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -723,6 +728,31 @@ DebugRoom_PrintPoisSvl:
 	ret
 
 .Label:     db "PSN:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
+
+DebugRoomMenu_WildItemDrop:
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_WILD_ITEM_DROP_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintWildItemDrop:
+	hlcoord 16, 12
+	ld de, .Label
+	call PlaceString
+	ld a, [wModFlags]
+	bit MODFLAG_WILD_ITEM_DROP_F, a
+	hlcoord 16, 13
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "WID:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 

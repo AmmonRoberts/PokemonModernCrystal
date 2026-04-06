@@ -278,3 +278,10 @@ PushLYOverrides::
 	ld a, (wLYOverridesEnd - wLYOverrides) / TILE_SIZE
 	ld [wRequested2bppSize], a
 	ret
+
+TryDropWildItem::
+; Thin home-bank stub — the full logic lives in _TryDropWildItemCore (Crystal
+; Features 1 section) so the home bank doesn't overflow in debug builds.
+; Called from HandleEnemyMonFaint (Battle Core, bank $0F) on wild-battle path.
+	farcall _TryDropWildItemCore
+	ret
