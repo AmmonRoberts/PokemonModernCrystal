@@ -205,3 +205,5 @@ SpecialsPointers::
 	add_special UnusedDummySpecial ; unused
 	add_special SelfTrade
 	add_special GiveOddEggToBox
+
+	add_special TMVendorGroupSelect
