@@ -5092,7 +5092,9 @@ BattleMenuPKMN_Loop:
 	jp z, TryPlayerSwitch
 	cp $2 ; STATS
 	jr z, .Stats
-	cp $3 ; CANCEL
+	cp $3 ; MOVE
+	jr z, .Move
+	cp $4 ; CANCEL
 	jr z, .Cancel
 	jr .loop
 
@@ -5105,6 +5107,10 @@ BattleMenuPKMN_Loop:
 	call Battle_StatsScreen
 	call CheckMobileBattleError
 	jr c, .Cancel
+	jp BattleMenuPKMN_ReturnFromStats
+
+.Move:
+	farcall BattleManagePokemonMoves
 	jp BattleMenuPKMN_ReturnFromStats
 
 .Cancel:
