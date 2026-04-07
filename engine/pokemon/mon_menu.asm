@@ -856,6 +856,48 @@ DeleteMoveScreen2DMenuData:
 	dn 2, 0 ; cursor offset
 	db PAD_UP | PAD_DOWN | PAD_A | PAD_B ; accepted buttons
 
+BattleManagePokemonMoves:
+	call DisableLCD
+
+	; Save the 17 tiles LoadStatsScreenPageTilesGFX will overwrite.
+	; Use vTiles0 tile $50 as buffer — clear of the icon loader (tile 0).
+	ld hl, vTiles2 tile $31
+	ld de, vTiles0 tile $50
+	ld bc, $11 tiles
+	call CopyBytes
+
+	call EnableLCD
+
+	call ManagePokemonMoves
+
+	; Sync wBattleMonMoves/PP from the active battler's party data.
+	; Done here (not per-swap) so it's correct regardless of which
+	; party member the user left the move screen on.
+	ld hl, wPartyMon1Moves
+	ld bc, PARTYMON_STRUCT_LENGTH
+	ld a, [wCurBattleMon]
+	call AddNTimes
+	ld de, wBattleMonMoves
+	ld bc, NUM_MOVES
+	call CopyBytes
+	ld hl, wPartyMon1PP
+	ld bc, PARTYMON_STRUCT_LENGTH
+	ld a, [wCurBattleMon]
+	call AddNTimes
+	ld de, wBattleMonPP
+	ld bc, NUM_MOVES
+	call CopyBytes
+
+	call DisableLCD
+
+	ld hl, vTiles0 tile $50
+	ld de, vTiles2 tile $31
+	ld bc, $11 tiles
+	call CopyBytes
+
+	call EnableLCD
+	ret
+
 ManagePokemonMoves:
 	ld a, [wCurPartySpecies]
 	cp EGG
@@ -1018,18 +1060,6 @@ MoveScreenLoop:
 	call .copy_move
 	pop hl
 	ld bc, wPartyMon1PP - wPartyMon1Moves
-	add hl, bc
-	call .copy_move
-	ld a, [wBattleMode]
-	jr z, .swap_moves
-	ld hl, wBattleMonMoves
-	ld bc, wBattleMonStructEnd - wBattleMon
-	ld a, [wCurPartyMon]
-	call AddNTimes
-	push hl
-	call .copy_move
-	pop hl
-	ld bc, wBattleMonPP - wBattleMonMoves
 	add hl, bc
 	call .copy_move
 
