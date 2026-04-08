@@ -1648,23 +1648,6 @@ PokegearTypeChart_Render:
 	ld de, wStringBuffer1
 	call PlaceString
 
-	; ◀ before  ▶ after type name
-	hlcoord 5, 3
-	ld [hl], CHARVAL("◀")
-	hlcoord 6, 3
-	ld c, 12
-.find_end
-	ld a, [hl]
-	cp CHARVAL("@")
-	jr z, .found_end
-	cp CHARVAL(" ")
-	jr z, .found_end
-	inc hl
-	dec c
-	jr nz, .find_end
-.found_end
-	ld [hl], CHARVAL("▶")
-
 	; --- Separator row 4 ---
 	hlcoord 1, 4
 	ld bc, 18
