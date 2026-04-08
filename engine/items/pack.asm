@@ -462,7 +462,13 @@ UseItem:
 	cp 1
 	jr z, .done                     ; player cancelled (B pressed)
 	; Not cancelled. Flag value 3 = next call skips palette clears AND GFX reinit.
+	; If evolution happened, use 2 instead so the party menu reloads sprite GFX.
+	ld a, [wMonTriedToEvolve]
+	and a
 	ld a, 3
+	jr z, .set_cancelled
+	ld a, 2
+.set_cancelled
 	ld [wPartyMenuCancelled], a
 	ld a, [wItemEffectSucceeded]
 	and a
