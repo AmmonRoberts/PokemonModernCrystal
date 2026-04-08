@@ -46,6 +46,11 @@ NuzlockeCheckFirstEncounter::
 	dec a
 	jr nz, .done ; not a wild battle (wBattleMode != 1)
 
+	; Tutorial battles don't count as real encounters
+	ld a, [wBattleType]
+	cp BATTLETYPE_TUTORIAL
+	jr z, .done
+
 	; Gate: rules don't apply until the player has returned the egg to Elm
 	; (EVENT_GAVE_MYSTERY_EGG_TO_ELM is the canonical "intro arc done" flag)
 	ld b, CHECK_FLAG

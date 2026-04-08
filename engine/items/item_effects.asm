@@ -184,6 +184,9 @@ PokeBallEffect:
 	jp nz, UseBallInTrainerBattle
 
 ; Nuzlocke first-encounter gate
+	ld a, [wBattleType]
+	cp BATTLETYPE_TUTORIAL
+	jr z, .nuzlocke_ok ; tutorial: always allow
 	ld a, [wNuzlockeMode]
 	and a
 	jr z, .nuzlocke_ok ; DISABLED: skip check
