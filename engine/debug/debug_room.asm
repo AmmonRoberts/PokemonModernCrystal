@@ -50,8 +50,9 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_BOSS_RANDO   ; 25
 	const DEBUGROOMMENUITEM_MONEY_MULT   ; 26
 	const DEBUGROOMMENUITEM_WILD_ITEM_DROP ; 27
-	const DEBUGROOMMENUITEM_HM_MODE        ; 28
-	const DEBUGROOMMENUITEM_OW_MOVE_MODE   ; 29
+	const DEBUGROOMMENUITEM_HM_MODE           ; 28
+	const DEBUGROOMMENUITEM_OW_MOVE_MODE      ; 29
+	const DEBUGROOMMENUITEM_WILD_HELD_ITEM_RAND ; 2a
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -92,6 +93,7 @@ _DebugRoom::
 	call DebugRoom_PrintBossRando
 	call DebugRoom_PrintGiftRando
 	call DebugRoom_PrintWildItemDrop
+	call DebugRoom_PrintWildHeldItemRand
 	call DebugRoom_PrintHMMode
 	call DebugRoom_PrintOWMoveMode
 	jr .status_done
@@ -238,6 +240,7 @@ _DebugRoom::
 	db "ITEM DROP@"
 	db "HM REQUIRE@"
 	db "FIELD TMS@"
+	db "HELD ITEM RND@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -283,6 +286,7 @@ _DebugRoom::
 	dw DebugRoomMenu_WildItemDrop
 	dw DebugRoomMenu_HMMode
 	dw DebugRoomMenu_OWMoveMode
+	dw DebugRoomMenu_WildHeldItemRand
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -348,10 +352,11 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_6
-	db 6
+	db 7
 	db DEBUGROOMMENUITEM_BOSS_RANDO
 	db DEBUGROOMMENUITEM_GIFT_RANDO
 	db DEBUGROOMMENUITEM_WILD_ITEM_DROP
+	db DEBUGROOMMENUITEM_WILD_HELD_ITEM_RAND
 	db DEBUGROOMMENUITEM_HM_MODE
 	db DEBUGROOMMENUITEM_OW_MOVE_MODE
 	db DEBUGROOMMENUITEM_NEXT
@@ -763,6 +768,31 @@ DebugRoom_PrintWildItemDrop:
 	ret
 
 .Label:     db "WID:@"
+.OffString: db " OFF@"
+.OnString:  db "  ON@"
+
+DebugRoomMenu_WildHeldItemRand:
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_WILD_HELD_ITEM_RAND_F
+	ld [hl], a
+	ret
+
+DebugRoom_PrintWildHeldItemRand:
+	hlcoord 16, 9
+	ld de, .Label
+	call PlaceString
+	ld a, [wModFlags]
+	bit MODFLAG_WILD_HELD_ITEM_RAND_F, a
+	hlcoord 16, 10
+	ld de, .OffString
+	jr z, .ok
+	ld de, .OnString
+.ok
+	call PlaceString
+	ret
+
+.Label:     db "WHR:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
 
