@@ -237,7 +237,7 @@ _DebugRoom::
 	db "MONEY MULT@"
 	db "ITEM DROP@"
 	db "HM REQUIRE@"
-	db "FIELD MOVES@"
+	db "FIELD TMS@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants

@@ -272,7 +272,7 @@ StringNewGameOptionsPage4:
 	db "     :<LF>"
 	db "REQUIRE HMS<LF>"
 	db "     :<LF>"
-	db "FIELD MOVES<LF>"
+	db "REQ FIELD TMS<LF>"
 	db "     :<LF>"
 	db "CONTINUE@"
 
