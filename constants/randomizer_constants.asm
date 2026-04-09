@@ -38,6 +38,7 @@ DEF MODFLAG_POISON_SURVIVAL_F        EQU 1 ; set = poison stops at 1 HP
 DEF MODFLAG_AUTO_NICKNAME_F          EQU 2 ; set = random nicknames on catch/hatch
 DEF MODFLAG_WILD_ITEM_DROP_F         EQU 4 ; set = wild #MON drop held items on KO
 DEF MODFLAG_TM_VENDOR_F              EQU 5 ; set = TM vendor NPC enabled in Blackthorn Mart
+DEF MODFLAG_WILD_HELD_ITEM_RAND_F    EQU 6 ; set = wild #MON held items are randomized
 
 ; HM requirement mode (stored in wHMMode)
 DEF HM_MODE_REQUIRED  EQU 0 ; default: party mon must KNOW the HM move

@@ -1,19 +1,43 @@
 _RollWildHeldItem::
 ; Rolls the item a wild Pokemon carries at the start of battle.
 ; Result written directly to wEnemyMonItem (farcall doesn't preserve a).
-; Odds: 75% NO_ITEM / 23% Item1 / 2% Item2.
+; If MODFLAG_WILD_HELD_ITEM_RAND_F is set, picks a random item from
+; RandomizableItems instead of using wBaseItem1/wBaseItem2.
+; Odds: 75% NO_ITEM / 25% item (standard: 23% Item1 / 2% Item2).
 	call BattleRandom
 	cp 75 percent + 1
-	jr nc, .roll_item2  ; >= 25%: give item
-	xor a               ; NO_ITEM
+	jr nc, .roll_item  ; >= 25%: give item
+	xor a              ; NO_ITEM
 	ld [wEnemyMonItem], a
 	ret
-.roll_item2:
+.roll_item:
+	ld a, [wModFlags]
+	bit MODFLAG_WILD_HELD_ITEM_RAND_F, a
+	jr nz, .rand_item
+	; Standard: ~2% Item2, ~23% Item1
 	call BattleRandom
-	cp 8 percent        ; 8% of 25% = 2% Item2
+	cp 8 percent       ; 8% of 25% = 2% Item2
 	ld a, [wBaseItem1]
-	jr nc, .done        ; Item1 on most rolls
+	jr nc, .done       ; Item1 on most rolls
 	ld a, [wBaseItem2]
+	jr .done
+.rand_item:
+	call BattleRandom
+	; Reduce to [0, NUM_RANDOMIZABLE_ITEMS) via subtraction loop
+	ld e, a
+.clamp:
+	ld a, e
+	cp NUM_RANDOMIZABLE_ITEMS
+	jr c, .index_ok
+	sub NUM_RANDOMIZABLE_ITEMS
+	ld e, a
+	jr .clamp
+.index_ok:
+	ld d, 0
+	ld hl, RandomizableItems
+	add hl, de
+	ld a, BANK(RandomizableItems)
+	call GetFarByte
 .done:
 	ld [wEnemyMonItem], a
 	ret
