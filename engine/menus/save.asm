@@ -983,6 +983,21 @@ _LoadData:
 	xor a ; reset to DISABLED if out of range
 	ld [wNuzlockeMode], a
 .nuzlocke_mode_ok
+	; Sanitize wHMMode: new variable — old saves may have garbage here.
+	; Clamp to valid range; out-of-range defaults to HM_MODE_REQUIRED (0 = ENABLED).
+	ld a, [wHMMode]
+	cp NUM_HM_MODES
+	jr c, .hm_mode_ok
+	xor a
+	ld [wHMMode], a
+.hm_mode_ok
+	; Sanitize wOWMoveMode: same semantics as wHMMode, for Rock Smash and Headbutt.
+	ld a, [wOWMoveMode]
+	cp NUM_HM_MODES
+	jr c, .ow_move_mode_ok
+	xor a
+	ld [wOWMoveMode], a
+.ow_move_mode_ok
 	; Regenerate the type matchup table from the saved seed.
 	; Old saves have seed=0, so the table will be filled with EFFECTIVE (flag-check also skips table use).
 	farcall GenerateTypeMatchupTable

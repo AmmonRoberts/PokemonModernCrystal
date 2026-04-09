@@ -2263,7 +2263,7 @@ wPoisonStepPartyFlags:: ds PARTY_LENGTH
 wPoisonStepDataEnd::
 ENDU
 
-	ds 23
+	ds 22
 
 
 SECTION "More WRAM 1", WRAMX
@@ -2876,12 +2876,10 @@ wTimeCyclesSinceLastCall:: db
 wReceiveCallDelay_MinsRemaining:: db
 wReceiveCallDelay_StartTime:: ds 3
 
-	ds 3
+	ds 2
 
 wBugContestMinsRemaining:: db
 wBugContestSecsRemaining:: db
-
-	ds 1
 
 wMapStatusEnd::
 
@@ -2952,6 +2950,12 @@ wTypeMatchupSeed:: db
 ; One-byte seed used to generate wTypeMatchupTable on new game and save-load.
 ; Saved in sCrystalData so the chart stays consistent across a save file.
 ; Old saves have 0 here, which produces a deterministic (all-EFFECTIVE) table.
+wHMMode:: db
+; HM requirement mode. 0 = HM_MODE_REQUIRED (default), 1 = HM_MODE_LEARNABLE, 2 = HM_MODE_FREE.
+; Old saves have whatever was in that SRAM slot; sanitized to HM_MODE_REQUIRED on load.
+wOWMoveMode:: db
+; Field-move requirement mode for Rock Smash and Headbutt (same values as wHMMode).
+; 0 = HM_MODE_REQUIRED (default), 1 = HM_MODE_LEARNABLE, 2 = HM_MODE_FREE.
 wCrystalDataEnd::
 
 wCrystalFlags::

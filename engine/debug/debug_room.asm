@@ -50,6 +50,8 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_BOSS_RANDO   ; 25
 	const DEBUGROOMMENUITEM_MONEY_MULT   ; 26
 	const DEBUGROOMMENUITEM_WILD_ITEM_DROP ; 27
+	const DEBUGROOMMENUITEM_HM_MODE        ; 28
+	const DEBUGROOMMENUITEM_OW_MOVE_MODE   ; 29
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -90,6 +92,8 @@ _DebugRoom::
 	call DebugRoom_PrintBossRando
 	call DebugRoom_PrintGiftRando
 	call DebugRoom_PrintWildItemDrop
+	call DebugRoom_PrintHMMode
+	call DebugRoom_PrintOWMoveMode
 	jr .status_done
 .page5_status
 	call DebugRoom_PrintWildRando
@@ -232,6 +236,8 @@ _DebugRoom::
 	db "BOSS RANDO@"
 	db "MONEY MULT@"
 	db "ITEM DROP@"
+	db "HM REQUIRE@"
+	db "FIELD TMS@"
 
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
@@ -275,6 +281,8 @@ _DebugRoom::
 	dw DebugRoomMenu_BossRando
 	dw DebugRoomMenu_MoneyMult
 	dw DebugRoomMenu_WildItemDrop
+	dw DebugRoomMenu_HMMode
+	dw DebugRoomMenu_OWMoveMode
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -340,10 +348,12 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_6
-	db 4
+	db 6
 	db DEBUGROOMMENUITEM_BOSS_RANDO
 	db DEBUGROOMMENUITEM_GIFT_RANDO
 	db DEBUGROOMMENUITEM_WILD_ITEM_DROP
+	db DEBUGROOMMENUITEM_HM_MODE
+	db DEBUGROOMMENUITEM_OW_MOVE_MODE
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -755,6 +765,80 @@ DebugRoom_PrintWildItemDrop:
 .Label:     db "WID:@"
 .OffString: db " OFF@"
 .OnString:  db "  ON@"
+
+DebugRoomMenu_HMMode:
+; Cycles wHMMode through REQUIRED -> LEARNABLE -> FREE.
+	ld a, [wHMMode]
+	inc a
+	cp NUM_HM_MODES
+	jr c, .ok
+	xor a
+.ok
+	ld [wHMMode], a
+	ret
+
+DebugRoom_PrintHMMode:
+	hlcoord 16, 4
+	ld de, .Label
+	call PlaceString
+	ld a, [wHMMode]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 16, 5
+	call PlaceString
+	ret
+
+.Label:      db "HMS:@"
+.Strings:
+	dw .Req
+	dw .Lrn
+	dw .Free
+.Req:  db " REQ@"
+.Lrn:  db " LRN@"
+.Free: db "FREE@"
+
+DebugRoomMenu_OWMoveMode:
+; Cycles wOWMoveMode through REQUIRED -> LEARNABLE -> FREE.
+	ld a, [wOWMoveMode]
+	inc a
+	cp NUM_HM_MODES
+	jr c, .ok
+	xor a
+.ok
+	ld [wOWMoveMode], a
+	ret
+
+DebugRoom_PrintOWMoveMode:
+	hlcoord 16, 6
+	ld de, .Label
+	call PlaceString
+	ld a, [wOWMoveMode]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 16, 7
+	call PlaceString
+	ret
+
+.Label:      db "FLD:@"
+.Strings:
+	dw .Req
+	dw .Lrn
+	dw .Free
+.Req:  db " REQ@"
+.Lrn:  db " LRN@"
+.Free: db "FREE@"
 
 DebugRoomMenu_AutoNick:
 	ld hl, wModFlags

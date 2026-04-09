@@ -26,6 +26,8 @@ InitCrystalData:
 	ld [wGiftRandMode], a  ; default = GIFT_RAND_STANDARD
 	ld [wTypeMatchupSeed], a
 	ld [wNuzlockeMode], a  ; default = NUZLOCKE_DISABLED
+	ld [wHMMode], a        ; default = HM_MODE_REQUIRED
+	ld [wOWMoveMode], a    ; default = HM_MODE_REQUIRED
 	; Zero wNuzlockeAreas and wNuzlockeLinesCaught (both in WRAMX 2)
 	ldh a, [rWBK]
 	push af
