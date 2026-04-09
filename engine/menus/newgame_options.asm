@@ -35,9 +35,16 @@ DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 7
 	const NEWGAMEOPT_RESET_ON_WIPE    ; 1
 	const NEWGAMEOPT_PARTY_LIMIT      ; 2
 	const NEWGAMEOPT_FIRST_ENCOUNTER  ; 3
-	const NEWGAMEOPT_TM_VENDOR        ; 4
-	const NEWGAMEOPT_PAGE4_CONTINUE   ; 5
-DEF NUM_NEWGAMEOPTIONS_PAGE4 EQU const_value ; 6
+	const NEWGAMEOPT_HM_REQUIRED      ; 4
+	const NEWGAMEOPT_OW_MOVE_REQUIRED ; 5
+	const NEWGAMEOPT_PAGE4_CONTINUE   ; 6
+DEF NUM_NEWGAMEOPTIONS_PAGE4 EQU const_value ; 7
+
+; Page 5: Miscellaneous options
+	const_def
+	const NEWGAMEOPT_TM_VENDOR        ; 0
+	const NEWGAMEOPT_PAGE5_CONTINUE   ; 1
+DEF NUM_NEWGAMEOPTIONS_PAGE5 EQU const_value ; 2
 
 DEF NUM_NEWGAMEOPTIONS EQU NUM_NEWGAMEOPTIONS_PAGE1 ; For compatibility
 
@@ -83,7 +90,9 @@ _NewGameOptions:
 	jr z, .page2_str
 	cp 2
 	jr z, .page3_str
-	ld de, StringNewGameOptionsPage4
+	cp 3
+	jr z, .page4_str
+	ld de, StringNewGameOptionsPage5
 	jr .display_page
 .page1_str
 	ld de, StringNewGameOptionsPage1
@@ -93,6 +102,9 @@ _NewGameOptions:
 	jr .display_page
 .page3_str
 	ld de, StringNewGameOptionsPage3
+	jr .display_page
+.page4_str
+	ld de, StringNewGameOptionsPage4
 .display_page
 	call PlaceString
 	xor a
@@ -106,7 +118,9 @@ _NewGameOptions:
 	jr z, .page2_count
 	cp 2
 	jr z, .page3_count
-	ld c, NUM_NEWGAMEOPTIONS_PAGE4 - 1
+	cp 3
+	jr z, .page4_count
+	ld c, NUM_NEWGAMEOPTIONS_PAGE5 - 1
 	jr .print_text_loop
 .page1_count
 	ld c, NUM_NEWGAMEOPTIONS_PAGE1 - 1 ; omit continue button
@@ -116,6 +130,9 @@ _NewGameOptions:
 	jr .print_text_loop
 .page3_count
 	ld c, NUM_NEWGAMEOPTIONS_PAGE3 - 1
+	jr .print_text_loop
+.page4_count
+	ld c, NUM_NEWGAMEOPTIONS_PAGE4 - 1
 .print_text_loop
 	push bc
 	xor a
@@ -153,7 +170,7 @@ _NewGameOptions:
 .handle_start
 	; START advances to next page or starts game
 	ld a, [wNewGameOptionsPage]
-	cp 3
+	cp 4
 	jr z, .ExitOptions
 	inc a
 	ld [wNewGameOptionsPage], a
@@ -171,7 +188,7 @@ _NewGameOptions:
 .handle_continue_button
 	; Continue button pressed
 	ld a, [wNewGameOptionsPage]
-	cp 3
+	cp 4
 	jr z, .ExitOptions
 	inc a
 	ld [wNewGameOptionsPage], a
@@ -202,7 +219,7 @@ _NewGameOptions:
 	ret
 
 StringNewGameOptionsPage1:
-	db "RANDOMIZERS   1/4<LF>"
+	db "RANDOMIZERS   1/5<LF>"
 	db "WILD #MON<LF>"
 	db "     :<LF>"
 	db "STARTERS<LF>"
@@ -218,7 +235,7 @@ StringNewGameOptionsPage1:
 	db "CONTINUE@"
 
 StringNewGameOptionsPage2:
-	db "RANDOMIZERS   2/4<LF>"
+	db "RANDOMIZERS   2/5<LF>"
 	db "GIFT #MON<LF>"
 	db "     :<LF>"
 	db "TYPES<LF>"
@@ -228,7 +245,7 @@ StringNewGameOptionsPage2:
 	db "CONTINUE@"
 
 StringNewGameOptionsPage3:
-	db "MODERNIZATION 3/4<LF>"
+	db "MODERNIZATION 3/5<LF>"
 	db "TM MODE<LF>"
 	db "     :<LF>"
 	db "EXP MULTIPLIER<LF>"
@@ -244,7 +261,7 @@ StringNewGameOptionsPage3:
 	db "CONTINUE@"
 
 StringNewGameOptionsPage4:
-	db "CHALLENGE     4/4<LF>"
+	db "CHALLENGE     4/5<LF>"
 	db "PERMADEATH<LF>"
 	db "     :<LF>"
 	db "RESET ON WIPE<LF>"
@@ -253,6 +270,14 @@ StringNewGameOptionsPage4:
 	db "     :<LF>"
 	db "1ST ENCOUNTER<LF>"
 	db "     :<LF>"
+	db "REQUIRE HMS<LF>"
+	db "     :<LF>"
+	db "FIELD MOVES<LF>"
+	db "     :<LF>"
+	db "CONTINUE@"
+
+StringNewGameOptionsPage5:
+	db "CHALLENGE     5/5<LF>"
 	db "TM VENDOR<LF>"
 	db "     :<LF>"
 	db "CONTINUE@"
@@ -265,13 +290,17 @@ GetNewGameOptionPointer:
 	jr z, .page2
 	cp 2
 	jr z, .page3
-	jumptable .PointersPage4, wJumptableIndex
+	cp 3
+	jr z, .page4
+	jumptable .PointersPage5, wJumptableIndex
 .page1
 	jumptable .PointersPage1, wJumptableIndex
 .page2
 	jumptable .PointersPage2, wJumptableIndex
 .page3
 	jumptable .PointersPage3, wJumptableIndex
+.page4
+	jumptable .PointersPage4, wJumptableIndex
 
 .PointersPage1:
 ; entries correspond to NEWGAMEOPT_* constants (Page 1 - Core Randomizers)
@@ -306,6 +335,12 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_ResetOnWipe
 	dw NewGameOptions_PartyLimit
 	dw NewGameOptions_FirstEncounter
+	dw NewGameOptions_HMRequired
+	dw NewGameOptions_OWMoveRequired
+	dw NewGameOptions_Continue
+
+.PointersPage5:
+; entries correspond to NEWGAMEOPT_* constants (Page 5 - Miscellaneous)
 	dw NewGameOptions_TMVendor
 	dw NewGameOptions_Continue
 NewGameOptions_BerryRandomization:
@@ -1031,12 +1066,112 @@ NewGameOptions_TMVendor:
 .Enabled:
 	ld de, .Enabled_str
 .Display:
-	hlcoord 8, 12
+	hlcoord 8, 4
 	call PlaceString
 	and a
 	ret
 .Disabled:    db "DISABLED@"
 .Enabled_str: db "ENABLED @"
+
+NewGameOptions_HMRequired:
+; Cycles HM_MODE_REQUIRED -> HM_MODE_LEARNABLE -> HM_MODE_FREE -> HM_MODE_REQUIRED.
+; ENABLED   (0): party mon must KNOW the HM
+; LEARNABLE (1): party mon only needs to be able to learn the HM
+; DISABLED  (2): no Pokémon check — badge alone suffices
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
+	ld a, [wHMMode]
+	inc a
+	cp NUM_HM_MODES
+	jr c, .set
+	xor a
+	jr .set
+.Left:
+	ld a, [wHMMode]
+	and a
+	jr z, .WrapLeft
+	dec a
+	jr .set
+.WrapLeft:
+	ld a, NUM_HM_MODES - 1
+.set:
+	ld [wHMMode], a
+.Display:
+	ld a, [wHMMode]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 8, 12
+	call PlaceString
+	and a
+	ret
+.Strings:
+	dw .Required
+	dw .Learnable
+	dw .Free
+.Required:  db "ENABLED  @"
+.Learnable: db "LEARNABLE@"
+.Free:      db "DISABLED @"
+
+NewGameOptions_OWMoveRequired:
+; Cycles HM_MODE_REQUIRED -> HM_MODE_LEARNABLE -> HM_MODE_FREE for Rock Smash and Headbutt.
+; ENABLED   (0): party mon must KNOW the move
+; LEARNABLE (1): party mon only needs to be able to learn the move
+; DISABLED  (2): no Pokémon check — badge alone suffices
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
+	ld a, [wOWMoveMode]
+	inc a
+	cp NUM_HM_MODES
+	jr c, .set
+	xor a
+	jr .set
+.Left:
+	ld a, [wOWMoveMode]
+	and a
+	jr z, .WrapLeft
+	dec a
+	jr .set
+.WrapLeft:
+	ld a, NUM_HM_MODES - 1
+.set:
+	ld [wOWMoveMode], a
+.Display:
+	ld a, [wOWMoveMode]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 8, 14
+	call PlaceString
+	and a
+	ret
+.Strings:
+	dw .Required
+	dw .Learnable
+	dw .Free
+.Required:  db "ENABLED  @"
+.Learnable: db "LEARNABLE@"
+.Free:      db "DISABLED @"
 
 NewGameOptions_Continue:
 	ldh a, [hJoyPressed]
@@ -1067,6 +1202,16 @@ NewGameOptionsControl:
 	jr z, .page2_down
 	cp 2
 	jr z, .page3_down
+	cp 3
+	jr z, .page4_down
+	; Page 5
+	ld a, [hl]
+	cp NEWGAMEOPT_PAGE5_CONTINUE
+	jr z, .WrapToTop
+	inc [hl]
+	scf
+	ret
+.page4_down
 	; Page 4
 	ld a, [hl]
 	cp NEWGAMEOPT_PAGE4_CONTINUE
@@ -1120,6 +1265,13 @@ NewGameOptionsControl:
 	jr z, .page2_bottom
 	cp 2
 	jr z, .page3_bottom
+	cp 3
+	jr z, .page4_bottom
+	; Page 5
+	ld [hl], NEWGAMEOPT_PAGE5_CONTINUE
+	scf
+	ret
+.page4_bottom
 	; Page 4
 	ld [hl], NEWGAMEOPT_PAGE4_CONTINUE
 	scf

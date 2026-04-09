@@ -105,6 +105,81 @@ CheckPartyMove:
 	scf
 	ret
 
+CheckPartyCanLearnHM:
+; Check if any party member's species is compatible with HM move d (via TMHM learnset).
+; Sets wCurPartyMon to the index of the first eligible party member.
+; Returns carry clear if found, carry set if none can learn it.
+; Unlike CheckPartyMove, this passes even if no party member currently KNOWS the move.
+	ld a, d
+	ld [wPutativeTMHMMove], a
+	ld e, 0
+	xor a
+	ld [wCurPartyMon], a
+.loop
+	ld c, e
+	ld b, 0
+	ld hl, wPartySpecies
+	add hl, bc
+	ld a, [hl]
+	and a
+	jr z, .no
+	cp -1
+	jr z, .no
+	cp EGG
+	jr z, .next
+	ld [wCurPartySpecies], a
+	push de                    ; protect loop counter across CanLearnTMHMMove
+	predef CanLearnTMHMMove
+	pop de
+	ld a, c                    ; c is nonzero if compatible
+	and a
+	jr nz, .yes
+.next
+	inc e
+	jr .loop
+.yes
+	ld a, e
+	ld [wCurPartyMon], a
+	xor a
+	ret
+.no
+	scf
+	ret
+
+CheckPartyMoveOrCanLearn:
+; Checks if a party member satisfies the HM requirement for field move d, per wHMMode.
+; HM_MODE_REQUIRED (0): party mon must KNOW the move          → CheckPartyMove
+; HM_MODE_LEARNABLE (1): party mon must be able to LEARN it   → CheckPartyCanLearnHM
+; HM_MODE_FREE (2):      no Pokémon check; sets wCurPartyMon=0 and returns success.
+	ld a, [wHMMode]
+	cp HM_MODE_LEARNABLE
+	jr z, .learnable
+	cp HM_MODE_FREE
+	jr z, .free
+	jp CheckPartyMove
+.learnable
+	jp CheckPartyCanLearnHM
+.free
+	xor a
+	ld [wCurPartyMon], a   ; first party slot for nickname display ("____ used SURF!")
+	ret                    ; carry clear = success
+
+CheckOWMoveOrCanLearn:
+; Same as CheckPartyMoveOrCanLearn but reads wOWMoveMode instead.
+; Used for Rock Smash and Headbutt (field moves that are not HMs).
+	ld a, [wOWMoveMode]
+	cp HM_MODE_LEARNABLE
+	jr z, .learnable
+	cp HM_MODE_FREE
+	jr z, .free
+	jp CheckPartyMove
+.learnable
+	jp CheckPartyCanLearnHM
+.free
+	xor a
+	ld [wCurPartyMon], a
+	ret
+
 FieldMoveFailed:
 	ld hl, .CantUseItemText
 	call MenuTextboxBackup
@@ -507,7 +582,7 @@ TrySurfOW::
 	jr c, .quit
 
 	ld d, SURF
-	call CheckPartyMove
+	call CheckPartyMoveOrCanLearn
 	jr c, .quit
 
 	ld hl, wBikeFlags
@@ -704,7 +779,7 @@ Script_UsedWaterfall:
 
 TryWaterfallOW::
 	ld d, WATERFALL
-	call CheckPartyMove
+	call CheckPartyMoveOrCanLearn
 	jr c, .failed
 	ld de, ENGINE_RISINGBADGE
 	call CheckEngineFlag
@@ -1055,7 +1130,7 @@ BouldersMayMoveText:
 
 TryStrengthOW:
 	ld d, STRENGTH
-	call CheckPartyMove
+	call CheckPartyMoveOrCanLearn
 	jr c, .nope
 
 	ld de, ENGINE_PLAINBADGE
@@ -1189,7 +1264,7 @@ DisappearWhirlpool:
 
 TryWhirlpoolOW::
 	ld d, WHIRLPOOL
-	call CheckPartyMove
+	call CheckPartyMoveOrCanLearn
 	jr c, .failed
 	ld de, ENGINE_GLACIERBADGE
 	call CheckEngineFlag
@@ -1284,7 +1359,7 @@ HeadbuttScript:
 
 TryHeadbuttOW::
 	ld d, HEADBUTT
-	call CheckPartyMove
+	call CheckOWMoveOrCanLearn
 	jr c, .no
 
 	ld a, BANK(AskHeadbuttScript)
@@ -1408,7 +1483,7 @@ AskRockSmashText:
 
 HasRockSmash:
 	ld d, ROCK_SMASH
-	call CheckPartyMove
+	call CheckOWMoveOrCanLearn
 	jr nc, .yes
 ; no
 	ld a, 1
@@ -1788,7 +1863,7 @@ GotOffBikeText:
 
 TryCutOW::
 	ld d, CUT
-	call CheckPartyMove
+	call CheckPartyMoveOrCanLearn
 	jr c, .cant_cut
 
 	ld de, ENGINE_HIVEBADGE
