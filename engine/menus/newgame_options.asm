@@ -30,7 +30,14 @@ DEF NUM_NEWGAMEOPTIONS_PAGE2 EQU const_value ; 5
 	const NEWGAMEOPT_PAGE3_CONTINUE   ; 6
 DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 7
 
-; Page 4: Nuzlocke/Challenge options
+; Page 4: Modernization options (continued)
+	const_def
+	const NEWGAMEOPT_TM_VENDOR           ; 0
+	const NEWGAMEOPT_WILD_HELD_ITEM_MOD  ; 1
+	const NEWGAMEOPT_PAGE4_CONTINUE      ; 2
+DEF NUM_NEWGAMEOPTIONS_PAGE4 EQU const_value ; 3
+
+; Page 5: Nuzlocke/Challenge options
 	const_def
 	const NEWGAMEOPT_PERMADEATH       ; 0
 	const NEWGAMEOPT_RESET_ON_WIPE    ; 1
@@ -38,14 +45,8 @@ DEF NUM_NEWGAMEOPTIONS_PAGE3 EQU const_value ; 7
 	const NEWGAMEOPT_FIRST_ENCOUNTER  ; 3
 	const NEWGAMEOPT_HM_REQUIRED      ; 4
 	const NEWGAMEOPT_OW_MOVE_REQUIRED ; 5
-	const NEWGAMEOPT_PAGE4_CONTINUE   ; 6
-DEF NUM_NEWGAMEOPTIONS_PAGE4 EQU const_value ; 7
-
-; Page 5: Miscellaneous options
-	const_def
-	const NEWGAMEOPT_TM_VENDOR        ; 0
-	const NEWGAMEOPT_PAGE5_CONTINUE   ; 1
-DEF NUM_NEWGAMEOPTIONS_PAGE5 EQU const_value ; 2
+	const NEWGAMEOPT_PAGE5_CONTINUE   ; 6
+DEF NUM_NEWGAMEOPTIONS_PAGE5 EQU const_value ; 7
 
 DEF NUM_NEWGAMEOPTIONS EQU NUM_NEWGAMEOPTIONS_PAGE1 ; For compatibility
 
@@ -264,7 +265,15 @@ StringNewGameOptionsPage3:
 	db "CONTINUE@"
 
 StringNewGameOptionsPage4:
-	db "CHALLENGE     4/5<LF>"
+	db "MODERNIZATION 4/5<LF>"
+	db "TM VENDOR<LF>"
+	db "     :<LF>"
+	db "MORE HLD ITMS<LF>"
+	db "     :<LF>"
+	db "CONTINUE@"
+
+StringNewGameOptionsPage5:
+	db "CHALLENGE     5/5<LF>"
 	db "PERMADEATH<LF>"
 	db "     :<LF>"
 	db "RESET ON WIPE<LF>"
@@ -276,12 +285,6 @@ StringNewGameOptionsPage4:
 	db "REQUIRE HMS<LF>"
 	db "     :<LF>"
 	db "REQ FIELD TMS<LF>"
-	db "     :<LF>"
-	db "CONTINUE@"
-
-StringNewGameOptionsPage5:
-	db "CHALLENGE     5/5<LF>"
-	db "TM VENDOR<LF>"
 	db "     :<LF>"
 	db "CONTINUE@"
 
@@ -334,18 +337,19 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_Continue
 
 .PointersPage4:
-; entries correspond to NEWGAMEOPT_* constants (Page 4 - Nuzlocke/Challenge)
+; entries correspond to NEWGAMEOPT_* constants (Page 4 - Modernization continued)
+	dw NewGameOptions_TMVendor
+	dw NewGameOptions_WildHeldItemMod
+	dw NewGameOptions_Continue
+
+.PointersPage5:
+; entries correspond to NEWGAMEOPT_* constants (Page 5 - Nuzlocke/Challenge)
 	dw NewGameOptions_Permadeath
 	dw NewGameOptions_ResetOnWipe
 	dw NewGameOptions_PartyLimit
 	dw NewGameOptions_FirstEncounter
 	dw NewGameOptions_HMRequired
 	dw NewGameOptions_OWMoveRequired
-	dw NewGameOptions_Continue
-
-.PointersPage5:
-; entries correspond to NEWGAMEOPT_* constants (Page 5 - Miscellaneous)
-	dw NewGameOptions_TMVendor
 	dw NewGameOptions_Continue
 NewGameOptions_BerryRandomization:
 	ldh a, [hJoyPressed]
@@ -1076,6 +1080,34 @@ NewGameOptions_FirstEncounter:
 .str_disabled:  db "DISABLED  @"
 .str_forgiving: db "FORGIVING @"
 .str_strict:    db "STRICT    @"
+
+NewGameOptions_WildHeldItemMod:
+; Toggles whether wild #MON have a 25% chance to hold their Item3 (DISABLED / ENABLED).
+	ldh a, [hJoyPressed]
+	bit B_PAD_LEFT, a
+	jr nz, .Toggle
+	bit B_PAD_RIGHT, a
+	jr z, .NonePressed
+.Toggle:
+	ld hl, wModFlags
+	ld a, [hl]
+	xor 1 << MODFLAG_WILD_HELD_ITEM_MOD_F
+	ld [hl], a
+.NonePressed:
+	ld a, [wModFlags]
+	bit MODFLAG_WILD_HELD_ITEM_MOD_F, a
+	jr nz, .Enabled
+	ld de, .Disabled
+	jr .Display
+.Enabled:
+	ld de, .Enabled_str
+.Display:
+	hlcoord 8, 6
+	call PlaceString
+	and a
+	ret
+.Disabled:    db "DISABLED@"
+.Enabled_str: db "ENABLED @"
 
 NewGameOptions_TMVendor:
 ; Toggles whether the TM vendor NPC appears in Blackthorn Mart (DISABLED / ENABLED).
