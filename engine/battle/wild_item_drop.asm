@@ -4,13 +4,30 @@ _RollWildHeldItem::
 ; If MODFLAG_WILD_HELD_ITEM_RAND_F is set, picks a random item from
 ; RandomizableItems instead of using wBaseItem1/wBaseItem2.
 ; Odds: 75% NO_ITEM / 25% item (standard: 23% Item1 / 2% Item2).
-; If MODFLAG_WILD_HELD_ITEM_MOD_F is set and the above resolves to NO_ITEM,
-; gives an independent flat 25% chance to hold Item3.
+; If MODFLAG_WILD_HELD_ITEM_MOD_F is set and the mon has an Item3, an
+; independent flat 25% roll for Item3 runs first; if it fires, Item3 is
+; used regardless of Item1/Item2. If it doesn't fire, the standard roll
+; proceeds normally.
+; Check Item3 (independent roll, only when MODFLAG_WILD_HELD_ITEM_MOD_F is set)
+	ld a, [wModFlags]
+	bit MODFLAG_WILD_HELD_ITEM_MOD_F, a
+	jr z, .standard_roll
+	ld a, [wBaseItem3]
+	and a              ; NO_ITEM?
+	jr z, .standard_roll
+	call BattleRandom
+	cp 64              ; < 64 of 256 ≈ 25%
+	jr nc, .standard_roll
+	ld a, [wBaseItem3]
+	ld [wEnemyMonItem], a
+	ret
+.standard_roll:
 	call BattleRandom
 	cp 75 percent + 1
 	jr nc, .roll_item  ; >= 25%: give item
 	xor a              ; NO_ITEM
-	jr .try_item3
+	ld [wEnemyMonItem], a
+	ret
 .roll_item:
 	ld a, [wModFlags]
 	bit MODFLAG_WILD_HELD_ITEM_RAND_F, a
@@ -40,27 +57,6 @@ _RollWildHeldItem::
 	ld a, BANK(RandomizableItems)
 	call GetFarByte
 .done:
-	and a              ; NO_ITEM?
-	jr z, .try_item3
-	ld [wEnemyMonItem], a
-	ret
-.try_item3:
-; If MODFLAG_WILD_HELD_ITEM_MOD_F is set and the mon has an Item3, give a flat
-; 25% chance to hold it instead of returning NO_ITEM.
-	ld a, [wModFlags]
-	bit MODFLAG_WILD_HELD_ITEM_MOD_F, a
-	jr z, .no_item
-	ld a, [wBaseItem3]
-	and a              ; NO_ITEM?
-	jr z, .no_item
-	call BattleRandom
-	cp 64              ; < 64 of 256 ≈ 25%
-	jr nc, .no_item
-	ld a, [wBaseItem3]
-	ld [wEnemyMonItem], a
-	ret
-.no_item:
-	xor a
 	ld [wEnemyMonItem], a
 	ret
 
