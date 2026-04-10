@@ -2705,6 +2705,7 @@ wBaseExp:: db
 wBaseItems::
 wBaseItem1:: db
 wBaseItem2:: db
+wBaseItem3:: db
 wBaseGender:: db
 wBaseUnknown1:: db
 wBaseEggSteps:: db
@@ -2720,7 +2721,7 @@ wCurBaseDataEnd::
 
 wCurDamage:: dw
 
-	ds 2
+	ds 1
 
 wMornEncounterRate::  db
 wDayEncounterRate::   db
