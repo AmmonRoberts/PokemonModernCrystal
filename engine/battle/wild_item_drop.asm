@@ -1,24 +1,33 @@
 _RollWildHeldItem::
 ; Rolls the item a wild Pokemon carries at the start of battle.
 ; Result written directly to wEnemyMonItem (farcall doesn't preserve a).
-; If MODFLAG_WILD_HELD_ITEM_RAND_F is set, picks a random item from
-; RandomizableItems instead of using wBaseItem1/wBaseItem2.
-; Odds: 75% NO_ITEM / 25% item (standard: 23% Item1 / 2% Item2).
-; If MODFLAG_WILD_HELD_ITEM_MOD_F is set and the mon has an Item3, an
-; independent flat 25% roll for Item3 runs first; if it fires, Item3 is
-; used regardless of Item1/Item2. If it doesn't fire, the standard roll
-; proceeds normally.
-; Check Item3 (independent roll, only when MODFLAG_WILD_HELD_ITEM_MOD_F is set)
+;
+; Standard roll (always runs unless the mod roll fires):
+;   75% NO_ITEM  /  ~23% Item1  /  ~2% Item2
+;   If MODFLAG_WILD_HELD_ITEM_RAND_F is set, Item1/Item2 are replaced
+;   with a random item drawn from RandomizableItems.
+;
+; Mod roll (MODFLAG_WILD_HELD_ITEM_MOD_F, only when Item3 != NO_ITEM):
+;   Runs independently before the standard roll. If it produces an item,
+;   the standard roll is skipped entirely; otherwise the standard roll
+;   proceeds as normal.
+;   75% skip  /  ~15% Item3  /  ~10% Item4
+; Check Item3/Item4 (mod roll, only when MODFLAG_WILD_HELD_ITEM_MOD_F is set)
 	ld a, [wModFlags]
 	bit MODFLAG_WILD_HELD_ITEM_MOD_F, a
 	jr z, .standard_roll
 	ld a, [wBaseItem3]
-	and a              ; NO_ITEM?
+	and a              ; NO_ITEM? (skip mod roll if no Item3)
 	jr z, .standard_roll
 	call BattleRandom
-	cp 64              ; < 64 of 256 ≈ 25%
-	jr nc, .standard_roll
+	cp 75 percent + 1  ; < 193: skip mod roll (~75%)
+	jr c, .standard_roll
+	call BattleRandom
+	cp 40 percent      ; ~10% Item4, ~15% Item3
 	ld a, [wBaseItem3]
+	jr nc, .mod_done   ; Item3 on most rolls
+	ld a, [wBaseItem4]
+.mod_done:
 	ld [wEnemyMonItem], a
 	ret
 .standard_roll:

@@ -2706,6 +2706,7 @@ wBaseItems::
 wBaseItem1:: db
 wBaseItem2:: db
 wBaseItem3:: db
+wBaseItem4:: db
 wBaseGender:: db
 wBaseUnknown1:: db
 wBaseEggSteps:: db
@@ -2720,8 +2721,6 @@ wCurBaseDataEnd::
 	assert wCurBaseDataEnd - wCurBaseData == BASE_DATA_SIZE
 
 wCurDamage:: dw
-
-	ds 1
 
 wMornEncounterRate::  db
 wDayEncounterRate::   db
