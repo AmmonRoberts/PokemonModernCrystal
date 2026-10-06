@@ -51,6 +51,12 @@ DEF NUM_NEWGAMEOPTIONS_PAGE4 EQU const_value ; 5
 	const NEWGAMEOPT_PAGE5_CONTINUE   ; 6
 DEF NUM_NEWGAMEOPTIONS_PAGE5 EQU const_value ; 7
 
+; Page 6: Kanto Challenge Mode
+	const_def
+	const NEWGAMEOPT_KANTO_CHALLENGE  ; 0
+	const NEWGAMEOPT_PAGE6_CONTINUE   ; 1
+DEF NUM_NEWGAMEOPTIONS_PAGE6 EQU const_value ; 2
+
 DEF NUM_NEWGAMEOPTIONS EQU NUM_NEWGAMEOPTIONS_PAGE1 ; For compatibility
 
 ; Rare Candy mart modes (stored in wRareCandyMart)
@@ -87,57 +93,27 @@ _NewGameOptions:
 	ld b, SCREEN_HEIGHT - 2
 	ld c, SCREEN_WIDTH - 2
 	call Textbox
-	hlcoord 2, 2
 	ld a, [wNewGameOptionsPage]
-	and a
-	jr z, .page1_str
-	cp 1
-	jr z, .page2_str
-	cp 2
-	jr z, .page3_str
-	cp 3
-	jr z, .page4_str
-	ld de, StringNewGameOptionsPage5
-	jr .display_page
-.page1_str
-	ld de, StringNewGameOptionsPage1
-	jr .display_page
-.page2_str
-	ld de, StringNewGameOptionsPage2
-	jr .display_page
-.page3_str
-	ld de, StringNewGameOptionsPage3
-	jr .display_page
-.page4_str
-	ld de, StringNewGameOptionsPage4
-.display_page
+	ld e, a
+	ld d, 0
+	ld hl, .PageStrings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 2, 2
 	call PlaceString
 	xor a
 	ld [wJumptableIndex], a
 
 ; Display the settings of each option when the menu is opened
 	ld a, [wNewGameOptionsPage]
-	and a
-	jr z, .page1_count
-	cp 1
-	jr z, .page2_count
-	cp 2
-	jr z, .page3_count
-	cp 3
-	jr z, .page4_count
-	ld c, NUM_NEWGAMEOPTIONS_PAGE5 - 1
-	jr .print_text_loop
-.page1_count
-	ld c, NUM_NEWGAMEOPTIONS_PAGE1 - 1 ; omit continue button
-	jr .print_text_loop
-.page2_count
-	ld c, NUM_NEWGAMEOPTIONS_PAGE2 - 1
-	jr .print_text_loop
-.page3_count
-	ld c, NUM_NEWGAMEOPTIONS_PAGE3 - 1
-	jr .print_text_loop
-.page4_count
-	ld c, NUM_NEWGAMEOPTIONS_PAGE4 - 1
+	ld e, a
+	ld d, 0
+	ld hl, .PageOptionCounts
+	add hl, de
+	ld c, [hl]
 .print_text_loop
 	push bc
 	xor a
@@ -198,7 +174,7 @@ _NewGameOptions:
 .handle_start
 	; START advances to next page or starts game
 	ld a, [wNewGameOptionsPage]
-	cp 4
+	cp 5
 	jr z, .ExitOptions
 	inc a
 	ld [wNewGameOptionsPage], a
@@ -216,7 +192,7 @@ _NewGameOptions:
 .handle_continue_button
 	; Continue button pressed
 	ld a, [wNewGameOptionsPage]
-	cp 4
+	cp 5
 	jr z, .ExitOptions
 	inc a
 	ld [wNewGameOptionsPage], a
@@ -246,8 +222,25 @@ _NewGameOptions:
 	scf ; set carry, cancel new game
 	ret
 
+.PageStrings:
+	dw StringNewGameOptionsPage1
+	dw StringNewGameOptionsPage2
+	dw StringNewGameOptionsPage3
+	dw StringNewGameOptionsPage4
+	dw StringNewGameOptionsPage5
+	dw StringNewGameOptionsPage6
+
+.PageOptionCounts:
+; omits the Continue button
+	db NUM_NEWGAMEOPTIONS_PAGE1 - 1
+	db NUM_NEWGAMEOPTIONS_PAGE2 - 1
+	db NUM_NEWGAMEOPTIONS_PAGE3 - 1
+	db NUM_NEWGAMEOPTIONS_PAGE4 - 1
+	db NUM_NEWGAMEOPTIONS_PAGE5 - 1
+	db NUM_NEWGAMEOPTIONS_PAGE6 - 1
+
 StringNewGameOptionsPage1:
-	db "RANDOMIZERS   1/5<LF>"
+	db "RANDOMIZERS   1/6<LF>"
 	db "WILD #MON<LF>"
 	db "     :<LF>"
 	db "STARTERS<LF>"
@@ -263,7 +256,7 @@ StringNewGameOptionsPage1:
 	db "CONTINUE@"
 
 StringNewGameOptionsPage2:
-	db "RANDOMIZERS   2/5<LF>"
+	db "RANDOMIZERS   2/6<LF>"
 	db "GIFT #MON<LF>"
 	db "     :<LF>"
 	db "TYPES<LF>"
@@ -277,7 +270,7 @@ StringNewGameOptionsPage2:
 	db "CONTINUE@"
 
 StringNewGameOptionsPage3:
-	db "MODERNIZATION 3/5<LF>"
+	db "MODERNIZATION 3/6<LF>"
 	db "TM MODE<LF>"
 	db "     :<LF>"
 	db "EXP MULTIPLIER<LF>"
@@ -293,7 +286,7 @@ StringNewGameOptionsPage3:
 	db "CONTINUE@"
 
 StringNewGameOptionsPage4:
-	db "MODERNIZATION 4/5<LF>"
+	db "MODERNIZATION 4/6<LF>"
 	db "TM VENDOR<LF>"
 	db "     :<LF>"
 	db "MORE HLD ITMS<LF>"
@@ -305,7 +298,7 @@ StringNewGameOptionsPage4:
 	db "CONTINUE@"
 
 StringNewGameOptionsPage5:
-	db "CHALLENGE     5/5<LF>"
+	db "CHALLENGE     5/6<LF>"
 	db "PERMADEATH<LF>"
 	db "     :<LF>"
 	db "RESET ON WIPE<LF>"
@@ -320,25 +313,39 @@ StringNewGameOptionsPage5:
 	db "     :<LF>"
 	db "CONTINUE@"
 
+StringNewGameOptionsPage6:
+	db "CHALLENGE     6/6<LF>"
+	db "KANTO CHALLENGE<LF>"
+	db "     :<LF>"
+	db "CONTINUE@"
+
 GetNewGameOptionPointer:
 	ld a, [wNewGameOptionsPage]
-	and a
-	jr z, .page1
-	cp 1
-	jr z, .page2
-	cp 2
-	jr z, .page3
-	cp 3
-	jr z, .page4
-	jumptable .PointersPage5, wJumptableIndex
-.page1
-	jumptable .PointersPage1, wJumptableIndex
-.page2
-	jumptable .PointersPage2, wJumptableIndex
-.page3
-	jumptable .PointersPage3, wJumptableIndex
-.page4
-	jumptable .PointersPage4, wJumptableIndex
+	ld e, a
+	ld d, 0
+	ld hl, .PagePointerTables
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+	ld a, [wJumptableIndex]
+	add a
+	ld e, a
+	ld d, 0
+	add hl, de
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+	jp hl
+
+.PagePointerTables:
+	dw .PointersPage1
+	dw .PointersPage2
+	dw .PointersPage3
+	dw .PointersPage4
+	dw .PointersPage5
+	dw .PointersPage6
 
 .PointersPage1:
 ; entries correspond to NEWGAMEOPT_* constants (Page 1 - Core Randomizers)
@@ -385,6 +392,11 @@ GetNewGameOptionPointer:
 	dw NewGameOptions_FirstEncounter
 	dw NewGameOptions_HMRequired
 	dw NewGameOptions_OWMoveRequired
+	dw NewGameOptions_Continue
+
+.PointersPage6:
+; entries correspond to NEWGAMEOPT_* constants (Page 6 - Kanto Challenge)
+	dw NewGameOptions_KantoChallenge
 	dw NewGameOptions_Continue
 NewGameOptions_BerryRandomization:
 	ldh a, [hJoyPressed]
@@ -1319,6 +1331,12 @@ NewGameOptions_OWMoveRequired:
 .Learnable: db "LEARNABLE@"
 .Free:      db "DISABLED @"
 
+NewGameOptions_KantoChallenge:
+; Handler body lives in Crystal Features 1 Ext bank to avoid overflowing Crystal Features 1.
+	farcall KantoChallengeOptionHandler
+	and a
+	ret
+
 NewGameOptions_Continue:
 	ldh a, [hJoyPressed]
 	and PAD_A
@@ -1341,50 +1359,10 @@ NewGameOptionsControl:
 	ret
 
 .DownPressed:
-	ld a, [wNewGameOptionsPage]
-	and a
-	jr z, .page1_down
-	cp 1
-	jr z, .page2_down
-	cp 2
-	jr z, .page3_down
-	cp 3
-	jr z, .page4_down
-	; Page 5
-	ld a, [hl]
-	cp NEWGAMEOPT_PAGE5_CONTINUE
-	jr z, .WrapToTop
-	inc [hl]
-	scf
-	ret
-.page4_down
-	; Page 4
-	ld a, [hl]
-	cp NEWGAMEOPT_PAGE4_CONTINUE
-	jr z, .WrapToTop
-	inc [hl]
-	scf
-	ret
-.page1_down
-	; Page 1
-	ld a, [hl]
-	cp NEWGAMEOPT_PAGE1_CONTINUE
-	jr z, .WrapToTop
-	inc [hl]
-	scf
-	ret
-.page2_down
-	; Page 2
-	ld a, [hl]
-	cp NEWGAMEOPT_PAGE2_CONTINUE
-	jr z, .WrapToTop
-	inc [hl]
-	scf
-	ret
-.page3_down
-	; Page 3
-	ld a, [hl]
-	cp NEWGAMEOPT_PAGE3_CONTINUE
+	push hl
+	call GetPageContinueIndex
+	pop hl
+	cp [hl]
 	jr z, .WrapToTop
 	inc [hl]
 	scf
@@ -1404,38 +1382,21 @@ NewGameOptionsControl:
 	ret
 
 .WrapToBottom:
+	push hl
+	call GetPageContinueIndex
+	pop hl
+	ld [hl], a
+	scf
+	ret
+
+GetPageContinueIndex:
+; Returns a = the Continue button's wJumptableIndex value for the current page.
 	ld a, [wNewGameOptionsPage]
-	and a
-	jr z, .page1_bottom
-	cp 1
-	jr z, .page2_bottom
-	cp 2
-	jr z, .page3_bottom
-	cp 3
-	jr z, .page4_bottom
-	; Page 5
-	ld [hl], NEWGAMEOPT_PAGE5_CONTINUE
-	scf
-	ret
-.page4_bottom
-	; Page 4
-	ld [hl], NEWGAMEOPT_PAGE4_CONTINUE
-	scf
-	ret
-.page1_bottom
-	; Page 1
-	ld [hl], NEWGAMEOPT_PAGE1_CONTINUE
-	scf
-	ret
-.page2_bottom
-	; Page 2
-	ld [hl], NEWGAMEOPT_PAGE2_CONTINUE
-	scf
-	ret
-.page3_bottom
-	; Page 3
-	ld [hl], NEWGAMEOPT_PAGE3_CONTINUE
-	scf
+	ld e, a
+	ld d, 0
+	ld hl, ContinueTable
+	add hl, de
+	ld a, [hl]
 	ret
 
 NewGameOptions_UpdateCursorPosition:
@@ -1467,12 +1428,7 @@ NewGameOptions_IsOnContinue:
 ; Returns carry set if wJumptableIndex is the Continue button for the current page.
 	ld a, [wJumptableIndex]
 	ld b, a
-	ld a, [wNewGameOptionsPage]
-	ld e, a
-	ld d, 0
-	ld hl, .ContinueTable
-	add hl, de
-	ld a, [hl]
+	call GetPageContinueIndex
 	cp b
 	jr z, .yes
 	and a
@@ -1480,9 +1436,11 @@ NewGameOptions_IsOnContinue:
 .yes:
 	scf
 	ret
-.ContinueTable:
+
+ContinueTable:
 	db NEWGAMEOPT_PAGE1_CONTINUE  ; page 0
 	db NEWGAMEOPT_PAGE2_CONTINUE  ; page 1
 	db NEWGAMEOPT_PAGE3_CONTINUE  ; page 2
 	db NEWGAMEOPT_PAGE4_CONTINUE  ; page 3
 	db NEWGAMEOPT_PAGE5_CONTINUE  ; page 4
+	db NEWGAMEOPT_PAGE6_CONTINUE  ; page 5

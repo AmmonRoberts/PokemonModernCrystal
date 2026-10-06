@@ -59,6 +59,7 @@ DEF DEBUGROOMMENU_NUM_PAGES EQU const_value
 	const DEBUGROOMMENUITEM_STATIC_RANDO        ; 2d
 	const DEBUGROOMMENUITEM_ENEMY_DMG_MULT      ; 2e
 	const DEBUGROOMMENUITEM_PLAYER_DMG_MULT     ; 2f
+	const DEBUGROOMMENUITEM_KANTO_CHALLENGE     ; 30
 
 _DebugRoom::
 	ldh a, [hJoyDown]
@@ -102,6 +103,7 @@ _DebugRoom::
 	call DebugRoom_PrintStaticRando
 	call DebugRoom_PrintEnemyDmgMult
 	call DebugRoom_PrintPlayerDmgMult
+	call DebugRoom_PrintKantoChallenge
 	jr .status_done
 .page6_status
 	call DebugRoom_PrintBossRando
@@ -261,6 +263,7 @@ _DebugRoom::
 	db "STATIC RANDO@"
 	db "ENEMY DMG@"
 	db "PLAYER DMG@"
+	db "KANTO CHLNG@"
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
 	dw DebugRoomMenu_SpClear
@@ -311,6 +314,7 @@ _DebugRoom::
 	dw DebugRoomMenu_StaticRando
 	dw DebugRoomMenu_EnemyDmgMult
 	dw DebugRoomMenu_PlayerDmgMult
+	dw DebugRoomMenu_KantoChallenge
 
 .MenuItems:
 ; entries correspond to DEBUGROOMMENU_* constants
@@ -388,11 +392,12 @@ _DebugRoom::
 	db -1
 
 	; DEBUGROOMMENU_PAGE_7
-	db 5
+	db 6
 	db DEBUGROOMMENUITEM_HELD_ITEM_RATE
 	db DEBUGROOMMENUITEM_STATIC_RANDO
 	db DEBUGROOMMENUITEM_ENEMY_DMG_MULT
 	db DEBUGROOMMENUITEM_PLAYER_DMG_MULT
+	db DEBUGROOMMENUITEM_KANTO_CHALLENGE
 	db DEBUGROOMMENUITEM_NEXT
 	db -1
 
@@ -1384,6 +1389,54 @@ DebugRoom_PrintPlayerDmgMult:
 .str_125: db "1.25@"
 .str_150: db "1.50@"
 .str_200: db "2.00@"
+
+DebugRoomMenu_KantoChallenge:
+; Cycles wKantoChallengeLevel through OFF, +1 .. +7.
+	ld a, [wKantoChallengeLevel]
+	inc a
+	cp NUM_KANTO_CHALLENGE_LEVELS
+	jr c, .ok
+	xor a
+.ok
+	ld [wKantoChallengeLevel], a
+	ret
+
+DebugRoom_PrintKantoChallenge:
+	hlcoord 16, 8
+	ld de, .Label
+	call PlaceString
+	ld a, [wKantoChallengeLevel]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 16, 9
+	call PlaceString
+	ret
+
+.Label:
+	db "KC:@"
+.Strings:
+	dw .str_off
+	dw .str_1
+	dw .str_2
+	dw .str_3
+	dw .str_4
+	dw .str_5
+	dw .str_6
+	dw .str_7
+.str_off: db "OFF @"
+.str_1:   db "LV 1@"
+.str_2:   db "LV 2@"
+.str_3:   db "LV 3@"
+.str_4:   db "LV 4@"
+.str_5:   db "LV 5@"
+.str_6:   db "LV 6@"
+.str_7:   db "LV 7@"
 
 DebugRoomMenu_WarpTo:
 	; Initialise the last-group tracker so the auto function doesn't fire a

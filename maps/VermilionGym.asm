@@ -19,7 +19,13 @@ VermilionGymSurgeScript:
 	waitbutton
 	closetext
 	winlosstext LtSurgeWinLossText, 0
+	readmem wKantoChallengeLevel
+	iffalse .NormalParty
+	loadtrainer LT_SURGE, LT_SURGE2
+	sjump .StartBattle
+.NormalParty:
 	loadtrainer LT_SURGE, LT_SURGE1
+.StartBattle:
 	startbattle
 	reloadmapafterbattle
 	setevent EVENT_BEAT_LTSURGE

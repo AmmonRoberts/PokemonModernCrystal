@@ -43,7 +43,9 @@ GetNewGameOptionDescString:
 	jr z, .page3
 	cp 3
 	jr z, .page4
-	ld hl, .DescPage5
+	cp 4
+	jr z, .page5
+	ld hl, .DescPage6
 	jr .lookup
 .page1:
 	ld hl, .DescPage1
@@ -56,6 +58,9 @@ GetNewGameOptionDescString:
 	jr .lookup
 .page4:
 	ld hl, .DescPage4
+	jr .lookup
+.page5:
+	ld hl, .DescPage5
 .lookup:
 	ld a, [wJumptableIndex]
 	ld e, a
@@ -98,6 +103,8 @@ GetNewGameOptionDescString:
 	dw .desc_first_enc
 	dw .desc_hm_req
 	dw .desc_ow_move
+.DescPage6:
+	dw .desc_kanto_challenge
 
 ; ---- Description strings (max 18 chars per line, with 5 lines) ----
 
@@ -254,3 +261,10 @@ GetNewGameOptionDescString:
 	db "no TM needed.<LF>"
 	db "LEARNABLE: Must be<LF>"
 	db "able to learn.@"
+
+.desc_kanto_challenge:
+	db "Scales KANTO gym<LF>"
+	db "trainer levels by<LF>"
+	db "badges owned, and<LF>"
+	db "adds #MON to<LF>"
+	db "gym leader teams.@"

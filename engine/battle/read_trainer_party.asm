@@ -80,6 +80,104 @@ ReadTrainerParty:
 	call CloseSRAM
 	jr .done
 
+MaybeApplyKantoChallengeLevelBoost:
+; Input/output: a = trainer's level. While Kanto Challenge Mode is enabled
+; and the current map is a Kanto gym, rebases the level so the gym is
+; fought at the same strength in any order:
+;   level = vanilla - gym anchor + KANTO_GYM_BASE_LEVEL + badges * offset
+; (clamped to 100). No-ops (a unchanged) otherwise. Preserves hl/de/bc.
+	push hl
+	push de
+	push bc
+	push af ; vanilla level; CountSetBits clobbers a/c/d/e
+
+	ld a, [wKantoChallengeLevel]
+	and a
+	jr z, .unchanged
+
+	call GetKantoGymAnchorLevel
+	jr nc, .unchanged
+	push af ; anchor
+
+	ld hl, wKantoBadges
+	ld b, 1
+	call CountSetBits
+	ld a, [wNumSetBits]
+	ld b, a
+	ld a, [wKantoChallengeLevel]
+	ld d, a
+	ld a, KANTO_GYM_BASE_LEVEL
+	inc b
+	jr .check
+.add_loop
+	add d
+.check
+	dec b
+	jr nz, .add_loop
+	ld e, a ; e = baseline + badge bonus
+
+	pop af ; anchor
+	ld c, a
+	pop af ; vanilla level
+	sub c
+	add e
+	cp 101
+	jr c, .done
+	ld a, 100
+	jr .done
+.unchanged
+	pop af
+.done
+	pop bc
+	pop de
+	pop hl
+	ret
+
+GetKantoGymAnchorLevel:
+; If the player is on a Kanto gym map, returns carry set and a = that gym's
+; anchor level; otherwise carry clear. Clobbers b, c, d, hl.
+	ld hl, .KantoGymMaps
+.loop
+	ld a, [hli]
+	cp -1
+	jr z, .no_match
+	ld b, a
+	ld a, [hli]
+	ld c, a
+	ld a, [hli]
+	ld d, a
+	push hl
+	ld hl, wMapGroup
+	ld a, [hli]
+	cp b
+	jr nz, .next
+	ld a, [hl]
+	cp c
+	jr z, .match
+.next
+	pop hl
+	jr .loop
+.match
+	pop hl
+	ld a, d
+	scf
+	ret
+.no_match
+	and a
+	ret
+
+.KantoGymMaps:
+; group, map, anchor = the gym leader's lowest vanilla level
+	db GROUP_PEWTER_GYM,    MAP_PEWTER_GYM,    41
+	db GROUP_CERULEAN_GYM,  MAP_CERULEAN_GYM,  42
+	db GROUP_VERMILION_GYM, MAP_VERMILION_GYM, 40
+	db GROUP_CELADON_GYM,   MAP_CELADON_GYM,   41
+	db GROUP_FUCHSIA_GYM,   MAP_FUCHSIA_GYM,   33
+	db GROUP_SAFFRON_GYM,   MAP_SAFFRON_GYM,   46
+	db GROUP_SEAFOAM_GYM,   MAP_SEAFOAM_GYM,   45
+	db GROUP_VIRIDIAN_GYM,  MAP_VIRIDIAN_GYM,  54
+	db -1
+
 TrainerTypes:
 ; entries correspond to TRAINERTYPE_* constants
 	dw TrainerType1 ; level, species
@@ -96,6 +194,7 @@ TrainerType1:
 	cp $ff
 	ret z
 
+	call MaybeApplyKantoChallengeLevelBoost
 	ld [wCurPartyLevel], a
 	ld a, [hli]
 	ld [wCurPartySpecies], a
@@ -116,6 +215,7 @@ TrainerType2:
 	cp $ff
 	ret z
 
+	call MaybeApplyKantoChallengeLevelBoost
 	ld [wCurPartyLevel], a
 	ld a, [hli]
 	ld [wCurPartySpecies], a
@@ -202,6 +302,7 @@ TrainerType3:
 	cp $ff
 	ret z
 
+	call MaybeApplyKantoChallengeLevelBoost
 	ld [wCurPartyLevel], a
 	ld a, [hli]
 	ld [wCurPartySpecies], a
@@ -231,6 +332,7 @@ TrainerType4:
 	cp $ff
 	ret z
 
+	call MaybeApplyKantoChallengeLevelBoost
 	ld [wCurPartyLevel], a
 	ld a, [hli]
 	ld [wCurPartySpecies], a

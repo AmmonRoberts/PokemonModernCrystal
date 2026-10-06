@@ -20,7 +20,13 @@ SeafoamGymBlaineScript:
 	waitbutton
 	closetext
 	winlosstext BlaineWinLossText, 0
+	readmem wKantoChallengeLevel
+	iffalse .NormalParty
+	loadtrainer BLAINE, BLAINE2
+	sjump .StartBattle
+.NormalParty:
 	loadtrainer BLAINE, BLAINE1
+.StartBattle:
 	startbattle
 	iftrue .ReturnAfterBattle
 	appear SEAFOAMGYM_GYM_GUIDE

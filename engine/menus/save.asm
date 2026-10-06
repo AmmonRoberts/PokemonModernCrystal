@@ -1022,6 +1022,14 @@ _LoadData:
 	xor a
 	ld [wStaticRandMode], a
 .static_rand_mode_ok
+	; Sanitize wKantoChallengeLevel: new variable — old saves may have garbage here.
+	; Clamp to valid range; out-of-range defaults to 0 (OFF).
+	ld a, [wKantoChallengeLevel]
+	cp NUM_KANTO_CHALLENGE_LEVELS
+	jr c, .kanto_challenge_level_ok
+	xor a
+	ld [wKantoChallengeLevel], a
+.kanto_challenge_level_ok
 	; Regenerate the type matchup table from the saved seed.
 	; Old saves have seed=0, so the table will be filled with EFFECTIVE (flag-check also skips table use).
 	farcall GenerateTypeMatchupTable

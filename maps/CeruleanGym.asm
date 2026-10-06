@@ -65,7 +65,13 @@ CeruleanGymMistyScript:
 	waitbutton
 	closetext
 	winlosstext MistyWinLossText, 0
+	readmem wKantoChallengeLevel
+	iffalse .NormalParty
+	loadtrainer MISTY, MISTY2
+	sjump .StartBattle
+.NormalParty:
 	loadtrainer MISTY, MISTY1
+.StartBattle:
 	startbattle
 	reloadmapafterbattle
 	setevent EVENT_BEAT_MISTY

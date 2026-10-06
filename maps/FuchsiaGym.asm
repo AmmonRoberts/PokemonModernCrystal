@@ -21,7 +21,13 @@ FuchsiaGymJanineScript:
 	waitbutton
 	closetext
 	winlosstext JanineText_ToughOne, 0
+	readmem wKantoChallengeLevel
+	iffalse .NormalParty
+	loadtrainer JANINE, JANINE2
+	sjump .StartBattle
+.NormalParty:
 	loadtrainer JANINE, JANINE1
+.StartBattle:
 	startbattle
 	reloadmapafterbattle
 	setevent EVENT_BEAT_JANINE

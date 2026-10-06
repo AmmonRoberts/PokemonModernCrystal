@@ -1821,7 +1821,11 @@ wOptions2::
 	db
 wNuzlockeMode:: db
 ; Nuzlocke first encounter mode. 0 = DISABLED, 1 = FORGIVING, 2 = STRICT.
-	ds 1
+wKantoChallengeLevel::
+; Kanto Challenge Mode: extra levels added per Kanto badge owned while
+; battling on a Kanto gym map. 0 = OFF (default), 1-7 = +1..+7 levels/badge.
+; Old saves have garbage here; sanitized to 0 (OFF) on load.
+	db
 wOptionsEnd::
 
 ; Time buffer, for counting the amount of time since

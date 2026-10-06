@@ -108,3 +108,61 @@ StaticRandOptionHandler::
 	ret
 .Standard:   db "STANDARD  @"
 .Randomized: db "RANDOMIZED@"
+
+KantoChallengeOptionHandler::
+; Cycles wKantoChallengeLevel through OFF, +1 .. +7 (right / left in reverse).
+; Nonzero values scale Kanto gym trainer levels by badges owned and add
+; extra Pokemon to each gym leader's team.
+	ldh a, [hJoyPressed]
+	bit B_PAD_RIGHT, a
+	jr nz, .Right
+	bit B_PAD_LEFT, a
+	jr nz, .Left
+	jr .Display
+.Right:
+	ld a, [wKantoChallengeLevel]
+	inc a
+	cp NUM_KANTO_CHALLENGE_LEVELS
+	jr c, .set
+	xor a
+	jr .set
+.Left:
+	ld a, [wKantoChallengeLevel]
+	and a
+	jr z, .WrapLeft
+	dec a
+	jr .set
+.WrapLeft:
+	ld a, NUM_KANTO_CHALLENGE_LEVELS - 1
+.set:
+	ld [wKantoChallengeLevel], a
+.Display:
+	ld a, [wKantoChallengeLevel]
+	ld e, a
+	ld d, 0
+	ld hl, .Strings
+	add hl, de
+	add hl, de
+	ld a, [hli]
+	ld d, [hl]
+	ld e, a
+	hlcoord 8, 4
+	call PlaceString
+	ret
+.Strings:
+	dw .str_off
+	dw .str_1
+	dw .str_2
+	dw .str_3
+	dw .str_4
+	dw .str_5
+	dw .str_6
+	dw .str_7
+.str_off: db "OFF @"
+.str_1:   db "LV 1@"
+.str_2:   db "LV 2@"
+.str_3:   db "LV 3@"
+.str_4:   db "LV 4@"
+.str_5:   db "LV 5@"
+.str_6:   db "LV 6@"
+.str_7:   db "LV 7@"

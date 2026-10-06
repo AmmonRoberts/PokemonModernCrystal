@@ -20,7 +20,13 @@ SaffronGymSabrinaScript:
 	waitbutton
 	closetext
 	winlosstext SabrinaWinLossText, 0
+	readmem wKantoChallengeLevel
+	iffalse .NormalParty
+	loadtrainer SABRINA, SABRINA2
+	sjump .StartBattle
+.NormalParty:
 	loadtrainer SABRINA, SABRINA1
+.StartBattle:
 	startbattle
 	reloadmapafterbattle
 	setevent EVENT_BEAT_SABRINA
