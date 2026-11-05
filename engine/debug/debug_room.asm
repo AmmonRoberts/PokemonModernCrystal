@@ -263,7 +263,7 @@ _DebugRoom::
 	db "STATIC RANDO@"
 	db "ENEMY DMG@"
 	db "PLAYER DMG@"
-	db "KANTO CHLNG@"
+	db "KANTO LV/BDG@"
 .Jumptable:
 ; entries correspond to DEBUGROOMMENUITEM_* constants
 	dw DebugRoomMenu_SpClear
@@ -1391,7 +1391,7 @@ DebugRoom_PrintPlayerDmgMult:
 .str_200: db "2.00@"
 
 DebugRoomMenu_KantoChallenge:
-; Cycles wKantoChallengeLevel through OFF, +1 .. +7.
+; Cycles wKantoChallengeLevel through OFF, 1 .. 7 levels per badge.
 	ld a, [wKantoChallengeLevel]
 	inc a
 	cp NUM_KANTO_CHALLENGE_LEVELS
@@ -1419,7 +1419,7 @@ DebugRoom_PrintKantoChallenge:
 	ret
 
 .Label:
-	db "KC:@"
+	db "L/B:@"
 .Strings:
 	dw .str_off
 	dw .str_1
@@ -1430,13 +1430,13 @@ DebugRoom_PrintKantoChallenge:
 	dw .str_6
 	dw .str_7
 .str_off: db "OFF @"
-.str_1:   db "LV 1@"
-.str_2:   db "LV 2@"
-.str_3:   db "LV 3@"
-.str_4:   db "LV 4@"
-.str_5:   db "LV 5@"
-.str_6:   db "LV 6@"
-.str_7:   db "LV 7@"
+.str_1:   db "1   @"
+.str_2:   db "2   @"
+.str_3:   db "3   @"
+.str_4:   db "4   @"
+.str_5:   db "5   @"
+.str_6:   db "6   @"
+.str_7:   db "7   @"
 
 DebugRoomMenu_WarpTo:
 	; Initialise the last-group tracker so the auto function doesn't fire a

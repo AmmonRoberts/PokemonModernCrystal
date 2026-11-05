@@ -315,7 +315,7 @@ StringNewGameOptionsPage5:
 
 StringNewGameOptionsPage6:
 	db "CHALLENGE     6/6<LF>"
-	db "KANTO CHALLENGE<LF>"
+	db "KANTO LV/BADGE<LF>"
 	db "     :<LF>"
 	db "CONTINUE@"
 

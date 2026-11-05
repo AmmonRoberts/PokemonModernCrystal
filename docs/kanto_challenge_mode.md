@@ -1,11 +1,11 @@
 # Kanto Challenge Mode
 
 Option name: **KANTO CHALLENGE** (new-game options page 6, debug room page 7).
-Values: `OFF`, `LV 1` .. `LV 7` (stored in `wKantoChallengeLevel`; the value is the offset per badge).
+Values: `OFF`, `1 PER BADGE` .. `7 PER BADGE` (stored in `wKantoChallengeLevel`; the value is the number of levels added per Kanto badge owned).
 
 ## Rules
 
-- Active only while the battle takes place on one of the 8 Kanto gym maps: Pewter, Cerulean, Vermilion, Celadon, Fuchsia, Saffron, Seafoam (Blaine), Viridian.
+- Gym rule: applies on the 8 Kanto gym maps: Pewter, Cerulean, Vermilion, Celadon, Fuchsia, Saffron, Seafoam (Blaine), Viridian. The wild and trainer rule for the rest of Kanto is in its own section below.
 - Level of every trainer Pokemon in those gyms (leaders and regular gym trainers) is normalized so Kanto can be done in any order:
 
   `level = min(100, vanilla level - gym anchor + 45 + Kanto badges owned x offset)`
@@ -28,11 +28,54 @@ Values: `OFF`, `LV 1` .. `LV 7` (stored in `wKantoChallengeLevel`; the value is 
 | Seafoam (Blaine) | 45 |
 | Viridian (Blue) | 54 |
 
+## Wild Pokemon and regular trainers in Kanto
+
+Applies when the player is in Kanto (by map landmark). The League approach (Routes 22, 23, 26, 27, 28, Victory Road, Tohjo Falls, Indigo Plateau) only counts after the Elite Four is beaten, so the way to the League keeps vanilla levels. Johto and Mt. Silver are untouched.
+
+`level = min(100, clamp(vanilla, floor, cap) + Kanto badges x offset)`
+
+| | Floor (0 badges) | Cap (0 badges) | Gap below gym baseline (45) |
+|---|---:|---:|---:|
+| Wild | 25 | 35 | 10 below the cap |
+| Trainers | 30 | 40 | 5 below the cap |
+
+- Vanilla levels below the floor are raised to it, and levels above the cap are lowered to it, so the spread between routes is compressed into a 10-level window that moves up with the badge bonus.
+- Because gyms use 45 + bonus, wild Pokemon stay 10 levels below a gym's lowest Pokemon and trainers 5 levels below at every badge count and offset.
+- Wild: random grass, cave and water encounters (including the randomizer). Roamers, swarms, headbutt trees, fishing, and scripted static encounters keep their levels.
+- Trainers: all Kanto trainers except the scripted rival, Red and Cal classes. Gym trainers use the gym rule above.
+- Constants: `KANTO_WILD_CAP`, `KANTO_WILD_FLOOR`, `KANTO_TRAINER_CAP`, `KANTO_TRAINER_FLOOR` in `constants/kanto_challenge_constants.asm`.
+
+### Wild level range (floor-cap) by badges and setting
+
+| Badges | 1/badge | 2/badge | 3/badge | 4/badge | 5/badge | 6/badge | 7/badge |
+|-------:|--:|--:|--:|--:|--:|--:|--:|
+| 0 | 25-35 | 25-35 | 25-35 | 25-35 | 25-35 | 25-35 | 25-35 |
+| 1 | 26-36 | 27-37 | 28-38 | 29-39 | 30-40 | 31-41 | 32-42 |
+| 2 | 27-37 | 29-39 | 31-41 | 33-43 | 35-45 | 37-47 | 39-49 |
+| 3 | 28-38 | 31-41 | 34-44 | 37-47 | 40-50 | 43-53 | 46-56 |
+| 4 | 29-39 | 33-43 | 37-47 | 41-51 | 45-55 | 49-59 | 53-63 |
+| 5 | 30-40 | 35-45 | 40-50 | 45-55 | 50-60 | 55-65 | 60-70 |
+| 6 | 31-41 | 37-47 | 43-53 | 49-59 | 55-65 | 61-71 | 67-77 |
+| 7 | 32-42 | 39-49 | 46-56 | 53-63 | 60-70 | 67-77 | 74-84 |
+
+### Trainer level range (floor-cap) by badges and setting
+
+| Badges | 1/badge | 2/badge | 3/badge | 4/badge | 5/badge | 6/badge | 7/badge |
+|-------:|--:|--:|--:|--:|--:|--:|--:|
+| 0 | 30-40 | 30-40 | 30-40 | 30-40 | 30-40 | 30-40 | 30-40 |
+| 1 | 31-41 | 32-42 | 33-43 | 34-44 | 35-45 | 36-46 | 37-47 |
+| 2 | 32-42 | 34-44 | 36-46 | 38-48 | 40-50 | 42-52 | 44-54 |
+| 3 | 33-43 | 36-46 | 39-49 | 42-52 | 45-55 | 48-58 | 51-61 |
+| 4 | 34-44 | 38-48 | 42-52 | 46-56 | 50-60 | 54-64 | 58-68 |
+| 5 | 35-45 | 40-50 | 45-55 | 50-60 | 55-65 | 60-70 | 65-75 |
+| 6 | 36-46 | 42-52 | 48-58 | 54-64 | 60-70 | 66-76 | 72-82 |
+| 7 | 37-47 | 44-54 | 51-61 | 58-68 | 65-75 | 72-82 | 79-89 |
+
 ## Level bonus (added to the 0-badge level)
 
 Bonus = badges x offset. Rows: Kanto badges owned. Columns: setting.
 
-| Badges | LV 1 | LV 2 | LV 3 | LV 4 | LV 5 | LV 6 | LV 7 |
+| Badges | 1/badge | 2/badge | 3/badge | 4/badge | 5/badge | 6/badge | 7/badge |
 |-------:|-----:|-----:|-----:|-----:|-----:|-----:|-----:|
 | 0 | +0 | +0 | +0 | +0 | +0 | +0 | +0 |
 | 1 | +1 | +2 | +3 | +4 | +5 | +6 | +7 |
@@ -44,7 +87,7 @@ Bonus = badges x offset. Rows: Kanto badges owned. Columns: setting.
 | 7 | +7 | +14 | +21 | +28 | +35 | +42 | +49 |
 | 8 | +8 | +16 | +24 | +32 | +40 | +48 | +56 |
 
-The highest leader level (52 at 0 badges: Ampharos, Gengar) is 87 at 7 badges on `LV 5`, 94 on `LV 6`, and hits the cap of 100 on `LV 7` (52 + 49 = 101, capped). On `LV 6` the cap is reached at 8 badges (52 + 48 = 100); on `LV 7` every Pokemon is 100 at 8 badges.
+The highest leader level (52 at 0 badges: Ampharos, Gengar) is 87 at 7 badges at 5/badge, 94 at 6/badge, and hits the cap of 100 at 7/badge (52 + 49 = 101, capped). At 6/badge the cap is reached at 8 badges (52 + 48 = 100); at 7/badge every Pokemon is 100 at 8 badges.
 
 To find a Pokemon's level: take its 0-badge level from the tables below and add the bonus from the row/column above.
 
@@ -145,14 +188,14 @@ Brock 5, Misty 4, Lt. Surge 5, Erika 4, Janine 5, Sabrina 3, Blaine 3, Blue 6 Po
 
 ## Worked example
 
-Misty, setting `LV 3`, 4 Kanto badges owned: bonus = 4 x 3 = +12.
+Misty, setting `3 PER BADGE`, 4 Kanto badges owned: bonus = 4 x 3 = +12.
 Golduck 57, Quagsire 57, Lapras 59, Vaporeon 59, Kingdra 61, Starmie 62.
 
 ## Explicit levels per setting, gym and badge count
 
 Computed with `vanilla - anchor + 45 + badges x offset` (cap 100). Columns are Kanto badges owned (0-7; a leader's own badge is not owned yet on the first fight). Party order is the in-battle order.
 
-### Setting LV 1 (+1 per badge)
+### Setting: 1 per badge
 
 #### Brock (Pewter)
 
@@ -240,7 +283,7 @@ Computed with `vanilla - anchor + 45 + badges x offset` (cap 100). Columns are K
 | Exeggutor | 49 | 50 | 51 | 52 | 53 | 54 | 55 | 56 |
 | Arcanine | 49 | 50 | 51 | 52 | 53 | 54 | 55 | 56 |
 
-### Setting LV 2 (+2 per badge)
+### Setting: 2 per badge
 
 #### Brock (Pewter)
 
@@ -328,7 +371,7 @@ Computed with `vanilla - anchor + 45 + badges x offset` (cap 100). Columns are K
 | Exeggutor | 49 | 51 | 53 | 55 | 57 | 59 | 61 | 63 |
 | Arcanine | 49 | 51 | 53 | 55 | 57 | 59 | 61 | 63 |
 
-### Setting LV 3 (+3 per badge)
+### Setting: 3 per badge
 
 #### Brock (Pewter)
 
@@ -416,7 +459,7 @@ Computed with `vanilla - anchor + 45 + badges x offset` (cap 100). Columns are K
 | Exeggutor | 49 | 52 | 55 | 58 | 61 | 64 | 67 | 70 |
 | Arcanine | 49 | 52 | 55 | 58 | 61 | 64 | 67 | 70 |
 
-### Setting LV 4 (+4 per badge)
+### Setting: 4 per badge
 
 #### Brock (Pewter)
 
@@ -504,7 +547,7 @@ Computed with `vanilla - anchor + 45 + badges x offset` (cap 100). Columns are K
 | Exeggutor | 49 | 53 | 57 | 61 | 65 | 69 | 73 | 77 |
 | Arcanine | 49 | 53 | 57 | 61 | 65 | 69 | 73 | 77 |
 
-### Setting LV 5 (+5 per badge)
+### Setting: 5 per badge
 
 #### Brock (Pewter)
 
@@ -592,7 +635,7 @@ Computed with `vanilla - anchor + 45 + badges x offset` (cap 100). Columns are K
 | Exeggutor | 49 | 54 | 59 | 64 | 69 | 74 | 79 | 84 |
 | Arcanine | 49 | 54 | 59 | 64 | 69 | 74 | 79 | 84 |
 
-### Setting LV 6 (+6 per badge)
+### Setting: 6 per badge
 
 #### Brock (Pewter)
 
@@ -680,7 +723,7 @@ Computed with `vanilla - anchor + 45 + badges x offset` (cap 100). Columns are K
 | Exeggutor | 49 | 55 | 61 | 67 | 73 | 79 | 85 | 91 |
 | Arcanine | 49 | 55 | 61 | 67 | 73 | 79 | 85 | 91 |
 
-### Setting LV 7 (+7 per badge)
+### Setting: 7 per badge
 
 #### Brock (Pewter)
 

@@ -110,7 +110,7 @@ StaticRandOptionHandler::
 .Randomized: db "RANDOMIZED@"
 
 KantoChallengeOptionHandler::
-; Cycles wKantoChallengeLevel through OFF, +1 .. +7 (right / left in reverse).
+; Cycles wKantoChallengeLevel through OFF, 1 .. 7 levels per badge (right / left in reverse).
 ; Nonzero values scale Kanto gym trainer levels by badges owned and add
 ; extra Pokemon to each gym leader's team.
 	ldh a, [hJoyPressed]
@@ -158,11 +158,11 @@ KantoChallengeOptionHandler::
 	dw .str_5
 	dw .str_6
 	dw .str_7
-.str_off: db "OFF @"
-.str_1:   db "LV 1@"
-.str_2:   db "LV 2@"
-.str_3:   db "LV 3@"
-.str_4:   db "LV 4@"
-.str_5:   db "LV 5@"
-.str_6:   db "LV 6@"
-.str_7:   db "LV 7@"
+.str_off: db "OFF        @"
+.str_1:   db "1 PER BADGE@"
+.str_2:   db "2 PER BADGE@"
+.str_3:   db "3 PER BADGE@"
+.str_4:   db "4 PER BADGE@"
+.str_5:   db "5 PER BADGE@"
+.str_6:   db "6 PER BADGE@"
+.str_7:   db "7 PER BADGE@"

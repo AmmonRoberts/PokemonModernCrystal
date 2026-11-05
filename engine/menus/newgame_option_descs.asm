@@ -263,8 +263,7 @@ GetNewGameOptionDescString:
 	db "able to learn.@"
 
 .desc_kanto_challenge:
-	db "Scales KANTO gym<LF>"
-	db "trainer levels by<LF>"
-	db "badges owned, and<LF>"
-	db "adds #MON to<LF>"
-	db "gym leader teams.@"
+	db "KANTO levels rise<LF>"
+	db "N per badge owned.<LF>"
+	db "Leaders get extra<LF>"
+	db "#MON.@"
