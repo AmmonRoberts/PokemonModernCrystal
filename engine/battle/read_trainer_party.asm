@@ -80,6 +80,206 @@ ReadTrainerParty:
 	call CloseSRAM
 	jr .done
 
+MaybeApplyKantoChallengeLevelBoost:
+; Input/output: a = trainer's level. While Kanto Challenge Mode is enabled:
+; - Kanto gym trainers are rebased onto the gym baseline:
+;     level = vanilla - gym anchor + KANTO_GYM_BASE_LEVEL + badge bonus
+; - other Kanto trainers (after the Elite Four) are clamped to a window
+;   below the gym baseline, then get the badge bonus.
+; Levels are capped at 100. No-ops (a unchanged) otherwise. Preserves hl/de/bc.
+	push hl
+	push de
+	push bc
+	push af ; vanilla level; CountSetBits clobbers a/c/d/e
+
+	ld a, [wKantoChallengeLevel]
+	and a
+	jr z, .unchanged
+
+	call GetKantoGymAnchorLevel
+	jr c, .gym
+
+	call IsKantoWorldTrainer
+	jr nc, .unchanged
+	call GetKantoBadgeBonus
+	ld e, a
+	pop af ; vanilla level
+	ld b, KANTO_TRAINER_FLOOR
+	ld c, KANTO_TRAINER_CAP
+	call ClampKantoLevel
+	jr .add_bonus
+
+.gym
+	push af ; anchor
+	call GetKantoBadgeBonus
+	ld e, a
+	pop af ; anchor
+	ld c, a
+	pop af ; vanilla level
+	sub c
+	add KANTO_GYM_BASE_LEVEL
+.add_bonus
+	add e
+	cp 101
+	jr c, .done
+	ld a, 100
+	jr .done
+.unchanged
+	pop af
+.done
+	pop bc
+	pop de
+	pop hl
+	ret
+
+KantoWorldWildLevel::
+; Called via farcall after a random wild encounter's level is stored in
+; wCurPartyLevel. Rebases it the same way as regular Kanto trainers, with a
+; lower window.
+	ld a, [wKantoChallengeLevel]
+	and a
+	ret z
+	call IsKantoWorldActive
+	ret nc
+	call GetKantoBadgeBonus
+	ld e, a
+	ld a, [wCurPartyLevel]
+	ld b, KANTO_WILD_FLOOR
+	ld c, KANTO_WILD_CAP
+	call ClampKantoLevel
+	add e
+	cp 101
+	jr c, .store
+	ld a, 100
+.store
+	ld [wCurPartyLevel], a
+	ret
+
+GetKantoBadgeBonus:
+; Returns a = Kanto badges owned * wKantoChallengeLevel. Clobbers b, c, d, e, hl.
+	ld hl, wKantoBadges
+	ld b, 1
+	call CountSetBits
+	ld a, [wNumSetBits]
+	ld b, a
+	ld a, [wKantoChallengeLevel]
+	ld d, a
+	xor a
+	inc b
+	jr .check
+.add_loop
+	add d
+.check
+	dec b
+	jr nz, .add_loop
+	ret
+
+ClampKantoLevel:
+; Clamps a to [b (floor), c (cap)].
+	cp b
+	jr nc, .above_floor
+	ld a, b
+.above_floor
+	cp c
+	jr c, .done
+	ld a, c
+.done
+	ret
+
+IsKantoWorldActive:
+; Returns carry set if the player is in Kanto. The Route 22-28 landmarks around
+; Victory Road and the League only count after the Elite Four, so the
+; approach to the League keeps its vanilla levels.
+	call IsInJohto
+	and a
+	jr z, .no
+	ld a, [wMapGroup]
+	ld b, a
+	ld a, [wMapNumber]
+	ld c, a
+	call GetWorldMapLocation
+	cp LANDMARK_ROUTE_22
+	jr c, .yes
+	cp LANDMARK_ROUTE_28 + 1
+	jr nc, .yes
+	ld b, CHECK_FLAG
+	ld de, EVENT_BEAT_ELITE_FOUR
+	call EventFlagAction
+	ld a, c
+	and a
+	jr z, .no
+.yes
+	scf
+	ret
+.no
+	and a
+	ret
+
+IsKantoWorldTrainer:
+; Returns carry set if the current trainer should be rebased outside the gyms.
+; Scripted boss classes keep their own levels.
+	call IsKantoWorldActive
+	ret nc
+	ld a, [wOtherTrainerClass]
+	cp RIVAL1
+	jr z, .no
+	cp RIVAL2
+	jr z, .no
+	cp RED
+	jr z, .no
+	cp CAL
+	jr z, .no
+	scf
+	ret
+.no
+	and a
+	ret
+
+GetKantoGymAnchorLevel:
+; If the player is on a Kanto gym map, returns carry set and a = that gym's
+; anchor level; otherwise carry clear. Clobbers b, c, d, hl.
+	ld hl, .KantoGymMaps
+.loop
+	ld a, [hli]
+	cp -1
+	jr z, .no_match
+	ld b, a
+	ld a, [hli]
+	ld c, a
+	ld a, [hli]
+	ld d, a
+	push hl
+	ld hl, wMapGroup
+	ld a, [hli]
+	cp b
+	jr nz, .next
+	ld a, [hl]
+	cp c
+	jr z, .match
+.next
+	pop hl
+	jr .loop
+.match
+	pop hl
+	ld a, d
+	scf
+	ret
+.no_match
+	and a
+	ret
+
+.KantoGymMaps:
+; group, map, anchor = the gym leader's lowest vanilla level
+	db GROUP_PEWTER_GYM,    MAP_PEWTER_GYM,    41
+	db GROUP_CERULEAN_GYM,  MAP_CERULEAN_GYM,  42
+	db GROUP_VERMILION_GYM, MAP_VERMILION_GYM, 40
+	db GROUP_CELADON_GYM,   MAP_CELADON_GYM,   41
+	db GROUP_FUCHSIA_GYM,   MAP_FUCHSIA_GYM,   33
+	db GROUP_SAFFRON_GYM,   MAP_SAFFRON_GYM,   46
+	db GROUP_SEAFOAM_GYM,   MAP_SEAFOAM_GYM,   45
+	db GROUP_VIRIDIAN_GYM,  MAP_VIRIDIAN_GYM,  54
+	db -1
+
 TrainerTypes:
 ; entries correspond to TRAINERTYPE_* constants
 	dw TrainerType1 ; level, species
@@ -96,6 +296,7 @@ TrainerType1:
 	cp $ff
 	ret z
 
+	call MaybeApplyKantoChallengeLevelBoost
 	ld [wCurPartyLevel], a
 	ld a, [hli]
 	ld [wCurPartySpecies], a
@@ -116,6 +317,7 @@ TrainerType2:
 	cp $ff
 	ret z
 
+	call MaybeApplyKantoChallengeLevelBoost
 	ld [wCurPartyLevel], a
 	ld a, [hli]
 	ld [wCurPartySpecies], a
@@ -202,6 +404,7 @@ TrainerType3:
 	cp $ff
 	ret z
 
+	call MaybeApplyKantoChallengeLevelBoost
 	ld [wCurPartyLevel], a
 	ld a, [hli]
 	ld [wCurPartySpecies], a
@@ -231,6 +434,7 @@ TrainerType4:
 	cp $ff
 	ret z
 
+	call MaybeApplyKantoChallengeLevelBoost
 	ld [wCurPartyLevel], a
 	ld a, [hli]
 	ld [wCurPartySpecies], a

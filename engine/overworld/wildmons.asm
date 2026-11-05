@@ -320,6 +320,9 @@ ChooseWildEncounter:
 .standard_ok
 	ld a, b
 	ld [wCurPartyLevel], a
+	push hl
+	farcall KantoWorldWildLevel
+	pop hl
 	ld b, [hl]
 	jr .validate_species
 	
@@ -366,6 +369,9 @@ ChooseWildEncounter:
 ; Get the original level from this slot
 	ld a, [hli] ; load level
 	ld [wCurPartyLevel], a ; store the original level
+	push hl
+	farcall KantoWorldWildLevel
+	pop hl
 	
 ; Now pick a random Pokemon species to replace the original one
 .randomize_species

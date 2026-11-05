@@ -17,7 +17,13 @@ PewterGymBrockScript:
 	waitbutton
 	closetext
 	winlosstext BrockWinLossText, 0
+	readmem wKantoChallengeLevel
+	iffalse .NormalParty
+	loadtrainer BROCK, BROCK2
+	sjump .StartBattle
+.NormalParty:
 	loadtrainer BROCK, BROCK1
+.StartBattle:
 	startbattle
 	reloadmapafterbattle
 	setevent EVENT_BEAT_BROCK

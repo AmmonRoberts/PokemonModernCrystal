@@ -20,7 +20,13 @@ CeladonGymErikaScript:
 	waitbutton
 	closetext
 	winlosstext ErikaBeatenText, 0
+	readmem wKantoChallengeLevel
+	iffalse .NormalParty
+	loadtrainer ERIKA, ERIKA2
+	sjump .StartBattle
+.NormalParty:
 	loadtrainer ERIKA, ERIKA1
+.StartBattle:
 	startbattle
 	reloadmapafterbattle
 	setevent EVENT_BEAT_ERIKA
